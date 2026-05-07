@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Compile or Die — typing roguelite</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#07090d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="app">
+  <div id="stage">
+    <div id="bg"></div>
+    <canvas id="game"></canvas>
+
+    <!-- HUD -->
+    <div id="hud">
+      <div class="hud-row hud-top">
+        <span class="chip lives" id="lives">♥♥♥</span>
+        <span class="chip wave" id="wave">WAVE 0</span>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <span class="chip score" id="score">0</span>
+          <button class="chip quit" id="btn-quit" title="Quit run (Esc)">✕</button>
+        </div>
+      </div>
+      <div class="hud-row hud-bot">
+        <span class="chip pack" id="pack">HTML</span>
+        <span class="chip combo" id="combo">×0</span>
+      </div>
+      <div class="combo-meter"><div id="combobar"></div></div>
+    </div>
+
+    <!-- function builder (study panel) -->
+    <div id="fn-builder" class="hidden">
+      <div class="fnb-head">
+        <div class="fnb-name"><span class="glyph"></span><span class="nm"></span></div>
+        <div class="fnb-progress">0%</div>
+      </div>
+      <div class="fnb-bar"><div></div></div>
+      <div class="fnb-code"></div>
+    </div>
+
+    <!-- mini-boss recall overlay -->
+    <div id="miniboss">
+      <div class="mb-bg"></div>
+      <div class="mb-title">RECALL CHALLENGE</div>
+      <div class="mb-fn-name"></div>
+      <div class="mb-ring">
+        <svg viewBox="0 0 240 240">
+          <circle cx="120" cy="120" r="110" fill="none" stroke="currentColor"
+                  stroke-opacity="0.15" stroke-width="2"></circle>
+          <circle id="mb-ring-fill" cx="120" cy="120" r="110" fill="none"
+                  stroke="currentColor" stroke-width="3"
+                  stroke-dasharray="691.15" stroke-dashoffset="0"
+                  transform="rotate(-90 120 120)"
+                  stroke-linecap="round"></circle>
+        </svg>
+        <div class="core"></div>
+      </div>
+      <pre class="mb-code"></pre>
+    </div>
+
+    <!-- mobile keyboard driver -->
+    <input id="typebox" autocomplete="off" autocapitalize="off"
+           autocorrect="off" spellcheck="false" inputmode="text"
+           aria-label="Type code tokens here">
+
+    <div id="flash" class="flash"></div>
+
+    <!-- start overlay -->
+    <div id="overlay-start" class="overlay menu">
+      <div class="menu-panel">
+
+        <div class="logo-block">
+          <div class="logo-mark">&lt;/&gt;</div>
+          <h1 class="menu-title">COMPILE<br>OR&nbsp;DIE</h1>
+          <p class="menu-lede">A typing roguelite.<br>Code falls — you compile.</p>
+          <div class="badges">
+            <span class="badge">5 packs</span>
+            <span class="badge">offline-ready</span>
+            <span class="badge">mobile-friendly</span>
+          </div>
+        </div>
+
+        <div class="features">
+          <div class="feature">
+            <div class="feature-icon">⚡</div>
+            <div class="feature-name">Type to destroy</div>
+            <div class="feature-desc">Real syntax falls. Type it before it crashes your codebase.</div>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">🧠</div>
+            <div class="feature-name">Recall test</div>
+            <div class="feature-desc">Every wave ends with a function-recall challenge. Beat the clock.</div>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">✨</div>
+            <div class="feature-name">Stack upgrades</div>
+            <div class="feature-desc">Splash, chain, freeze, multipliers. Build a different run every time.</div>
+          </div>
+        </div>
+
+        <div class="section-label">Select your packs</div>
+        <div id="pack-grid" class="pack-grid"></div>
+
+        <button class="btn primary big" id="btn-start">
+          <span class="btn-label">Start run</span>
+          <span class="kbd">↵</span>
+        </button>
+
+        <div class="footnote">Tip: don't let tokens hit the floor.</div>
+      </div>
+    </div>
+
+    <!-- upgrade overlay -->
+    <div id="overlay-upgrade" class="overlay hidden">
+      <div class="panel">
+        <div class="title">Choose an upgrade</div>
+        <div class="subtitle" id="upgrade-wave">Wave cleared</div>
+        <div id="upgrade-grid" class="upgrade-grid"></div>
+      </div>
+    </div>
+
+    <!-- game over overlay -->
+    <div id="overlay-gameover" class="overlay hidden">
+      <div class="panel">
+        <div class="title">Stack overflow</div>
+        <div class="subtitle">Your codebase crashed.</div>
+        <div id="final-stats"></div>
+        <div class="btn-row">
+          <button class="btn primary" id="btn-restart">New run</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="packs.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
