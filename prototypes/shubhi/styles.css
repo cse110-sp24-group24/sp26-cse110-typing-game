@@ -1,0 +1,92 @@
+:root {
+  --bg: #0f1226;
+  --panel: #1f2550;
+  --accent: #6ee7ff;
+  --good: #4ade80;
+  --bad: #f87171;
+  --text: #eef2ff;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: radial-gradient(circle at top, #25306b, var(--bg));
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.game-shell {
+  width: min(960px, 100%);
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+h1 { margin-bottom: 0.4rem; }
+.hud {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-weight: 700;
+}
+
+.playfield {
+  position: relative;
+  height: 55vh;
+  min-height: 320px;
+  margin: 1rem 0;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.2);
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.12));
+}
+
+.snippet {
+  position: absolute;
+  padding: 0.3rem 0.5rem;
+  border-radius: 0.5rem;
+  background: var(--panel);
+  border: 1px solid rgba(255,255,255,0.15);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: nowrap;
+}
+
+.input-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+}
+
+input, button {
+  font-size: 1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  border: 0;
+}
+
+input { outline: 2px solid transparent; }
+input:focus { outline-color: var(--accent); }
+button {
+  background: var(--accent);
+  color: #091027;
+  font-weight: 800;
+}
+
+.status { min-height: 1.3rem; }
+.good { color: var(--good); }
+.bad { color: var(--bad); }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+@media (max-width: 700px) {
+  .playfield { height: 50vh; }
+  .hud { font-size: 0.95rem; }
+}
