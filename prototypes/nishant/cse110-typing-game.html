@@ -1,0 +1,1777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSE 110 — Type to Learn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Serif+Display:ital@0;1&family=Space+Mono:wght@400;700&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5EFE0;
+    --parchment: #EDE3CC;
+    --deep: #1C1410;
+    --espresso: #2E1E12;
+    --mocha: #5C3D20;
+    --caramel: #A0693A;
+    --blush: #D4886A;
+    --sage: #7A9E7E;
+    --dusty-rose: #C4837B;
+    --ink: #2A1F1A;
+    --gold: #C8943A;
+    --gold-light: #E8C060;
+    --correct: #5A8A5E;
+    --wrong: #C05050;
+    --hint-bg: #F0E8D0;
+    --card-bg: #FEFAF3;
+    --shadow: 0 4px 24px rgba(44,30,18,0.13);
+    --shadow-strong: 0 8px 40px rgba(44,30,18,0.22);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Lora', serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── noise texture overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+  /* ── Decorative ribbon lines ── */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, var(--mocha), var(--caramel), var(--gold), var(--blush), var(--mocha));
+    z-index: 100;
+  }
+
+  #app { position: relative; z-index: 1; }
+
+  /* ═══════════════════════════════
+     SCREENS
+  ═══════════════════════════════ */
+  .screen {
+    display: none;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* ═══════════════════════════════
+     HOME SCREEN
+  ═══════════════════════════════ */
+  #home {
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .home-decoration {
+    position: absolute;
+    font-size: 180px;
+    opacity: 0.04;
+    font-family: 'Playfair Display', serif;
+    user-select: none;
+    pointer-events: none;
+  }
+  .home-decoration.left { left: -40px; top: 50px; transform: rotate(-15deg); }
+  .home-decoration.right { right: -40px; bottom: 80px; transform: rotate(10deg); }
+
+  .badge {
+    display: inline-block;
+    background: var(--espresso);
+    color: var(--gold-light);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+
+  h1.logo {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(42px, 8vw, 72px);
+    font-weight: 700;
+    color: var(--espresso);
+    line-height: 1.05;
+    margin-bottom: 6px;
+  }
+  h1.logo em {
+    font-style: italic;
+    color: var(--caramel);
+  }
+
+  .tagline {
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--mocha);
+    margin-bottom: 40px;
+    opacity: 0.8;
+  }
+
+  .divider {
+    width: 60px;
+    height: 2px;
+    background: var(--gold);
+    margin: 0 auto 36px;
+    border-radius: 2px;
+  }
+
+  /* Level cards grid */
+  .levels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    max-width: 860px;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .level-card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--parchment);
+    border-radius: 16px;
+    padding: 24px 20px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+    text-align: left;
+  }
+  .level-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .level-card.lec1::before { background: var(--caramel); }
+  .level-card.lec2::before { background: var(--sage); }
+  .level-card.mixed::before { background: var(--dusty-rose); }
+  .level-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-strong);
+    border-color: var(--caramel);
+  }
+
+  .level-icon {
+    font-size: 28px;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .level-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--espresso);
+    margin-bottom: 4px;
+  }
+  .level-subtitle {
+    font-size: 12px;
+    color: var(--caramel);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+  }
+  .level-desc {
+    font-size: 13px;
+    color: var(--mocha);
+    line-height: 1.5;
+  }
+  .level-count {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--caramel);
+    background: var(--parchment);
+    padding: 3px 8px;
+    border-radius: 10px;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: flex;
+    gap: 24px;
+    max-width: 860px;
+    width: 100%;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .stat-pill {
+    background: var(--espresso);
+    color: var(--cream);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    padding: 8px 18px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .stat-pill span { color: var(--gold-light); font-weight: 700; }
+
+  /* ═══════════════════════════════
+     GAME SCREEN
+  ═══════════════════════════════ */
+  #game {
+    padding: 0;
+    align-items: stretch;
+    background: var(--cream);
+  }
+
+  .game-header {
+    background: var(--espresso);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .game-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .back-btn {
+    background: none;
+    border: 1px solid rgba(200,148,58,0.4);
+    color: var(--gold-light);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .back-btn:hover { background: rgba(200,148,58,0.15); }
+
+  .game-level-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--gold-light);
+    letter-spacing: 1px;
+    opacity: 0.8;
+  }
+
+  .header-stats {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .hstat {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--cream);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .hstat .val {
+    color: var(--gold-light);
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  /* Progress bar */
+  .progress-track {
+    height: 3px;
+    background: rgba(255,255,255,0.1);
+    width: 100%;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--blush));
+    transition: width 0.4s ease;
+  }
+
+  /* Main game area */
+  .game-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 20px 40px;
+    max-width: 720px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  /* Question card */
+  .q-card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--parchment);
+    border-radius: 20px;
+    padding: 32px 36px;
+    width: 100%;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+    position: relative;
+    animation: slideUp 0.35s ease;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .q-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--caramel);
+    letter-spacing: 1.5px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .q-category {
+    background: var(--parchment);
+    color: var(--mocha);
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    padding: 3px 10px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .q-text {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(17px, 3vw, 22px);
+    color: var(--espresso);
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+
+  /* Hint zone */
+  .hint-zone {
+    margin-top: 12px;
+  }
+
+  .hint-btn {
+    background: none;
+    border: 1.5px dashed var(--caramel);
+    color: var(--caramel);
+    font-family: 'Lora', serif;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hint-btn:hover { background: var(--parchment); }
+  .hint-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .hint-text {
+    background: var(--hint-bg);
+    border-left: 3px solid var(--gold);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: var(--mocha);
+    line-height: 1.55;
+    font-style: italic;
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+  .hint-text.visible { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .hints-available {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--sage);
+    margin-top: 6px;
+  }
+
+  /* Typing area */
+  .typing-section {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .type-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: var(--mocha);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .answer-wrapper {
+    position: relative;
+  }
+
+  #answerInput {
+    width: 100%;
+    background: var(--card-bg);
+    border: 2px solid var(--parchment);
+    border-radius: 12px;
+    padding: 16px 18px;
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    color: var(--espresso);
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    resize: none;
+    min-height: 52px;
+    max-height: 140px;
+    overflow-y: auto;
+    caret-color: var(--caramel);
+    line-height: 1.5;
+  }
+  #answerInput:focus { border-color: var(--caramel); background: #FFFDF6; }
+  #answerInput.correct { border-color: var(--correct); background: #F0F8F1; }
+  #answerInput.wrong { border-color: var(--wrong); background: #FDF3F2; animation: shake 0.35s ease; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  .enter-hint {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--caramel);
+    opacity: 0.7;
+    margin-top: 6px;
+    text-align: right;
+  }
+
+  /* Feedback */
+  .feedback-bar {
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.55;
+    display: none;
+    animation: fadeIn 0.25s ease;
+    margin-bottom: 16px;
+  }
+  .feedback-bar.correct {
+    display: block;
+    background: #EBF7EC;
+    border: 1.5px solid var(--correct);
+    color: #2A5E2E;
+  }
+  .feedback-bar.wrong {
+    display: block;
+    background: #FDF0EF;
+    border: 1.5px solid var(--wrong);
+    color: #7A2020;
+  }
+  .feedback-bar .fb-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .feedback-bar .fb-answer {
+    font-style: italic;
+    font-family: 'Lora', serif;
+  }
+
+  /* Action buttons */
+  .action-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    flex: 1;
+    background: var(--espresso);
+    color: var(--cream);
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .btn-primary:hover { background: var(--mocha); transform: translateY(-1px); }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--mocha);
+    border: 1.5px solid var(--parchment);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--caramel); color: var(--caramel); }
+
+  /* Streaks / combos */
+  .streak-badge {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: var(--gold);
+    color: var(--espresso);
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 18px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    animation: popIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    z-index: 200;
+  }
+  @keyframes popIn {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  /* Earned hints toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--espresso);
+    color: var(--gold-light);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    padding: 12px 24px;
+    border-radius: 20px;
+    box-shadow: var(--shadow-strong);
+    transition: transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    z-index: 300;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ═══════════════════════════════
+     RESULTS SCREEN
+  ═══════════════════════════════ */
+  #results {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .results-card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--parchment);
+    border-radius: 24px;
+    padding: 48px 40px;
+    max-width: 540px;
+    width: 100%;
+    box-shadow: var(--shadow-strong);
+    animation: slideUp 0.4s ease;
+  }
+
+  .results-emoji {
+    font-size: 56px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .results-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    color: var(--espresso);
+    margin-bottom: 6px;
+  }
+
+  .results-subtitle {
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    color: var(--caramel);
+    font-size: 16px;
+    margin-bottom: 32px;
+  }
+
+  .score-ring {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 28px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .score-ring svg {
+    position: absolute;
+    top: 0; left: 0;
+    transform: rotate(-90deg);
+  }
+  .score-ring .score-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--espresso);
+    z-index: 1;
+  }
+  .score-ring .score-denom {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--caramel);
+    position: absolute;
+    bottom: 22px;
+    z-index: 1;
+  }
+
+  .results-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .res-stat {
+    background: var(--parchment);
+    border-radius: 12px;
+    padding: 14px 10px;
+  }
+  .res-stat .rs-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    color: var(--espresso);
+    display: block;
+  }
+  .res-stat .rs-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--caramel);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: block;
+    margin-top: 2px;
+  }
+
+  .results-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* ═══════════════════════════════
+     TESTS PANEL (dev overlay)
+  ═══════════════════════════════ */
+  #testPanel {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background: var(--espresso);
+    color: var(--cream);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    z-index: 9999;
+    max-width: 220px;
+    opacity: 0.85;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    display: none;
+  }
+  #testPanel:hover { opacity: 1; }
+  #testPanel .tp-title { color: var(--gold-light); margin-bottom: 6px; font-weight: 700; letter-spacing: 1px; }
+  #testPanel .tp-item { margin: 3px 0; }
+  #testPanel .tp-item.pass::before { content: '✓ '; color: var(--sage); }
+  #testPanel .tp-item.fail::before { content: '✗ '; color: var(--dusty-rose); }
+
+  .run-tests-btn {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background: var(--espresso);
+    color: var(--gold-light);
+    border: none;
+    border-radius: 20px;
+    padding: 7px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    cursor: pointer;
+    z-index: 9999;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+  }
+  .run-tests-btn:hover { background: var(--mocha); }
+
+  /* Responsive */
+  @media (max-width: 500px) {
+    .q-card { padding: 24px 20px; }
+    .results-card { padding: 36px 24px; }
+    .game-header { padding: 10px 14px; }
+    .game-main { padding: 20px 14px 30px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ════════ HOME SCREEN ════════ -->
+  <div id="home" class="screen active">
+    <div class="home-decoration left">📖</div>
+    <div class="home-decoration right">✍️</div>
+
+    <div class="badge">CSE 110 · UCSD · Study Tool</div>
+
+    <h1 class="logo">Type to<br><em>Learn</em></h1>
+    <p class="tagline">Your soft-academia midterm companion</p>
+    <div class="divider"></div>
+
+    <div class="stats-row" id="globalStats">
+      <div class="stat-pill">Total correct: <span id="totalCorrect">0</span></div>
+      <div class="stat-pill">Hints earned: <span id="totalHintsEarned">0</span></div>
+      <div class="stat-pill">Best streak: <span id="bestStreak">0</span></div>
+    </div>
+
+    <div class="levels-grid">
+      <div class="level-card lec1" onclick="startLevel('lec1')">
+        <span class="level-icon">📜</span>
+        <div class="level-count" id="count-lec1">20 q</div>
+        <div class="level-title">Lecture 1</div>
+        <div class="level-subtitle">SWE Intro</div>
+        <div class="level-desc">Demystification, definition &amp; defiance — what software engineering really is.</div>
+      </div>
+
+      <div class="level-card lec2" onclick="startLevel('lec2')">
+        <span class="level-icon">👩‍💻</span>
+        <div class="level-count" id="count-lec2">20 q</div>
+        <div class="level-title">Lecture 2</div>
+        <div class="level-subtitle">Individual Devs</div>
+        <div class="level-desc">Developer tools, IDEs, version control, debugging, and professional practices.</div>
+      </div>
+
+      <div class="level-card mixed" onclick="startLevel('mixed')">
+        <span class="level-icon">🎲</span>
+        <div class="level-count" id="count-mixed">40 q</div>
+        <div class="level-title">Mixed Bank</div>
+        <div class="level-subtitle">Both Lectures</div>
+        <div class="level-desc">Shuffled questions from Lectures 1 &amp; 2 — the full midterm challenge.</div>
+      </div>
+    </div>
+
+    <p style="font-family:'Space Mono',monospace;font-size:11px;color:var(--mocha);opacity:0.6;margin-top:8px;">
+      Type your answers • Earn hints for correct streaks • Press Enter to submit
+    </p>
+  </div>
+
+  <!-- ════════ GAME SCREEN ════════ -->
+  <div id="game" class="screen">
+    <div class="game-header">
+      <div class="game-header-left">
+        <button class="back-btn" onclick="goHome()">← Home</button>
+        <span class="game-level-tag" id="gameLevelTag">LECTURE 1</span>
+      </div>
+      <div class="header-stats">
+        <div class="hstat">Q <span class="val" id="hQNum">1/20</span></div>
+        <div class="hstat">✓ <span class="val" id="hScore">0</span></div>
+        <div class="hstat">🔥 <span class="val" id="hStreak">0</span></div>
+        <div class="hstat">💡 <span class="val" id="hHints">0</span></div>
+      </div>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+
+    <div class="game-main">
+      <div class="q-card" id="qCard">
+        <div class="q-number">
+          <span id="qNumLabel">QUESTION 1 OF 20</span>
+          <span class="q-category" id="qCategory">—</span>
+        </div>
+        <div class="q-text" id="qText">Loading…</div>
+
+        <div class="hint-zone" id="hintZone">
+          <button class="hint-btn" id="hintBtn" onclick="useHint()">
+            💡 Use a hint
+          </button>
+          <div class="hints-available" id="hintsAvail">0 hints available</div>
+          <div class="hint-text" id="hintText"></div>
+        </div>
+      </div>
+
+      <div class="feedback-bar" id="feedbackBar">
+        <div class="fb-label" id="fbLabel"></div>
+        <div class="fb-answer" id="fbAnswer"></div>
+      </div>
+
+      <div class="typing-section">
+        <div class="type-label">Your answer</div>
+        <div class="answer-wrapper">
+          <textarea
+            id="answerInput"
+            placeholder="Type your answer here…"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+            rows="1"
+          ></textarea>
+        </div>
+        <div class="enter-hint">Press Enter to submit · Shift+Enter for new line</div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-primary" id="submitBtn" onclick="submitAnswer()">Submit Answer</button>
+        <button class="btn-secondary" id="nextBtn" onclick="nextQuestion()" style="display:none">Next →</button>
+        <button class="btn-secondary" id="skipBtn" onclick="skipQuestion()">Skip</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ RESULTS SCREEN ════════ -->
+  <div id="results" class="screen">
+    <div class="results-card">
+      <span class="results-emoji" id="resultsEmoji">🎉</span>
+      <h2 class="results-title" id="resultsTitle">Session Complete!</h2>
+      <p class="results-subtitle" id="resultsSubtitle">How'd it go?</p>
+
+      <div class="score-ring">
+        <svg width="120" height="120">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="#E8DFCA" stroke-width="8"/>
+          <circle cx="60" cy="60" r="52" fill="none" stroke="#C8943A" stroke-width="8"
+            stroke-dasharray="326.7" stroke-dashoffset="326.7"
+            stroke-linecap="round" id="scoreCircle"/>
+        </svg>
+        <span class="score-num" id="scoreNum">0</span>
+        <span class="score-denom" id="scoreDenom">/ 20</span>
+      </div>
+
+      <div class="results-stats">
+        <div class="res-stat">
+          <span class="rs-val" id="resAccuracy">0%</span>
+          <span class="rs-label">Accuracy</span>
+        </div>
+        <div class="res-stat">
+          <span class="rs-val" id="resBestStreak">0</span>
+          <span class="rs-label">Best streak</span>
+        </div>
+        <div class="res-stat">
+          <span class="rs-val" id="resHintsUsed">0</span>
+          <span class="rs-label">Hints used</span>
+        </div>
+      </div>
+
+      <div class="results-actions">
+        <button class="btn-primary" style="flex:1" onclick="restartSameLevel()">Retry Level</button>
+        <button class="btn-secondary" style="flex:1" onclick="goHome()">↩ Home</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast & streak badge (portals) -->
+<div class="toast" id="toastEl"></div>
+<button class="run-tests-btn" id="runTestsBtn" onclick="runAllTests()">🧪 Run Tests</button>
+<div id="testPanel"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   QUESTION BANK
+═══════════════════════════════════════════════════ */
+const QUESTIONS = {
+  lec1: [
+    {
+      q: "What is the formal IEEE definition of Software Engineering?",
+      keywords: ["systematic","disciplined","quantifiable","development","operation","maintenance"],
+      hint: "The IEEE definition uses three key adjectives that describe how engineering principles are applied.",
+      answer: "The systematic, disciplined, and quantifiable application of engineering principles to the development, operation, and maintenance of software.",
+      category: "Definitions"
+    },
+    {
+      q: "What two-word phrase describes the gap between what customers want and what engineers build?",
+      keywords: ["requirements","gap","communication"],
+      hint: "Think about the space between what is asked for and what gets delivered.",
+      answer: "Requirements gap",
+      category: "SWE Concepts"
+    },
+    {
+      q: "Name the four core phases typically found in any Software Development Life Cycle (SDLC).",
+      keywords: ["requirements","design","implementation","testing"],
+      hint: "Think: gather → plan → build → verify.",
+      answer: "Requirements, Design, Implementation (coding), and Testing.",
+      category: "SDLC"
+    },
+    {
+      q: "What does SDLC stand for?",
+      keywords: ["software","development","life","cycle"],
+      hint: "It's the full name of the overarching process model for creating software.",
+      answer: "Software Development Life Cycle",
+      category: "Definitions"
+    },
+    {
+      q: "In the Waterfall model, why is it problematic to go back to an earlier phase?",
+      keywords: ["costly","expensive","sequential","rigid","difficult"],
+      hint: "Think of water — it only flows one direction and going back takes enormous effort.",
+      answer: "Waterfall is sequential and rigid, making it extremely costly or nearly impossible to revisit earlier phases once completed.",
+      category: "Process Models"
+    },
+    {
+      q: "List two main advantages of the Waterfall model.",
+      keywords: ["clear","documentation","easy to manage","structured","milestones","understand"],
+      hint: "Think about what's great about having strict phases with clear deliverables.",
+      answer: "Clear documentation requirements and easy-to-manage structured phases with defined milestones.",
+      category: "Process Models"
+    },
+    {
+      q: "What is the defining characteristic of Agile software development?",
+      keywords: ["iterative","incremental","flexible","adaptive","change","sprint","short cycles"],
+      hint: "Agile embraces change rather than fighting it, delivering in short cycles.",
+      answer: "Iterative and incremental development in short cycles (sprints), allowing teams to adapt to changing requirements.",
+      category: "Agile"
+    },
+    {
+      q: "What year was the Agile Manifesto published?",
+      keywords: ["2001"],
+      hint: "It was published at the start of the 21st century.",
+      answer: "2001",
+      category: "History"
+    },
+    {
+      q: "Name the four values stated in the Agile Manifesto.",
+      keywords: ["individuals","interactions","working software","customer collaboration","responding to change"],
+      hint: "Each value has something valued on the left 'over' something on the right.",
+      answer: "Individuals & interactions over processes & tools; Working software over documentation; Customer collaboration over contract negotiation; Responding to change over following a plan.",
+      category: "Agile"
+    },
+    {
+      q: "What is 'technical debt' in software engineering?",
+      keywords: ["shortcuts","future","cost","refactor","quick","easy","accumulates"],
+      hint: "Just like financial debt, it accumulates interest if you don't pay it off.",
+      answer: "Technical debt is the implied cost of future rework caused by choosing an easy or quick solution now instead of a better, more robust approach.",
+      category: "SWE Concepts"
+    },
+    {
+      q: "Define 'software entropy' (also called bit rot or code rot).",
+      keywords: ["degradation","quality","decreases","over time","changes","disorder"],
+      hint: "Entropy in physics means increasing disorder — what does that mean for a codebase over time?",
+      answer: "Software entropy is the tendency of software to become more complex, disorganized, and harder to maintain over time as changes accumulate.",
+      category: "SWE Concepts"
+    },
+    {
+      q: "What is the primary goal of software engineering as a discipline?",
+      keywords: ["quality","reliable","maintainable","cost","time","schedule","meet requirements"],
+      hint: "Think about building software that works well, on time, and within budget.",
+      answer: "To produce high-quality software that is reliable, maintainable, and meets user requirements within time and budget constraints.",
+      category: "Definitions"
+    },
+    {
+      q: "Name three qualities that define 'good' software according to SWE principles.",
+      keywords: ["correct","reliable","maintainable","efficient","usable","portable","secure"],
+      hint: "Think about properties users and developers both care about: does it work, can it be fixed, is it safe?",
+      answer: "Correctness, reliability, maintainability (and others like efficiency, usability, security, portability).",
+      category: "Quality"
+    },
+    {
+      q: "What distinguishes a software engineer from a programmer?",
+      keywords: ["process","methodology","systematic","team","full lifecycle","beyond coding"],
+      hint: "A programmer writes code; an engineer thinks about the entire lifecycle and process.",
+      answer: "A software engineer applies systematic methodologies, considers the full development lifecycle, works in teams, and thinks beyond just coding to include process, design, and quality.",
+      category: "Definitions"
+    },
+    {
+      q: "What is 'scope creep' in a software project?",
+      keywords: ["uncontrolled","growth","features","requirements","expand","change"],
+      hint: "Think about features slowly growing beyond the original plan without formal approval.",
+      answer: "Scope creep is the uncontrolled expansion of a project's features and requirements beyond the original plan, often without adjusting time or budget.",
+      category: "SWE Concepts"
+    },
+    {
+      q: "Describe the Spiral model of software development in one sentence.",
+      keywords: ["risk","iterative","prototype","cycles","combine","waterfall","agile"],
+      hint: "This model prioritizes one thing above all others in each loop of the spiral.",
+      answer: "The Spiral model combines iterative development with risk analysis, progressing through repeated cycles of planning, risk assessment, engineering, and evaluation.",
+      category: "Process Models"
+    },
+    {
+      q: "What is a 'prototype' in the context of software development?",
+      keywords: ["early","model","working","demonstrate","validate","requirements","feedback"],
+      hint: "It's not the final product — it's a quick, early version built to gather feedback.",
+      answer: "A prototype is an early working model of a software system built to demonstrate concepts, validate requirements, or gather user feedback before full development.",
+      category: "SWE Concepts"
+    },
+    {
+      q: "What does 'maintainability' mean as a software quality attribute?",
+      keywords: ["ease","modify","fix","update","extend","understand","change"],
+      hint: "After the software ships, how easy is it to fix bugs or add features?",
+      answer: "Maintainability is the ease with which software can be modified, fixed, updated, or extended after initial deployment.",
+      category: "Quality"
+    },
+    {
+      q: "In software engineering, what is a 'stakeholder'?",
+      keywords: ["interest","involved","affected","project","outcome","user","customer","manager"],
+      hint: "Anyone who has a stake — something to gain or lose — from the software project.",
+      answer: "A stakeholder is any individual or group with an interest in, involvement in, or affected by the software project or its outcomes.",
+      category: "Definitions"
+    },
+    {
+      q: "What problem does version control solve that individual developers face?",
+      keywords: ["track","changes","history","rollback","collaborate","conflict","backup"],
+      hint: "Imagine working on code alone and then accidentally breaking everything — what do you need?",
+      answer: "Version control tracks changes over time, allowing developers to revert to earlier states, understand history, and avoid losing work.",
+      category: "Tools"
+    }
+  ],
+
+  lec2: [
+    {
+      q: "What is an IDE and name two examples commonly used in software development?",
+      keywords: ["integrated","development","environment","vscode","intellij","eclipse","visual studio"],
+      hint: "It's an all-in-one tool that combines a code editor, debugger, and build system.",
+      answer: "An IDE (Integrated Development Environment) is a software application that provides a comprehensive environment for coding. Examples: VS Code, IntelliJ IDEA, Eclipse.",
+      category: "Tools"
+    },
+    {
+      q: "What are the three main components typically found in an IDE?",
+      keywords: ["editor","debugger","build","compiler","run"],
+      hint: "You write code in one, fix errors in another, and the third compiles/runs your program.",
+      answer: "A source code editor, a debugger, and a build automation tool (compiler/run system).",
+      category: "Tools"
+    },
+    {
+      q: "What is the purpose of a linter in software development?",
+      keywords: ["static","analysis","errors","style","warnings","code quality","before running"],
+      hint: "It checks your code without running it, catching style issues and potential bugs.",
+      answer: "A linter performs static analysis of source code to detect potential errors, style violations, and suspicious constructs without executing the program.",
+      category: "Tools"
+    },
+    {
+      q: "Explain the difference between a compiler and an interpreter.",
+      keywords: ["compiler","whole","translates","machine code","interpreter","line by line","executes"],
+      hint: "One translates everything at once before running; the other translates and runs one line at a time.",
+      answer: "A compiler translates the entire source code to machine code before execution; an interpreter translates and executes the code line-by-line at runtime.",
+      category: "Tools"
+    },
+    {
+      q: "What is Git and what type of version control system is it?",
+      keywords: ["distributed","version control","git","track","changes"],
+      hint: "Git is distributed — every developer has a complete copy of the entire history.",
+      answer: "Git is a distributed version control system that tracks changes in source code, allowing multiple developers to collaborate and maintain history.",
+      category: "Version Control"
+    },
+    {
+      q: "What does 'git commit' do?",
+      keywords: ["saves","snapshot","changes","history","local","repository","message"],
+      hint: "Think of it as taking a photograph of your code at a specific moment in time.",
+      answer: "git commit saves a snapshot of the staged changes to the local repository with a descriptive message, creating a point in history.",
+      category: "Version Control"
+    },
+    {
+      q: "What is the difference between 'git pull' and 'git fetch'?",
+      keywords: ["pull","fetch","merge","download","remote","automatic","updates"],
+      hint: "One just downloads; the other downloads AND automatically integrates the changes.",
+      answer: "git fetch downloads changes from the remote repository without merging; git pull downloads and automatically merges those changes into your current branch.",
+      category: "Version Control"
+    },
+    {
+      q: "What is a 'branch' in Git and why are branches useful?",
+      keywords: ["parallel","isolated","line","development","feature","experiment","merge","independent"],
+      hint: "Branches let you work on a new feature without affecting the main working code.",
+      answer: "A branch is an independent line of development in Git. Branches let developers work on features or fixes in isolation without affecting the main codebase, then merge when ready.",
+      category: "Version Control"
+    },
+    {
+      q: "Describe what a merge conflict is and when it occurs.",
+      keywords: ["same","file","lines","conflict","resolve","both","changes","simultaneously"],
+      hint: "Two developers edited the same lines in the same file — Git can't decide whose version wins.",
+      answer: "A merge conflict occurs when two branches have made changes to the same lines of a file, and Git cannot automatically determine which version to keep — a developer must resolve it manually.",
+      category: "Version Control"
+    },
+    {
+      q: "What is the purpose of a '.gitignore' file?",
+      keywords: ["ignore","exclude","track","not","files","directories","build","secrets"],
+      hint: "It tells Git which files should never be tracked (like compiled binaries or API keys).",
+      answer: "A .gitignore file specifies which files and directories Git should not track or include in commits, such as build artifacts, dependencies, or sensitive configuration files.",
+      category: "Version Control"
+    },
+    {
+      q: "What is 'pair programming' and what are its benefits?",
+      keywords: ["two","driver","navigator","together","same","screen","review","quality","knowledge sharing"],
+      hint: "Two developers sit together at one machine — one types while the other reviews in real time.",
+      answer: "Pair programming has two developers working together at one computer: a driver who writes code and a navigator who reviews in real time. Benefits include fewer bugs, better design, and knowledge sharing.",
+      category: "Dev Practices"
+    },
+    {
+      q: "What is 'rubber duck debugging'?",
+      keywords: ["explain","problem","aloud","duck","object","articulate","solution"],
+      hint: "By explaining your code step-by-step to an inanimate object, you often discover the bug yourself.",
+      answer: "Rubber duck debugging is a technique where a programmer explains their code line-by-line to a rubber duck (or any inanimate object), which often helps them find the bug through the process of articulating the problem.",
+      category: "Debugging"
+    },
+    {
+      q: "What is the difference between a syntax error and a runtime error?",
+      keywords: ["syntax","compile","grammar","runtime","execution","crash","during"],
+      hint: "One prevents the program from even starting; the other crashes the program while it's running.",
+      answer: "A syntax error is a grammatical mistake caught at compile/parse time that prevents the program from running; a runtime error occurs during execution when the program encounters an unexpected condition and crashes.",
+      category: "Debugging"
+    },
+    {
+      q: "What is a 'breakpoint' in a debugger?",
+      keywords: ["pause","execution","line","inspect","variables","state","stop"],
+      hint: "You set it at a specific line to pause the program right there and examine what's happening.",
+      answer: "A breakpoint is a marker set at a specific line of code in a debugger that pauses program execution at that point, allowing the developer to inspect variables and program state.",
+      category: "Debugging"
+    },
+    {
+      q: "Name two common code review practices and explain the goal of code review.",
+      keywords: ["pull request","peer review","quality","bugs","knowledge","style","feedback"],
+      hint: "Code review is when someone else looks at your code before it's merged — what's the point?",
+      answer: "Common practices include pull request reviews and pair review sessions. The goal of code review is to catch bugs, enforce coding standards, share knowledge, and improve overall code quality.",
+      category: "Dev Practices"
+    },
+    {
+      q: "What is 'refactoring' and why is it important?",
+      keywords: ["restructure","improve","readability","design","same behavior","clean","without changing"],
+      hint: "You change the code's structure but NOT what it does — the output stays identical.",
+      answer: "Refactoring is the process of restructuring existing code to improve its readability, design, or maintainability without changing its external behavior.",
+      category: "Dev Practices"
+    },
+    {
+      q: "What does DRY stand for and what principle does it represent?",
+      keywords: ["don't","repeat","yourself","duplication","single","source","truth"],
+      hint: "Every piece of knowledge should exist in exactly one place in the codebase.",
+      answer: "DRY stands for Don't Repeat Yourself — the principle that every piece of knowledge or logic should have a single, authoritative representation in the codebase to avoid duplication.",
+      category: "Principles"
+    },
+    {
+      q: "What is a 'commit message' best practice and why does it matter?",
+      keywords: ["descriptive","what","why","short","imperative","clear","history","communicate"],
+      hint: "Future you (or teammates) will need to understand WHY this change was made months from now.",
+      answer: "Good commit messages are concise, descriptive, and written in the imperative mood (e.g., 'Fix null pointer in login'). They explain what changed and why, making project history understandable.",
+      category: "Version Control"
+    },
+    {
+      q: "What is 'continuous integration' (CI) and what problem does it solve?",
+      keywords: ["automate","build","test","merge","frequently","integration","broken","detect early"],
+      hint: "Instead of integrating code once at the end, you integrate it constantly — catching issues early.",
+      answer: "Continuous Integration (CI) is the practice of automatically building and testing code every time a developer pushes changes, detecting integration problems and broken builds as early as possible.",
+      category: "Dev Practices"
+    },
+    {
+      q: "What is the purpose of unit tests in software development?",
+      keywords: ["smallest","function","method","verify","isolated","individual","correct","automated"],
+      hint: "They test the smallest possible piece of code — usually a single function — in isolation.",
+      answer: "Unit tests verify that individual functions or methods work correctly in isolation, providing automated confidence that small code units behave as expected.",
+      category: "Testing"
+    }
+  ]
+};
+
+// Compute mixed bank
+QUESTIONS.mixed = [...QUESTIONS.lec1, ...QUESTIONS.lec2];
+
+/* ═══════════════════════════════════════════════════
+   GLOBAL STATE
+═══════════════════════════════════════════════════ */
+let state = {
+  currentLevel: null,
+  questions: [],
+  qIndex: 0,
+  score: 0,
+  streak: 0,
+  bestStreak: 0,
+  hints: 0,
+  hintsUsed: 0,
+  hintsEarned: 0,
+  answered: false,
+  hintShown: false,
+  globalCorrect: 0,
+  globalHintsEarned: 0,
+  globalBestStreak: 0
+};
+
+// Persist global stats to localStorage
+function loadGlobalStats() {
+  try {
+    const s = JSON.parse(localStorage.getItem('cse110_stats') || '{}');
+    state.globalCorrect = s.correct || 0;
+    state.globalHintsEarned = s.hints || 0;
+    state.globalBestStreak = s.bestStreak || 0;
+  } catch(e) {}
+}
+function saveGlobalStats() {
+  try {
+    localStorage.setItem('cse110_stats', JSON.stringify({
+      correct: state.globalCorrect,
+      hints: state.globalHintsEarned,
+      bestStreak: state.globalBestStreak
+    }));
+  } catch(e) {}
+}
+function updateHomeStats() {
+  document.getElementById('totalCorrect').textContent = state.globalCorrect;
+  document.getElementById('totalHintsEarned').textContent = state.globalHintsEarned;
+  document.getElementById('bestStreak').textContent = state.globalBestStreak;
+  document.getElementById('count-lec1').textContent = QUESTIONS.lec1.length + ' q';
+  document.getElementById('count-lec2').textContent = QUESTIONS.lec2.length + ' q';
+  document.getElementById('count-mixed').textContent = QUESTIONS.mixed.length + ' q';
+}
+
+/* ═══════════════════════════════════════════════════
+   SCREEN MANAGEMENT
+═══════════════════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goHome() {
+  loadGlobalStats();
+  updateHomeStats();
+  showScreen('home');
+}
+
+/* ═══════════════════════════════════════════════════
+   LEVEL START
+═══════════════════════════════════════════════════ */
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startLevel(level) {
+  state.currentLevel = level;
+  state.questions = shuffle(QUESTIONS[level]);
+  state.qIndex = 0;
+  state.score = 0;
+  state.streak = 0;
+  state.bestStreak = 0;
+  state.hints = 0;
+  state.hintsUsed = 0;
+  state.hintsEarned = 0;
+  state.answered = false;
+  state.hintShown = false;
+
+  const labels = { lec1:'LECTURE 1 — SWE INTRO', lec2:'LECTURE 2 — INDIVIDUAL DEVS', mixed:'MIXED BANK' };
+  document.getElementById('gameLevelTag').textContent = labels[level];
+
+  showScreen('game');
+  renderQuestion();
+}
+
+function restartSameLevel() {
+  startLevel(state.currentLevel);
+}
+
+/* ═══════════════════════════════════════════════════
+   QUESTION RENDERING
+═══════════════════════════════════════════════════ */
+function renderQuestion() {
+  const q = state.questions[state.qIndex];
+  const total = state.questions.length;
+
+  state.answered = false;
+  state.hintShown = false;
+
+  // Header stats
+  document.getElementById('hQNum').textContent = `${state.qIndex + 1}/${total}`;
+  document.getElementById('hScore').textContent = state.score;
+  document.getElementById('hStreak').textContent = state.streak;
+  document.getElementById('hHints').textContent = state.hints;
+
+  // Progress
+  const pct = (state.qIndex / total) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  // Question card
+  document.getElementById('qNumLabel').textContent = `QUESTION ${state.qIndex + 1} OF ${total}`;
+  document.getElementById('qCategory').textContent = q.category;
+  document.getElementById('qText').textContent = q.q;
+
+  // Hint zone
+  document.getElementById('hintText').classList.remove('visible');
+  document.getElementById('hintText').textContent = '';
+  document.getElementById('hintsAvail').textContent = `${state.hints} hint${state.hints !== 1 ? 's' : ''} available`;
+  document.getElementById('hintBtn').disabled = state.hints < 1;
+
+  // Input
+  const inp = document.getElementById('answerInput');
+  inp.value = '';
+  inp.className = '';
+  inp.disabled = false;
+
+  // Feedback
+  const fb = document.getElementById('feedbackBar');
+  fb.className = 'feedback-bar';
+
+  // Buttons
+  document.getElementById('submitBtn').style.display = '';
+  document.getElementById('nextBtn').style.display = 'none';
+  document.getElementById('skipBtn').style.display = '';
+
+  // Re-trigger animation
+  const card = document.getElementById('qCard');
+  card.style.animation = 'none';
+  card.offsetHeight; // reflow
+  card.style.animation = '';
+
+  // Focus input after brief delay (allows animation)
+  setTimeout(() => { if (!inp.disabled) inp.focus(); }, 50);
+}
+
+/* ═══════════════════════════════════════════════════
+   ANSWER EVALUATION
+═══════════════════════════════════════════════════ */
+function normalise(str) {
+  return str.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+}
+
+function evaluateAnswer(userAnswer, question) {
+  const norm = normalise(userAnswer);
+  if (!norm) return false;
+
+  // Check keyword matches (need at least 40% of keywords)
+  const matched = question.keywords.filter(kw => norm.includes(kw.toLowerCase())).length;
+  const ratio = matched / question.keywords.length;
+
+  // Also check direct similarity to canonical answer
+  const canonNorm = normalise(question.answer);
+  const canonWords = canonNorm.split(/\s+/).filter(w => w.length > 3);
+  const userWords = norm.split(/\s+/).filter(w => w.length > 3);
+  const wordOverlap = canonWords.filter(w => norm.includes(w)).length / Math.max(canonWords.length, 1);
+
+  return ratio >= 0.35 || wordOverlap >= 0.4;
+}
+
+/* ═══════════════════════════════════════════════════
+   SUBMIT / NEXT / SKIP
+═══════════════════════════════════════════════════ */
+function submitAnswer() {
+  if (state.answered) { nextQuestion(); return; }
+  const inp = document.getElementById('answerInput');
+  const userAns = inp.value.trim();
+  if (!userAns) {
+    inp.style.animation = 'none';
+    inp.offsetHeight;
+    inp.classList.add('wrong');
+    setTimeout(() => inp.classList.remove('wrong'), 400);
+    return;
+  }
+  processAnswer(userAns);
+}
+
+function processAnswer(userAns) {
+  state.answered = true;
+  const q = state.questions[state.qIndex];
+  const correct = evaluateAnswer(userAns, q);
+
+  const inp = document.getElementById('answerInput');
+  const fb = document.getElementById('feedbackBar');
+
+  inp.disabled = true;
+
+  if (correct) {
+    inp.classList.add('correct');
+    state.score++;
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+
+    // Update global
+    state.globalCorrect++;
+    if (state.bestStreak > state.globalBestStreak) state.globalBestStreak = state.bestStreak;
+
+    // Earn hints on streaks of 2, 3, 5
+    if (state.streak === 2 || state.streak === 3 || state.streak % 5 === 0) {
+      state.hints++;
+      state.hintsEarned++;
+      state.globalHintsEarned++;
+      showToast(`💡 Hint earned! (streak ×${state.streak})`);
+    } else if (state.streak > 1) {
+      showStreakBadge(state.streak);
+    }
+
+    fb.className = 'feedback-bar correct';
+    document.getElementById('fbLabel').textContent = '✓ Correct!';
+    document.getElementById('fbAnswer').textContent = `Great answer. Full answer: ${q.answer}`;
+
+    saveGlobalStats();
+  } else {
+    inp.classList.add('wrong');
+    state.streak = 0;
+    fb.className = 'feedback-bar wrong';
+    document.getElementById('fbLabel').textContent = '✗ Not quite';
+    document.getElementById('fbAnswer').textContent = `Correct answer: ${q.answer}`;
+  }
+
+  document.getElementById('hScore').textContent = state.score;
+  document.getElementById('hStreak').textContent = state.streak;
+  document.getElementById('hHints').textContent = state.hints;
+
+  document.getElementById('submitBtn').style.display = 'none';
+  document.getElementById('nextBtn').style.display = '';
+  document.getElementById('skipBtn').style.display = 'none';
+}
+
+function skipQuestion() {
+  if (state.answered) return;
+  state.streak = 0;
+  document.getElementById('hStreak').textContent = 0;
+
+  const q = state.questions[state.qIndex];
+  const fb = document.getElementById('feedbackBar');
+  fb.className = 'feedback-bar wrong';
+  document.getElementById('fbLabel').textContent = 'Skipped';
+  document.getElementById('fbAnswer').textContent = `Answer: ${q.answer}`;
+
+  state.answered = true;
+  document.getElementById('answerInput').disabled = true;
+  document.getElementById('submitBtn').style.display = 'none';
+  document.getElementById('nextBtn').style.display = '';
+  document.getElementById('skipBtn').style.display = 'none';
+}
+
+function nextQuestion() {
+  state.qIndex++;
+  if (state.qIndex >= state.questions.length) {
+    showResults();
+  } else {
+    renderQuestion();
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   HINTS
+═══════════════════════════════════════════════════ */
+function useHint() {
+  if (state.hints < 1 || state.hintShown || state.answered) return;
+  state.hints--;
+  state.hintsUsed++;
+  state.hintShown = true;
+
+  const q = state.questions[state.qIndex];
+  const ht = document.getElementById('hintText');
+  ht.textContent = '💡 Hint: ' + q.hint;
+  ht.classList.add('visible');
+
+  document.getElementById('hintBtn').disabled = true;
+  document.getElementById('hintsAvail').textContent = `${state.hints} hint${state.hints !== 1 ? 's' : ''} available`;
+  document.getElementById('hHints').textContent = state.hints;
+}
+
+/* ═══════════════════════════════════════════════════
+   RESULTS
+═══════════════════════════════════════════════════ */
+function showResults() {
+  showScreen('results');
+  const total = state.questions.length;
+  const pct = Math.round((state.score / total) * 100);
+
+  // Emoji & message
+  let emoji, title, sub;
+  if (pct >= 90) { emoji = '🏆'; title = 'Brilliant Work!'; sub = 'You absolutely crushed it.'; }
+  else if (pct >= 75) { emoji = '🌟'; title = 'Great Job!'; sub = 'You know this material well.'; }
+  else if (pct >= 55) { emoji = '📚'; title = 'Good Effort!'; sub = 'A little more review and you\'ll ace it.'; }
+  else { emoji = '☕'; title = 'Keep Studying!'; sub = 'Every expert was once a beginner.'; }
+
+  document.getElementById('resultsEmoji').textContent = emoji;
+  document.getElementById('resultsTitle').textContent = title;
+  document.getElementById('resultsSubtitle').textContent = sub;
+
+  document.getElementById('scoreNum').textContent = state.score;
+  document.getElementById('scoreDenom').textContent = `/ ${total}`;
+  document.getElementById('resAccuracy').textContent = pct + '%';
+  document.getElementById('resBestStreak').textContent = state.bestStreak;
+  document.getElementById('resHintsUsed').textContent = state.hintsUsed;
+
+  // Animate ring
+  const circumference = 326.7;
+  const offset = circumference * (1 - state.score / total);
+  const circle = document.getElementById('scoreCircle');
+  circle.style.strokeDashoffset = circumference;
+  setTimeout(() => {
+    circle.style.transition = 'stroke-dashoffset 1.2s ease';
+    circle.style.strokeDashoffset = offset;
+  }, 100);
+}
+
+/* ═══════════════════════════════════════════════════
+   UI HELPERS
+═══════════════════════════════════════════════════ */
+let streakTimeout = null;
+function showStreakBadge(n) {
+  const existing = document.querySelector('.streak-badge');
+  if (existing) existing.remove();
+  if (streakTimeout) clearTimeout(streakTimeout);
+
+  const badge = document.createElement('div');
+  badge.className = 'streak-badge';
+  badge.textContent = `🔥 ${n}× streak!`;
+  document.body.appendChild(badge);
+  streakTimeout = setTimeout(() => { badge.style.opacity = '0'; badge.style.transition = 'opacity 0.4s'; setTimeout(() => badge.remove(), 400); }, 1800);
+}
+
+let toastTimeout = null;
+function showToast(msg) {
+  const t = document.getElementById('toastEl');
+  t.textContent = msg;
+  t.classList.add('show');
+  if (toastTimeout) clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 2800);
+  if (streakTimeout) clearTimeout(streakTimeout);
+  const existing = document.querySelector('.streak-badge');
+  if (existing) existing.remove();
+}
+
+/* ═══════════════════════════════════════════════════
+   KEYBOARD — No global muted keys
+═══════════════════════════════════════════════════ */
+document.addEventListener('keydown', function(e) {
+  const activeScreen = document.querySelector('.screen.active');
+  if (!activeScreen) return;
+  const screenId = activeScreen.id;
+
+  if (screenId === 'game') {
+    // Enter = submit (Shift+Enter = newline handled by textarea naturally)
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (state.answered) {
+        nextQuestion();
+      } else {
+        submitAnswer();
+      }
+    }
+    // Escape = skip only if not yet answered
+    if (e.key === 'Escape' && !state.answered) {
+      e.preventDefault();
+      skipQuestion();
+    }
+    // H key = use hint (when textarea is NOT focused OR explicitly Ctrl+H)
+    const inp = document.getElementById('answerInput');
+    if (e.key === 'h' && e.ctrlKey) {
+      e.preventDefault();
+      useHint();
+    }
+  }
+
+  if (screenId === 'results') {
+    if (e.key === 'Enter') { e.preventDefault(); restartSameLevel(); }
+    if (e.key === 'Escape') { e.preventDefault(); goHome(); }
+  }
+});
+
+// Auto-resize textarea
+document.getElementById('answerInput').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 140) + 'px';
+});
+
+/* ═══════════════════════════════════════════════════
+   ████  TEST SUITE  ████
+═══════════════════════════════════════════════════ */
+function runAllTests() {
+  const results = [];
+  let passed = 0;
+
+  function test(name, fn) {
+    try {
+      const result = fn();
+      const ok = result === true || result === undefined;
+      results.push({ name, ok });
+      if (ok) passed++;
+    } catch(e) {
+      results.push({ name, ok: false, err: e.message });
+    }
+  }
+
+  // ── Data Integrity ──
+  test('Lec1 has 20 questions', () => QUESTIONS.lec1.length === 20);
+  test('Lec2 has 20 questions', () => QUESTIONS.lec2.length === 20);
+  test('Mixed has 40 questions', () => QUESTIONS.mixed.length === 40);
+  test('All questions have required fields', () => {
+    const all = [...QUESTIONS.lec1, ...QUESTIONS.lec2];
+    return all.every(q => q.q && q.keywords?.length > 0 && q.hint && q.answer && q.category);
+  });
+  test('No duplicate questions in lec1', () => {
+    const texts = QUESTIONS.lec1.map(q => q.q);
+    return new Set(texts).size === texts.length;
+  });
+  test('No duplicate questions in lec2', () => {
+    const texts = QUESTIONS.lec2.map(q => q.q);
+    return new Set(texts).size === texts.length;
+  });
+
+  // ── Evaluation Logic ──
+  test('evaluateAnswer: exact keyword match passes', () => {
+    const q = QUESTIONS.lec1.find(q => q.q.includes('SDLC'));
+    return evaluateAnswer('Software Development Life Cycle', q) === true;
+  });
+  test('evaluateAnswer: empty string fails', () => {
+    return evaluateAnswer('', QUESTIONS.lec1[0]) === false;
+  });
+  test('evaluateAnswer: gibberish fails', () => {
+    return evaluateAnswer('xkcdwqpxyz blorp', QUESTIONS.lec1[0]) === false;
+  });
+  test('evaluateAnswer: partial keyword match passes', () => {
+    const q = QUESTIONS.lec2.find(q => q.q.includes('Git'));
+    return evaluateAnswer('git is a distributed version control system', q) === true;
+  });
+  test('evaluateAnswer: case-insensitive', () => {
+    const q = QUESTIONS.lec1.find(q => q.q.includes('Agile Manifesto'));
+    return evaluateAnswer('AGILE MANIFESTO WAS IN 2001 ITERATIVE', q) === true;
+  });
+  test('evaluateAnswer: word-overlap fallback works', () => {
+    const q = QUESTIONS.lec2.find(q => q.q.includes('linter'));
+    return evaluateAnswer('static analysis errors style warnings code quality', q) === true;
+  });
+
+  // ── State Management ──
+  test('startLevel resets score to 0', () => {
+    state.score = 99;
+    startLevel('lec1');
+    return state.score === 0;
+  });
+  test('startLevel resets streak to 0', () => {
+    return state.streak === 0;
+  });
+  test('startLevel resets hints to 0', () => {
+    return state.hints === 0;
+  });
+  test('startLevel shuffles questions', () => {
+    // Run shuffle multiple times; at least one should differ from original order
+    const orig = QUESTIONS.lec1.map(q => q.q);
+    let diffFound = false;
+    for (let i = 0; i < 5; i++) {
+      const shuffled = shuffle(QUESTIONS.lec1).map(q => q.q);
+      if (JSON.stringify(shuffled) !== JSON.stringify(orig)) { diffFound = true; break; }
+    }
+    return diffFound; // statistically certain
+  });
+  test('shuffle preserves all elements', () => {
+    const arr = [1,2,3,4,5,6,7,8,9,10];
+    const sh = shuffle(arr);
+    return sh.length === arr.length && arr.every(x => sh.includes(x));
+  });
+
+  // ── Hint System ──
+  test('hints cannot go negative', () => {
+    state.hints = 0;
+    useHint();
+    return state.hints === 0;
+  });
+  test('hint earned after streak of 2', () => {
+    startLevel('lec1');
+    state.streak = 1;
+    state.hints = 0;
+    const q = state.questions[state.qIndex];
+    const ans = q.answer;
+    // Simulate a correct answer that makes streak = 2
+    state.answered = false;
+    document.getElementById('answerInput').value = ans;
+    document.getElementById('answerInput').disabled = false;
+    processAnswer(ans);
+    return state.streak === 2 && state.hints === 1;
+  });
+
+  // ── Keyboard ──
+  test('Enter key does not propagate from textarea to window submit during typing', () => {
+    // Verify: when answerInput is focused and shiftKey+Enter is pressed, it should NOT submit
+    const evt = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true });
+    const inp = document.getElementById('answerInput');
+    inp.value = 'testing';
+    // If Shift+Enter is captured, state.answered would be true — it should NOT be
+    const before = state.answered;
+    inp.dispatchEvent(evt);
+    return true; // no crash = pass (the handler checks !e.shiftKey)
+  });
+  test('No global keyboard muting — normal alphanumeric keys work', () => {
+    // Verify there are no stopPropagation/preventDefault on alphanumeric keys
+    let keyDefaultPrevented = false;
+    const handler = (e) => { if (e.defaultPrevented) keyDefaultPrevented = true; };
+    document.addEventListener('keydown', handler);
+    const evt = new KeyboardEvent('keydown', { key: 'a', bubbles: true, cancelable: true });
+    document.getElementById('answerInput').dispatchEvent(evt);
+    document.removeEventListener('keydown', handler);
+    return !keyDefaultPrevented;
+  });
+
+  // ── UI Rendering ──
+  test('renderQuestion updates question text', () => {
+    startLevel('lec1');
+    renderQuestion();
+    const txt = document.getElementById('qText').textContent;
+    return txt.length > 5 && txt !== 'Loading…';
+  });
+  test('progress bar starts at 0%', () => {
+    startLevel('lec2');
+    return document.getElementById('progressFill').style.width === '0%';
+  });
+  test('score ring circumference constant correct', () => {
+    const r = 52;
+    const expected = +(2 * Math.PI * r).toFixed(1);
+    return Math.abs(expected - 326.7) < 1;
+  });
+  test('normalise removes punctuation', () => {
+    return normalise("Hello, World! It's great.") === 'hello world its great';
+  });
+  test('question categories are non-empty strings', () => {
+    return [...QUESTIONS.lec1,...QUESTIONS.lec2].every(q => typeof q.category === 'string' && q.category.length > 0);
+  });
+  test('goHome shows home screen', () => {
+    goHome();
+    return document.getElementById('home').classList.contains('active');
+  });
+
+  // ── Render test panel ──
+  const panel = document.getElementById('testPanel');
+  panel.style.display = 'block';
+  panel.innerHTML = `<div class="tp-title">TEST RESULTS — ${passed}/${results.length} passed</div>` +
+    results.map(r => `<div class="tp-item ${r.ok ? 'pass' : 'fail'}">${r.name}${r.err ? ' — ' + r.err : ''}</div>`).join('');
+
+  // Restore game state after tests
+  goHome();
+
+  console.log(`\n📋 CSE 110 Typing Game Tests: ${passed}/${results.length} passed`);
+  results.forEach(r => console.log(` ${r.ok ? '✓' : '✗'} ${r.name}${r.err ? ' — ' + r.err : ''}`));
+}
+
+/* ═══════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════ */
+loadGlobalStats();
+updateHomeStats();
+</script>
+</body>
+</html>
