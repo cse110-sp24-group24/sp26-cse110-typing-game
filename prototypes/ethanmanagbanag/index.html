@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CodeType Studio Race</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace">
+        <header class="title-bar">
+          <div class="window-controls" aria-hidden="true">
+            <span class="control close"></span>
+            <span class="control minimize"></span>
+            <span class="control maximize"></span>
+          </div>
+          <p>CodeType Studio - Race Mode</p>
+        </header>
+
+        <div class="editor-layout">
+          <nav class="file-panel" aria-label="Project files">
+            <h1>Explorer</h1>
+            <p class="folder-name">typing-race</p>
+            <ul>
+              <li id="selectedFileName" class="selected-file">choose-language</li>
+              <li>player-run</li>
+              <li>bot-run</li>
+            </ul>
+          </nav>
+
+          <section class="editor-panel" aria-labelledby="game-heading">
+            <div class="tab-row">
+              <button id="languageTab" class="editor-tab active">race.config</button>
+              <div class="scoreboard" aria-label="Typing stats">
+                <span class="stat-card">
+                  <small>WPM</small>
+                  <strong id="currentWpm">0</strong>
+                </span>
+                <span class="stat-card">
+                  <small>Accuracy</small>
+                  <strong id="accuracy">100%</strong>
+                </span>
+                <span class="stat-card">
+                  <small>Best</small>
+                  <strong id="bestWpm">0</strong>
+                </span>
+                <span class="stat-card bot-stat">
+                  <small>Bot WPM</small>
+                  <strong id="botWpm">0</strong>
+                </span>
+              </div>
+            </div>
+
+            <section class="game-header">
+              <div>
+                <p id="languageLabel" class="eyebrow">No Language Selected</p>
+                <h2 id="game-heading">Beat the bot by finishing every code line first.</h2>
+              </div>
+              <div class="header-actions">
+                <button id="changeLanguageButton" class="secondary-button" type="button">Setup</button>
+                <button id="restartButton" class="primary-button" type="button">Restart</button>
+              </div>
+            </section>
+
+            <section class="race-grid" aria-label="Head to head coding race">
+              <article class="racer-panel player-panel">
+                <header class="racer-header">
+                  <div>
+                    <span class="racer-label">You</span>
+                    <p id="playerProgressText">Waiting for language</p>
+                  </div>
+                  <strong id="playerPercent">0%</strong>
+                </header>
+                <div class="progress-track" aria-hidden="true">
+                  <span id="playerProgressBar" class="progress-fill player-fill"></span>
+                </div>
+                <div class="editor-window" aria-live="polite">
+                  <ol id="playerCodeLines" class="code-lines"></ol>
+                </div>
+              </article>
+
+              <article class="racer-panel bot-panel">
+                <header class="racer-header">
+                  <div>
+                    <span class="racer-label">Syntax Bot</span>
+                    <p id="botProgressText">Waiting for your first key</p>
+                  </div>
+                  <strong id="botPercent">0%</strong>
+                </header>
+                <div class="progress-track" aria-hidden="true">
+                  <span id="botProgressBar" class="progress-fill bot-fill"></span>
+                </div>
+                <div class="editor-window bot-window" aria-live="polite">
+                  <ol id="botCodeLines" class="code-lines"></ol>
+                </div>
+              </article>
+            </section>
+
+            <label class="input-label" for="typingInput">Current line</label>
+            <div class="typing-box">
+              <div id="ghostLine" class="ghost-line" aria-hidden="true">Choose a language to unlock the race...</div>
+              <textarea
+                id="typingInput"
+                class="typing-input"
+                rows="3"
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+                disabled
+                aria-label="Current line typing box"
+              ></textarea>
+            </div>
+
+            <footer class="status-bar">
+              <span id="statusMessage">Choose a language to load your code challenge.</span>
+              <span id="progressStatus">Race not started</span>
+            </footer>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <div id="languageModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="language-heading">
+      <section class="modal-card language-card">
+        <p class="eyebrow">Run Setup</p>
+        <h2 id="language-heading">Choose how you want to practice.</h2>
+        <div class="setup-group" aria-label="Game mode">
+          <span class="setup-label">Mode</span>
+          <div class="setup-options">
+            <button id="soloModeButton" class="setup-button active" type="button">Solo</button>
+            <button id="botModeButton" class="setup-button" type="button">Versus Bot</button>
+          </div>
+        </div>
+        <div id="difficultyGroup" class="setup-group hidden" aria-label="Bot difficulty">
+          <span class="setup-label">Bot Difficulty</span>
+          <div class="setup-options">
+            <button class="setup-button difficulty-button active" type="button" data-difficulty="easy">Easy</button>
+            <button class="setup-button difficulty-button" type="button" data-difficulty="medium">Medium</button>
+            <button class="setup-button difficulty-button" type="button" data-difficulty="hard">Hard</button>
+            <button class="setup-button difficulty-button" type="button" data-difficulty="impossible">Impossible</button>
+          </div>
+        </div>
+        <div class="setup-group">
+          <span class="setup-label">Language</span>
+          <div id="languageOptions" class="language-options modal-options" aria-label="Language choices"></div>
+        </div>
+      </section>
+    </div>
+
+    <div id="resultModal" class="modal-overlay result-modal hidden" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+      <section class="modal-card result-card">
+        <p class="eyebrow">Race Results</p>
+        <h2 id="resultTitle">Syntax Bot finished first.</h2>
+        <p id="resultSummary" class="result-summary">Review the stats, then reset for another run.</p>
+        <div class="result-stats" aria-label="Race result stats">
+          <span class="result-stat">
+            <small>Your WPM</small>
+            <strong id="resultPlayerWpm">0</strong>
+          </span>
+          <span class="result-stat">
+            <small>Your Accuracy</small>
+            <strong id="resultPlayerAccuracy">100%</strong>
+          </span>
+          <span class="result-stat">
+            <small>Your Progress</small>
+            <strong id="resultPlayerProgress">0%</strong>
+          </span>
+          <span class="result-stat bot-result">
+            <small>Bot WPM</small>
+            <strong id="resultBotWpm">0</strong>
+          </span>
+          <span class="result-stat bot-result">
+            <small>Bot Accuracy</small>
+            <strong id="resultBotAccuracy">100%</strong>
+          </span>
+          <span class="result-stat bot-result">
+            <small>Bot Progress</small>
+            <strong id="resultBotProgress">0%</strong>
+          </span>
+        </div>
+        <button id="resultResetButton" class="primary-button modal-action" type="button">Reset</button>
+      </section>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
