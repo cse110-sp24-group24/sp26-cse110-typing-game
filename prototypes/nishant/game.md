@@ -1,5 +1,5 @@
 
-#Prompt
+# Prompt
 As a CSE110 Student, I find it hard to study for the midterms due to a lot of informaiton provided. Create a typing game where I can study for midterms by answer questions through typing.  Use simple html, css  and JS. Create a book-tok inspired UI UX. Make a lot of tests to ensure the game works properly and there arent any global muted keys.  As u progress by answering correctly you can acquire hints, make different levels for each individual lecture or mixed bank of questions.
 
 Use these links for lecture 1-2:
