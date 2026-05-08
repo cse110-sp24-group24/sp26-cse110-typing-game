@@ -1,1 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Typing Game Prototype</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="game-card">
+    <header class="game-header">
+      <p class="eyebrow">University Prototype</p>
+      <h1>Code Typing Game</h1>
+      <p class="intro">Type each code snippet exactly as shown before the timer runs out.</p>
+    </header>
 
+    <section class="stats" aria-label="Game stats">
+      <div class="stat-box">
+        <span class="stat-label">Score</span>
+        <strong id="score">0</strong>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Time</span>
+        <strong><span id="time">30</span>s</strong>
+      </div>
+    </section>
+
+    <section class="snippet-area">
+      <label for="typingInput">Current code snippet</label>
+      <pre id="snippet" class="code-snippet"></pre>
+    </section>
+
+    <textarea
+      id="typingInput"
+      rows="4"
+      spellcheck="false"
+      autocomplete="off"
+      placeholder="Start typing the snippet here..."
+    ></textarea>
+
+    <p id="message" class="message">Press Start to begin.</p>
+
+    <div class="actions">
+      <button id="startButton" type="button">Start Game</button>
+      <button id="resetButton" type="button">Reset</button>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
