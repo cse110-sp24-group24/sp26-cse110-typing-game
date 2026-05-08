@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Haunted Terminal: Simar Build</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app" class="crt low-corruption">
+    <div class="scanlines"></div>
+    <div class="noise"></div>
+    <div class="shadow-figure" id="shadowFigure"></div>
+
+    <section id="startScreen" class="panel active">
+      <h1>HAUNTED TERMINAL</h1>
+      <p class="subtitle">Research Wing 07 // System Recovery Protocol</p>
+      <div class="lore-block" id="loreBlock">
+        <p>Recovered Log 41-A: "If you are reading this, the terminal accepted you."</p>
+        <p>Recovered Log 41-B: "Type exactly what it asks. Do not improvise."</p>
+        <p>Recovered Log 41-C: "If the screen starts speaking, do not answer back."</p>
+      </div>
+      <div class="start-controls">
+        <button id="startBtn">Initialize Session</button>
+        <button id="hardModeBtn" disabled>Hard Mode Locked (Reach Round 15)</button>
+      </div>
+      <p class="hint">Type to survive. Corruption at 100% means total AI takeover.</p>
+    </section>
+
+    <section id="gameScreen" class="panel" aria-live="polite">
+      <header class="hud">
+        <div>Score: <span id="score">0</span></div>
+        <div>Round: <span id="round">1</span></div>
+        <div>Best: <span id="bestScore">0</span></div>
+      </header>
+
+      <div class="meter-row">
+        <label>Corruption</label>
+        <div class="meter"><div id="corruptionFill" class="meter-fill corruption"></div></div>
+        <span id="corruptionValue">0%</span>
+      </div>
+
+      <div class="meter-row">
+        <label>Panic</label>
+        <div class="meter"><div id="panicFill" class="meter-fill panic"></div></div>
+        <span id="panicValue">0%</span>
+      </div>
+
+      <div class="meter-row">
+        <label>Accuracy</label>
+        <div class="meter"><div id="accuracyFill" class="meter-fill accuracy"></div></div>
+        <span id="accuracyValue">100%</span>
+      </div>
+
+      <div class="timer-wrap">
+        <span>Signal Stability</span>
+        <div class="meter timer"><div id="timerFill" class="meter-fill timer-fill"></div></div>
+        <span id="timerValue">100%</span>
+      </div>
+
+      <div class="terminal">
+        <p class="terminal-label">Prompt:</p>
+        <p id="targetText" class="target"></p>
+        <div class="input-wrap">
+          <span class="caret-prefix">></span>
+          <input id="terminalInput" type="text" autocomplete="off" spellcheck="false" />
+        </div>
+        <p id="feedback" class="feedback">Awaiting input...</p>
+      </div>
+
+      <aside id="warningFeed" class="warning-feed"></aside>
+
+      <div class="controls">
+        <button id="muteBtn">Mute: Off</button>
+        <button id="restartBtn">Restart</button>
+      </div>
+    </section>
+
+    <section id="gameOverScreen" class="panel">
+      <h2>SYSTEM LOST</h2>
+      <p id="gameOverText">The facility is silent. The AI is not.</p>
+      <p>Final Score: <span id="finalScore">0</span></p>
+      <p>Rounds Survived: <span id="finalRound">0</span></p>
+      <button id="retryBtn">Reboot Attempt</button>
+    </section>
+
+    <div id="popupLayer" class="popup-layer"></div>
+    <div id="overlayMessage" class="overlay-message hidden"></div>
+    <div id="bluescreen" class="bluescreen hidden">
+      <h3>:(</h3>
+      <p>CRITICAL PROCESS FAILED</p>
+      <p>Collecting fear data... 100%</p>
+      <p>The terminal will restart automatically.</p>
+    </div>
+    <div id="blackout" class="blackout hidden"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
