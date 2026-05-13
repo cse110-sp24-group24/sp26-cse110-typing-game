@@ -1,0 +1,21 @@
+US-01 · Language Selection · Sprint 1
+
+Choose a coding language before starting a run
+
+As a beginner CS student, I want to choose a programming language before the game starts, so that I can practice syntax that matches what I am currently learning in class.
+
+Acceptance criteria
+A language selection menu appears before gameplay begins
+At minimum, JavaScript and Python are selectable
+All code snippets during the run match the selected language
+The chosen language is visibly displayed during gameplay
+Notes
+
+Players should feel like the game is helping reinforce familiar syntax rather than forcing them to learn a completely new language mid-run. The selected language should remain consistent throughout the run to avoid confusion.
+
+Dependencies
+Snippet generation system must support multiple languages
+UI menu system must exist before the run begins
+Definition of done
+
+The player can select a language before gameplay, and all generated snippets consistently use that language throughout the session.
