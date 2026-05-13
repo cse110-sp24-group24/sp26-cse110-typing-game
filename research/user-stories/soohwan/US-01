@@ -1,21 +1,30 @@
-US-01 · Language Selection · Sprint 1
+# US-02 · UX · Sprint 1
 
-Choose a coding language before starting a run
+## Real-time typing feedback
 
-As a beginner CS student, I want to choose a programming language before the game starts, so that I can practice syntax that matches what I am currently learning in class.
+**As a player**, I want immediate visual feedback when I type characters correctly or incorrectly, so that I can quickly recognize mistakes and improve my typing accuracy during gameplay.
 
-Acceptance criteria
-A language selection menu appears before gameplay begins
-At minimum, JavaScript and Python are selectable
-All code snippets during the run match the selected language
-The chosen language is visibly displayed during gameplay
-Notes
+---
 
-Players should feel like the game is helping reinforce familiar syntax rather than forcing them to learn a completely new language mid-run. The selected language should remain consistent throughout the run to avoid confusion.
+## Acceptance criteria
 
-Dependencies
-Snippet generation system must support multiple languages
-UI menu system must exist before the run begins
-Definition of done
+* [ ] Correctly typed characters are highlighted in green
+* [ ] Incorrect characters are highlighted in red
+* [ ] Incorrect input does not advance progress on the snippet
+* [ ] Feedback updates instantly as the player types
 
-The player can select a language before gameplay, and all generated snippets consistently use that language throughout the session.
+---
+
+## Notes
+
+Typing games depend heavily on responsiveness. If feedback feels delayed or unclear, the gameplay quickly becomes frustrating. Correct and incorrect states should be visually obvious at a glance without distracting from the horror atmosphere. The player should feel constantly connected to the typing mechanic.
+
+## Dependencies
+
+* Core typing input system must exist
+* UI text rendering system must support dynamic styling
+* Snippet progression system must track character accuracy
+
+## Definition of done
+
+While typing a snippet, players receive immediate visual feedback for every character entered. Correct characters display differently from incorrect ones, and invalid input does not incorrectly progress the snippet.
