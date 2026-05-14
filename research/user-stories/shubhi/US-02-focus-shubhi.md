@@ -1,4 +1,4 @@
-# US-03 - Focus Mode - Sprint 1
+# US-02 - Focus Mode - Sprint 1
 
 ## Reducing distractions for beginners
 
