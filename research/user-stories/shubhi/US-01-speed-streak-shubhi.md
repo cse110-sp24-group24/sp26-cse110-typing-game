@@ -1,4 +1,4 @@
-# US-02 - Combo System - Sprint 1
+# US-01 - Combo System - Sprint 1
 
 ## Building confidence through streaks
 
