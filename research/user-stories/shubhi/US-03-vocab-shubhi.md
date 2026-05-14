@@ -1,4 +1,4 @@
-# US-04 - Coding Vocabulary Practice - Sprint 1
+# US-03 - Coding Vocabulary Practice - Sprint 1
 
 ## Practicing real CS terminology
 
