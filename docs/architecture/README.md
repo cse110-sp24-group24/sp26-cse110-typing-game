@@ -1,4 +1,4 @@
-# Architecture Overview — Phantom Type
+# Architecture Overview
 
 ## What This Document Is
 
