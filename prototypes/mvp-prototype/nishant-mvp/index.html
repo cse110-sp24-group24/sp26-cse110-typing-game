@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CodeCrypt — Type Your Way to the Web</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Creepster&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ═══════════════════ SCREEN: TITLE ═══════════════════ -->
+  <div id="screen-title" class="screen active">
+    <div class="title-bg">
+      <div class="ghost-particles" id="ghost-particles"></div>
+    </div>
+    <div class="title-content">
+      <div class="title-eyebrow">👻 A Haunted Coding Adventure</div>
+      <h1 class="title-logo">CODE<span>CRYPT</span></h1>
+      <p class="title-tagline">Type HTML. Cast CSS. Conjure JavaScript.<br>Build a website from the void.</p>
+
+      <div class="chapter-preview">
+        <div class="chapter-card" data-ch="0">
+          <div class="chapter-icon">🏚️</div>
+          <div class="chapter-info">
+            <span class="chapter-label">Chapter I</span>
+            <span class="chapter-name">The Skeleton</span>
+            <span class="chapter-lang">HTML</span>
+          </div>
+          <div class="chapter-lock" id="lock-0">UNLOCKED</div>
+        </div>
+        <div class="chapter-card" data-ch="1">
+          <div class="chapter-icon">🕯️</div>
+          <div class="chapter-info">
+            <span class="chapter-label">Chapter II</span>
+            <span class="chapter-name">The Séance</span>
+            <span class="chapter-lang">CSS</span>
+          </div>
+          <div class="chapter-lock" id="lock-1">🔒</div>
+        </div>
+        <div class="chapter-card" data-ch="2">
+          <div class="chapter-icon">⚡</div>
+          <div class="chapter-info">
+            <span class="chapter-label">Chapter III</span>
+            <span class="chapter-name">The Awakening</span>
+            <span class="chapter-lang">JavaScript</span>
+          </div>
+          <div class="chapter-lock" id="lock-2">🔒</div>
+        </div>
+      </div>
+
+      <button class="btn-start" id="btn-start">BEGIN THE RITUAL</button>
+      <button class="btn-secondary" id="btn-preview">👁 Preview Your Site</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ SCREEN: GAME ═══════════════════ -->
+  <div id="screen-game" class="screen">
+
+    <!-- HUD -->
+    <div class="hud">
+      <div class="hud-left">
+        <div class="hud-chapter" id="hud-chapter">Chapter I · HTML</div>
+        <div class="hud-level" id="hud-level">Level 1 / 5</div>
+      </div>
+      <div class="hud-center">
+        <div class="health-bar-wrap">
+          <div class="health-label">SOUL</div>
+          <div class="health-bar"><div class="health-fill" id="health-fill"></div></div>
+        </div>
+      </div>
+      <div class="hud-right">
+        <div class="hud-stat"><span id="stat-wpm">0</span> WPM</div>
+        <div class="hud-stat"><span id="stat-acc">100</span>% ACC</div>
+        <div class="hud-stat">🔥 <span id="stat-streak">0</span></div>
+      </div>
+    </div>
+
+    <!-- Progress path -->
+    <div class="level-path" id="level-path"></div>
+
+    <!-- Game arena -->
+    <div class="game-arena">
+
+      <!-- Enemy / Ghost side -->
+      <div class="enemy-zone">
+        <div class="enemy-ghost" id="enemy-ghost">
+          <div class="ghost-body" id="ghost-body">
+            <div class="ghost-eyes"></div>
+          </div>
+          <div class="ghost-speech" id="ghost-speech"></div>
+        </div>
+        <div class="enemy-hp-wrap">
+          <div class="enemy-hp-bar"><div class="enemy-hp-fill" id="enemy-hp-fill"></div></div>
+          <div class="enemy-name" id="enemy-name">Syntax Specter</div>
+        </div>
+      </div>
+
+      <!-- Typing zone -->
+      <div class="typing-zone">
+        <div class="lesson-context" id="lesson-context"></div>
+
+        <div class="snippet-display" id="snippet-display">
+          <!-- Lines rendered by JS -->
+        </div>
+
+        <div class="input-wrap">
+          <span class="input-prompt">&gt;</span>
+          <input
+            type="text"
+            id="typing-input"
+            class="typing-input"
+            autocomplete="off"
+            autocorrect="off"
+            spellcheck="false"
+            placeholder="Type the highlighted line…"
+          />
+        </div>
+        <div class="input-feedback" id="input-feedback"></div>
+
+        <div class="progress-info">
+          <span id="progress-lines">Line 0 / 0</span>
+          <span id="progress-hint"></span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Upgrade panel (between levels) -->
+    <div class="upgrade-panel hidden" id="upgrade-panel">
+      <div class="upgrade-inner">
+        <h2 class="upgrade-title">⚗️ Choose Your Enchantment</h2>
+        <p class="upgrade-subtitle">A spectral reward for your progress</p>
+        <div class="upgrade-cards" id="upgrade-cards"></div>
+        <button class="btn-skip-upgrade" id="btn-skip-upgrade">Skip — Press On</button>
+      </div>
+    </div>
+
+    <!-- Boss intro -->
+    <div class="boss-intro hidden" id="boss-intro">
+      <div class="boss-intro-inner">
+        <div class="boss-icon">💀</div>
+        <h2>BOSS ENCOUNTER</h2>
+        <p id="boss-intro-text">Type the entire function from memory. One shot.</p>
+        <button class="btn-start" id="btn-boss-start">FACE THE BOSS</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════ SCREEN: CHAPTER COMPLETE ═══════════════════ -->
+  <div id="screen-chapter-end" class="screen">
+    <div class="chapter-end-inner">
+      <div class="chapter-end-icon" id="ch-end-icon">🏚️</div>
+      <h2 class="chapter-end-title" id="ch-end-title">Chapter Complete!</h2>
+      <p class="chapter-end-msg" id="ch-end-msg"></p>
+
+      <!-- Live preview of site built so far -->
+      <div class="site-preview-wrap">
+        <div class="preview-label">Your Site So Far</div>
+        <iframe id="site-preview" class="site-preview" sandbox="allow-same-origin"></iframe>
+      </div>
+
+      <div class="end-stats" id="end-stats"></div>
+
+      <div class="chapter-end-actions">
+        <button class="btn-start" id="btn-next-chapter">NEXT CHAPTER →</button>
+        <button class="btn-secondary" id="btn-title-from-end">Main Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ SCREEN: FINAL END ═══════════════════ -->
+  <div id="screen-final" class="screen">
+    <div class="final-inner">
+      <div class="final-fireworks" id="final-fireworks"></div>
+      <h1 class="final-title">🌐 SITE CONJURED!</h1>
+      <p class="final-subtitle">You typed through the void and built something real.</p>
+
+      <div class="site-preview-wrap big">
+        <div class="preview-label">🏆 Your Completed Website</div>
+        <iframe id="site-preview-final" class="site-preview" sandbox="allow-same-origin"></iframe>
+      </div>
+
+      <div class="final-stats" id="final-stats"></div>
+
+      <button class="btn-start" id="btn-play-again">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ SCREEN: SITE PREVIEW MODAL ═══════════════════ -->
+  <div id="modal-preview" class="modal hidden">
+    <div class="modal-inner">
+      <div class="modal-header">
+        <span>👁 Site Preview</span>
+        <button class="modal-close" id="modal-close">✕</button>
+      </div>
+      <iframe id="modal-iframe" class="modal-iframe" sandbox="allow-same-origin"></iframe>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ OVERLAY: damage flash ═══════════════════ -->
+  <div class="dmg-flash" id="dmg-flash"></div>
+
+  <script src="game.js"></script>
+</body>
+</html>
