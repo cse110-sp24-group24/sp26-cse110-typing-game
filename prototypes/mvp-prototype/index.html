@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phantom Type</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- MENU SCREEN -->
+  <div id="menu-screen" class="screen active">
+    <div class="menu-fog"></div>
+    <div class="menu-content">
+      <h1 class="game-title">Phantom<span class="title-accent">Type</span></h1>
+      <p class="tagline">Type code. Slay ghosts. Survive the haunted terminal.</p>
+      <button id="play-btn" class="btn btn-primary">Play</button>
+    </div>
+    <div class="ghost-silhouette"></div>
+  </div>
+
+  <!-- LANGUAGE SELECTION -->
+  <div id="language-screen" class="screen">
+    <div class="menu-fog"></div>
+    <div class="language-content">
+      <h2 class="screen-title">Choose Your Language</h2>
+      <p class="screen-subtitle">All code in your run will use this syntax.</p>
+      <div class="language-buttons">
+        <button id="js-btn" class="btn btn-language">
+          <span class="lang-icon">JS</span>
+          <span class="lang-name">JavaScript</span>
+        </button>
+        <button id="py-btn" class="btn btn-language">
+          <span class="lang-icon">PY</span>
+          <span class="lang-name">Python</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WAVE INTRO CARD -->
+  <div id="wave-intro-screen" class="screen">
+    <div class="menu-fog"></div>
+    <div class="wave-intro-card">
+      <div id="wave-intro-number" class="wave-intro-number">Wave 1</div>
+      <div class="wave-intro-function">
+        <code id="wave-intro-function"></code>
+      </div>
+      <p id="wave-intro-desc" class="wave-intro-desc"></p>
+      <div class="wave-intro-hint">Press any key to begin...</div>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="game-screen" class="screen">
+    <!-- HUD -->
+    <div id="game-hud" class="game-hud">
+      <div class="hud-left">
+        <div id="lives-display" class="hud-lives"></div>
+        <div id="wave-display" class="hud-wave">Wave 1</div>
+      </div>
+      <div class="hud-center">
+        <div id="upgrades-hud" class="upgrades-hud" style="display:none;"></div>
+        <div id="combo-display" class="combo-display" style="display:none;">
+          <span id="combo-value">×0</span>
+          <div class="combo-bar-bg"><div id="combo-bar" class="combo-bar"></div></div>
+        </div>
+      </div>
+      <div class="hud-right">
+        <div class="hud-score-label">Score</div>
+        <div id="score-display" class="hud-score">0</div>
+        <div id="language-label" class="hud-language">JavaScript</div>
+      </div>
+    </div>
+
+    <!-- ARENA + CODE PANEL side by side -->
+    <div class="play-area">
+      <!-- CODE PANEL -->
+      <div id="code-panel" class="code-panel">
+        <div class="code-panel-title">
+          <span class="code-panel-dot red"></span>
+          <span class="code-panel-dot yellow"></span>
+          <span class="code-panel-dot green"></span>
+          <span id="code-panel-header" class="code-panel-filename">function</span>
+        </div>
+        <div id="code-lines" class="code-lines"></div>
+      </div>
+
+      <!-- ARENA (center player, enemies from all sides) -->
+      <div id="arena" class="arena">
+        <!-- SVG layer for rays -->
+        <svg id="ray-layer" class="ray-layer"></svg>
+        <!-- Player in center -->
+        <div id="player" class="player">
+          <div class="player-glow"></div>
+          <svg viewBox="0 0 64 64" width="64" height="64" class="player-sprite">
+            <circle cx="32" cy="32" r="28" fill="rgba(120,80,220,0.3)" stroke="rgba(180,140,255,0.6)" stroke-width="2"/>
+            <circle cx="32" cy="32" r="16" fill="rgba(160,120,255,0.5)" stroke="rgba(200,170,255,0.8)" stroke-width="2"/>
+            <circle cx="32" cy="32" r="6" fill="rgba(220,200,255,0.9)"/>
+          </svg>
+        </div>
+        <!-- Enemies spawn here dynamically -->
+      </div>
+    </div>
+
+    <!-- INPUT -->
+    <div class="input-area">
+      <span class="input-prompt">&gt;</span>
+      <input type="text" id="typing-input" class="typing-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+    </div>
+  </div>
+
+  <!-- BOSS INTRO -->
+  <div id="boss-intro-screen" class="screen">
+    <div class="boss-intro-content">
+      <div class="boss-intro-warning">⚠ &nbsp; D A N G E R &nbsp; ⚠</div>
+      <div id="boss-intro-wave" class="boss-intro-title">Wave 1 Boss</div>
+      <div id="boss-ghost" class="boss-ghost-intro">
+        <svg viewBox="0 0 128 160" width="140" height="175">
+          <path d="M64 8C32 8 8 36 8 64v76l16-12 16 12 12-12 12 12 12-12 12 12 16-12 16 12V64C120 36 96 8 64 8z" fill="rgba(255,80,80,0.6)" stroke="rgba(255,120,120,0.8)" stroke-width="3"/>
+          <circle cx="44" cy="52" r="11" fill="rgba(255,30,30,0.9)"/>
+          <circle cx="84" cy="52" r="11" fill="rgba(255,30,30,0.9)"/>
+          <circle cx="44" cy="52" r="5" fill="rgba(255,200,200,0.9)"/>
+          <circle cx="84" cy="52" r="5" fill="rgba(255,200,200,0.9)"/>
+          <ellipse cx="64" cy="80" rx="16" ry="10" fill="rgba(255,30,30,0.4)"/>
+        </svg>
+      </div>
+      <div class="boss-intro-subtitle">Survive the timer — type every line to slay the boss!</div>
+    </div>
+  </div>
+
+  <!-- WAVE FEEDBACK -->
+  <div id="wave-feedback-screen" class="screen">
+    <div class="feedback-content">
+      <h2 class="screen-title">Wave Complete</h2>
+      <div class="feedback-stats">
+        <div class="feedback-stat">
+          <div class="feedback-stat-value" id="feedback-wpm">0</div>
+          <div class="feedback-stat-label">WPM</div>
+        </div>
+        <div class="feedback-stat">
+          <div class="feedback-stat-value" id="feedback-accuracy">0%</div>
+          <div class="feedback-stat-label">Accuracy</div>
+        </div>
+      </div>
+      <div class="feedback-mistakes-section">
+        <h3 class="feedback-mistakes-title">Mistakes</h3>
+        <div id="feedback-mistakes" class="feedback-mistakes"></div>
+      </div>
+      <button id="feedback-continue-btn" class="btn btn-secondary">Continue</button>
+    </div>
+  </div>
+
+  <!-- UPGRADE SELECTION -->
+  <div id="upgrade-screen" class="screen">
+    <div class="upgrade-content">
+      <h2 class="screen-title">Choose an Upgrade</h2>
+      <div id="upgrade-cards" class="upgrade-cards"></div>
+    </div>
+  </div>
+
+  <!-- PAUSE OVERLAY -->
+  <div id="pause-overlay" class="screen pause-overlay">
+    <div class="pause-content">
+      <h2 class="pause-title">Paused</h2>
+      <button id="resume-btn" class="btn btn-primary">Resume</button>
+      <button id="quit-btn" class="btn btn-danger">Quit Run</button>
+    </div>
+  </div>
+
+  <!-- END-OF-RUN STATS -->
+  <div id="stats-screen" class="screen">
+    <div class="stats-content">
+      <h2 class="screen-title">Run Complete</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stats-accuracy">0%</div>
+          <div class="stat-label">Accuracy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stats-wpm">0</div>
+          <div class="stat-label">Avg WPM</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stats-waves">0</div>
+          <div class="stat-label">Waves Survived</div>
+        </div>
+        <div class="stat-card stat-card-score">
+          <div class="stat-value" id="stats-score">0</div>
+          <div class="stat-label">Final Score</div>
+        </div>
+      </div>
+      <div class="stats-formula" id="stats-formula"></div>
+      <button id="play-again-btn" class="btn btn-primary">Play Again</button>
+    </div>
+  </div>
+
+  <canvas id="fx-canvas"></canvas>
+  <div id="flash-overlay" class="flash-overlay"></div>
+  <script src="snippets.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
