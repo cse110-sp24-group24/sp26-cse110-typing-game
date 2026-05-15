@@ -92,7 +92,7 @@ The order below is designed so each sprint produces a testable, playable slice. 
 
 | # | Component | Depends On |
 |---|-----------|------------|
-| 1 | `snippets/` — JS + Python libraries | — |
+| 1 | `snippets/` — JS + HTML + CSS libraries (≥5 functions per language) | — |
 | 2 | `state.js` — RunState factory | — |
 | 3 | `screenManager.js` — show/hide screens | — |
 | 4 | Main Menu screen + Language Selection screen | screenManager |

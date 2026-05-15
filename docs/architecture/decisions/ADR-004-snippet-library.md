@@ -13,8 +13,8 @@ The snippet library is the educational core of the game. Every wave, every boss 
 - Whether the game can filter by language, complexity, or concept
 
 The library must support at minimum:
-- JavaScript and Python (MVP)
-- 5–8 functions per language (MVP), expandable post-MVP
+- JavaScript, HTML, and CSS (MVP)
+- At least 5 functions per language (MVP), expandable post-MVP
 - Per-function: name, lines[], plain-English description, concept tags
 - Per-function: complexity indicator for difficulty scaling
 
@@ -26,7 +26,7 @@ Three storage formats were evaluated:
 
 ## Decision
 
-Use **ES module files** — one per language (`snippets/javascript.js`, `snippets/python.js`) — exporting an array of snippet objects. A thin `snippets/index.js` provides the public API (`getSnippetsForLanguage`, `getRandomSnippet`).
+Use **ES module files** — one per language (`snippets/javascript.js`, `snippets/html.js`, `snippets/css.js`) — exporting an array of snippet objects. A thin `snippets/index.js` provides the public API (`getSnippetsForLanguage`, `getRandomSnippet`).
 
 ## Considered Options
 
@@ -85,7 +85,7 @@ Each function in the library must conform to this shape:
 {
   id: "js-reverse-string",          // unique across all languages
   name: "reverseString",            // function name as it appears in code
-  language: "javascript",           // 'javascript' | 'python'
+  language: "javascript",           // 'javascript' | 'html' | 'css'
   description: "Takes a string and returns it with its characters in reverse order.",
   conceptTags: ["loops", "strings"], // 1–3 tags from a fixed vocabulary
   complexity: 1,                    // 1 (beginner) | 2 (intermediate)
@@ -116,8 +116,9 @@ export function getSnippetById(id)                  // direct lookup
 ```
 
 ### Positive Consequences
-- Content contributors work entirely within `snippets/javascript.js` or `snippets/python.js`; no game logic is exposed to them
+- Content contributors work entirely within `snippets/javascript.js`, `snippets/html.js`, or `snippets/css.js`; no game logic is exposed to them
 - The `snippets/index.js` public API means the rest of the game is insulated from the data format
+- Each language ships with at least 5 functions at MVP; adding more requires touching only that language's file
 - Adding a new language post-MVP requires creating one new file and a one-line addition to `index.js`
 
 ### Negative Consequences
