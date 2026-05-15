@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Architecture Overview
+    url: https://github.com/cse110-sp24-group24/sp26-cse110-typing-game/blob/main/docs/architecture/README.md
+    about: Check the sprint build order and module map before opening a feature task.
