@@ -2,7 +2,7 @@
 
 ## What This Document Is
 
-This document describes the software architecture for **Phantom Type**, a browser-based roguelite typing game targeting beginner-to-intermediate CS students. It was produced after synthesizing the MVP specification and all team user stories. Every significant structural decision is recorded in a companion ADR (Architecture Decision Record) under `decisions/`.
+This document describes the software architecture for **FILL IN FINALIZED NAME**, a browser-based roguelite typing game targeting beginner-to-intermediate CS students. It was produced based on the MVP specification and all team user stories. Every significant structural decision is recorded in a companion ADR (Architecture Decision Record) under `decisions/`.
 
 ---
 
