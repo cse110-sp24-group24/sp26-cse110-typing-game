@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><!-- Game name TBD --></title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SCREENS — only one .screen is .active at a time.
+       screenManager.js controls which one is visible.
+       ═══════════════════════════════════════════════════════════ -->
+
+  <!-- SCREEN 1: Main Menu -->
+  <div id="menu-screen" class="screen active">
+    <!-- Populated by Issue #4 (Main Menu + Language Selection) -->
+    <div class="menu-fog"></div>
+    <div class="menu-content">
+      <h1 class="game-title"><!-- title --></h1>
+      <p class="tagline"><!-- tagline --></p>
+      <button id="play-btn" class="btn btn-primary">Play</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: Language Selection -->
+  <div id="language-screen" class="screen">
+    <!-- Populated by Issue #4 (Main Menu + Language Selection) -->
+    <div class="language-content">
+      <h2 class="screen-title">Choose Your Language</h2>
+      <p class="screen-subtitle">All code in your run will use this syntax.</p>
+      <div class="language-buttons">
+        <button class="btn btn-language" data-language="javascript">
+          <span class="lang-icon">JS</span>
+          <span class="lang-name">JavaScript</span>
+        </button>
+        <button class="btn btn-language" data-language="html">
+          <span class="lang-icon">HTML</span>
+          <span class="lang-name">HTML</span>
+        </button>
+        <button class="btn btn-language" data-language="css">
+          <span class="lang-icon">CSS</span>
+          <span class="lang-name">CSS</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: Wave Intro Card -->
+  <div id="wave-intro-screen" class="screen">
+    <!-- Populated by Issue #10 (waveIntroCard.js) -->
+    <div class="wave-intro-card">
+      <div id="wave-intro-number" class="wave-intro-number">Wave 1</div>
+      <div class="wave-intro-function">
+        <code id="wave-intro-function-name"></code>
+      </div>
+      <div id="wave-intro-tags" class="wave-intro-tags"></div>
+      <p id="wave-intro-desc" class="wave-intro-desc"></p>
+      <div class="wave-intro-hint">Press any key to begin...</div>
+    </div>
+  </div>
+
+  <!-- SCREEN 4: Game (waves + boss) -->
+  <div id="game-screen" class="screen">
+
+    <!-- HUD — hudManager.js owns all elements inside here -->
+    <div id="game-hud" class="game-hud">
+      <div class="hud-left">
+        <div id="lives-display" class="hud-lives"></div>
+        <div id="wave-display" class="hud-wave">Wave 1</div>
+        <div id="lang-badge" class="hud-lang"></div>
+      </div>
+      <div class="hud-center">
+        <div id="score-display" class="hud-score">0</div>
+      </div>
+      <div class="hud-right">
+        <div id="upgrades-panel" class="hud-upgrades"></div>
+        <button id="settings-btn" class="btn-icon" aria-label="Settings">⚙</button>
+      </div>
+    </div>
+
+    <!-- Play Area — enemySystem.js spawns enemies here -->
+    <div id="play-area" class="play-area">
+      <!-- Ghost enemies are dynamically inserted here by enemySystem.js -->
+      <div id="deadline-line" class="deadline-line"></div>
+    </div>
+
+    <!-- Code Panel — codePanel.js assembles the function here line by line -->
+    <div id="code-panel" class="code-panel">
+      <div id="code-panel-header" class="code-panel-header"></div>
+      <div id="code-panel-lines" class="code-panel-lines"></div>
+    </div>
+
+    <!-- Typing Area — typingEngine.js owns the input; target-line-display shows the typo overlay -->
+    <div class="typing-area">
+      <div id="target-line-display" class="target-line-display" aria-hidden="true"></div>
+      <input
+        id="typing-input"
+        type="text"
+        autocomplete="new-password"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+        aria-label="Type the code shown above"
+        placeholder="Start typing..."
+      />
+    </div>
+
+  </div>
+
+  <!-- SCREEN 5: Per-Wave Stats -->
+  <div id="wave-stats-screen" class="screen">
+    <!-- Populated by Issue #19 (Per-wave stats feedback screen) -->
+    <div class="wave-stats-content">
+      <h2 class="screen-title">Wave Complete</h2>
+      <div id="wave-stat-wpm" class="stat-block"></div>
+      <div id="wave-stat-accuracy" class="stat-block"></div>
+      <div id="wave-stat-mistakes" class="stat-block mistakes-list"></div>
+      <p class="wave-stats-hint">Press any key to continue...</p>
+    </div>
+  </div>
+
+  <!-- SCREEN 6: Upgrade Selection -->
+  <div id="upgrade-screen" class="screen">
+    <!-- Populated by Issue #13 (Upgrade Selection Screen) -->
+    <div class="upgrade-content">
+      <h2 class="screen-title">Choose an Upgrade</h2>
+      <div id="upgrade-cards" class="upgrade-cards"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN 7: End-of-Run Stats -->
+  <div id="stats-screen" class="screen">
+    <!-- Populated by Issue #20 (statsScreen.js) -->
+    <div class="stats-content">
+      <h2 class="stats-title">Run Over</h2>
+      <div id="stats-accuracy" class="stat-block"></div>
+      <div id="stats-wpm" class="stat-block"></div>
+      <div id="stats-waves" class="stat-block"></div>
+      <div id="stats-score" class="stat-block"></div>
+      <button id="play-again-btn" class="btn btn-primary">Play Again</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       OVERLAYS — appear on top of any screen. Hidden by default.
+       Toggle .hidden class to show/hide.
+       ═══════════════════════════════════════════════════════════ -->
+
+  <!-- Pause Overlay — Issue #21 -->
+  <div id="pause-overlay" class="overlay hidden">
+    <div class="pause-content">
+      <h2>Paused</h2>
+      <button id="resume-btn" class="btn btn-primary">Resume</button>
+      <button id="quit-btn" class="btn btn-secondary">Quit Run</button>
+    </div>
+  </div>
+
+  <!-- Settings Panel — Issue #23 -->
+  <div id="settings-panel" class="overlay hidden">
+    <div class="settings-content">
+      <h3>Audio Settings</h3>
+      <label class="setting-row">
+        Music
+        <input type="range" id="music-volume" min="0" max="1" step="0.05" value="0.5">
+      </label>
+      <label class="setting-row">
+        SFX
+        <input type="range" id="sfx-volume" min="0" max="1" step="0.05" value="0.7">
+      </label>
+      <label class="setting-row">
+        <input type="checkbox" id="mute-toggle"> Mute All
+      </label>
+      <button id="settings-close" class="btn btn-secondary">Close</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       Entry point — all JS flows through main.js
+       ═══════════════════════════════════════════════════════════ -->
+  <script type="module" src="src/main.js"></script>
+
+</body>
+</html>

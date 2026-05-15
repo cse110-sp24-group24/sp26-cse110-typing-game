@@ -8,7 +8,7 @@ This document describes the software architecture for **FILL IN FINALIZED NAME**
 
 ## System Summary
 
-Phantom Type is a **single-page web application** with no backend. It runs entirely in the browser, requires no install or login, and is deployable as static files (e.g., GitHub Pages). The target platform is desktop browsers (Chrome, Firefox, Safari) on standard laptop keyboards.
+The game is a **single-page web application** with no backend. It runs entirely in the browser, requires no install or login, and is deployable as static files (e.g., GitHub Pages). The target platform is desktop browsers (Chrome, Firefox, Safari) on standard laptop keyboards.
 
 ---
 
@@ -56,8 +56,9 @@ src/
 ├── state.js             # RunState object definition and factory
 ├── snippets/
 │   ├── index.js         # Exports getSnippet(), getSnippetsForLanguage()
-│   ├── javascript.js    # JS snippet library
-│   └── python.js        # Python snippet library
+│   ├── javascript.js    # JavaScript snippet library
+│   ├── html.js          # HTML snippet library
+│   └── css.js           # CSS snippet library
 ├── engine/
 │   ├── waveManager.js   # Wave lifecycle: spawn → clear → boss signal
 │   ├── enemySystem.js   # Enemy movement, deadline detection, fall speed

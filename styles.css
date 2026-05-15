@@ -1,0 +1,265 @@
+/* ═══════════════════════════════════════════════════════════════
+   PHANTOM TYPE — styles.css
+   Structure: Variables → Reset → Screens → Overlays → Game Layout
+   All visual styling for individual components is added here as
+   each Issue is implemented. The screen/overlay management below
+   must remain stable — everything else can be expanded freely.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── CSS Custom Properties (Horror Theme Palette) ─────────────── */
+:root {
+  /* Backgrounds */
+  --color-bg:           #080810;
+  --color-bg-surface:   #0f0f1a;
+  --color-bg-card:      #13131f;
+
+  /* Accents */
+  --color-primary:      rgba(130, 200, 255, 0.9);   /* ghost blue */
+  --color-success:      rgba(100, 255, 180, 0.9);   /* correct green */
+  --color-error:        rgba(255, 80,  80,  0.9);   /* typo red */
+  --color-warning:      rgba(255, 180, 60,  0.9);   /* deadline orange */
+  --color-muted:        rgba(255, 255, 255, 0.25);
+
+  /* Text */
+  --color-text:         rgba(220, 220, 240, 0.95);
+  --color-text-dim:     rgba(180, 180, 200, 0.5);
+
+  /* Typography */
+  --font-mono:    'Courier New', Courier, monospace;
+  --font-display: Georgia, serif;
+
+  /* Spacing */
+  --radius:  6px;
+  --gap:     1rem;
+}
+
+/* ── Reset ────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ── Screen Management ────────────────────────────────────────── */
+/*
+   screenManager.js adds/removes .active to control which screen
+   is visible. All screens start hidden; only #menu-screen starts
+   with .active (set in index.html).
+*/
+
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  background: var(--color-bg);
+}
+
+.screen.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ── Overlay Management ───────────────────────────────────────── */
+/*
+   Overlays (pause, settings) sit on top of screens via z-index.
+   Toggle .hidden to show/hide — no screen transition needed.
+*/
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+}
+
+.overlay.hidden {
+  display: none;
+}
+
+/* ── Utility Classes ──────────────────────────────────────────── */
+.btn {
+  padding: 0.6rem 1.4rem;
+  border: 1px solid var(--color-muted);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--color-primary);
+}
+
+.btn-primary {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn-secondary {
+  border-color: var(--color-muted);
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  font-size: 1.2rem;
+  padding: 0.25rem;
+  transition: color 0.15s;
+}
+
+.btn-icon:hover {
+  color: var(--color-text);
+}
+
+/* ── Game Screen Layout ───────────────────────────────────────── */
+/*
+   The game screen has a fixed layout:
+     - HUD bar at the top
+     - Play area (enemies fall here) on the left/center
+     - Code panel on the right
+     - Typing area at the bottom
+   Detailed sizing is added when Issues #6, #9, #18 are implemented.
+*/
+
+#game-screen {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr 320px;
+  grid-template-areas:
+    "hud      hud"
+    "play     code"
+    "typing   code";
+  gap: 0;
+  align-items: stretch;
+  justify-items: stretch;
+  padding: 0;
+}
+
+.game-hud         { grid-area: hud; }
+.play-area        { grid-area: play; position: relative; overflow: hidden; }
+.code-panel       { grid-area: code; }
+.typing-area      { grid-area: typing; }
+
+/* Deadline line — enemySystem.js detects when enemies cross this */
+.deadline-line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--color-warning);
+  box-shadow: 0 0 12px var(--color-warning);
+}
+
+/* Typing input */
+#typing-input {
+  width: 100%;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-muted);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  padding: 0.6rem 0.8rem;
+  outline: none;
+  caret-color: var(--color-primary);
+}
+
+#typing-input:focus {
+  border-color: var(--color-primary);
+}
+
+/* Typo feedback overlay (typingEngine renders correct/incorrect spans here) */
+#target-line-display {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  padding: 0.4rem 0.8rem;
+  min-height: 1.6rem;
+}
+
+#target-line-display .correct   { color: var(--color-success); }
+#target-line-display .incorrect { color: var(--color-error); text-decoration: underline; }
+
+/* ── Enemy Defeat Animation ───────────────────────────────────── */
+/* Triggered by enemySystem.js adding .dissolving class (Issue #16) */
+
+@keyframes dissolve {
+  0%   { opacity: 1; transform: scale(1);   filter: blur(0px); }
+  50%  { opacity: 0.5; transform: scale(1.2); filter: blur(2px); }
+  100% { opacity: 0; transform: scale(0.5); filter: blur(6px); }
+}
+
+.enemy.dissolving {
+  animation: dissolve 0.5s ease-out forwards;
+  pointer-events: none;
+}
+
+/* ── Enemy Fall Animation ─────────────────────────────────────── */
+/* enemySystem.js sets animation-duration from state.fallSpeedMultiplier */
+
+@keyframes enemyFall {
+  from { top: -12%; }
+  to   { top: 105%; }
+}
+
+.enemy {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  animation: enemyFall linear forwards;
+}
+
+.enemy .enemy-code {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--color-text);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-muted);
+  border-radius: var(--radius);
+  padding: 0.25rem 0.5rem;
+  white-space: nowrap;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Screen-edge Flash on Life Loss ──────────────────────────── */
+@keyframes lifeFlash {
+  0%   { box-shadow: inset 0 0 0px 0px var(--color-error); }
+  30%  { box-shadow: inset 0 0 60px 20px var(--color-error); }
+  100% { box-shadow: inset 0 0 0px 0px var(--color-error); }
+}
+
+body.life-lost {
+  animation: lifeFlash 0.5s ease-out;
+}
