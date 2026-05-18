@@ -99,7 +99,7 @@ function spawnEnemy(state, snippet) {
   ...
 }
 
-// ❌ Bad
+// Bad
 function spawnEnemy(state, snippet)
 {
   ...
