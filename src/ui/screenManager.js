@@ -1,13 +1,4 @@
-/**
- * ui/screenManager.js — Screen visibility management.
- *
- * Owns: adding/removing .active on .screen divs. The single
- * function showScreen() is the only way screens change.
- *
- * Implemented by Issue #3.
- */
-
-const SCREENS = [
+const VALID_SCREEN_IDS = new Set([
   'menu-screen',
   'language-screen',
   'wave-intro-screen',
@@ -15,11 +6,39 @@ const SCREENS = [
   'wave-stats-screen',
   'upgrade-screen',
   'stats-screen',
-];
+]);
 
-/** Hides all screens and activates the one matching screenId. */
+let currentScreenId =
+  document.querySelector('.screen.active')?.id || 'menu-screen';
+
+/**
+ * Show one screen and hide every other screen.
+ * The CSS transition system handles the visual fade via the .active class.
+ */
 export function showScreen(screenId) {
-  SCREENS.forEach(id => {
-    document.getElementById(id)?.classList.toggle('active', id === screenId);
+  if (!VALID_SCREEN_IDS.has(screenId)) {
+    console.error(`Invalid screen id: ${screenId}`);
+    return;
+  }
+
+  const targetScreen = document.getElementById(screenId);
+
+  if (!targetScreen) {
+    console.error(`Screen element not found: ${screenId}`);
+    return;
+  }
+
+  document.querySelectorAll('.screen').forEach((screen) => {
+    screen.classList.remove('active');
   });
+
+  targetScreen.classList.add('active');
+  currentScreenId = screenId;
+}
+
+/**
+ * Return the id of the screen currently marked as active.
+ */
+export function getCurrentScreen() {
+  return currentScreenId;
 }
