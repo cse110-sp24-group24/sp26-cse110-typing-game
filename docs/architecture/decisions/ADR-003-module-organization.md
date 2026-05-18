@@ -89,7 +89,8 @@ Files grouped into `engine/`, `ui/`, `audio/`, `snippets/`, `data/`, `utils/`. E
 | Module | Owner |
 |--------|-------|
 | `snippets/javascript.js` | Content contributors (any) |
-| `snippets/python.js` | Content contributors (any) |
+| `snippets/html.js` | Content contributors (any) |
+| `snippets/css.js` | Content contributors (any) |
 | `engine/typingEngine.js` | Core gameplay pair |
 | `engine/enemySystem.js` | Core gameplay pair |
 | `engine/waveManager.js` | Core gameplay pair |

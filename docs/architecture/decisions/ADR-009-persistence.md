@@ -38,7 +38,7 @@ All state lives in JavaScript variables. Refreshing the page loses everything.
 - No stale state bugs (old data from a previous session interfering with a new run)
 
 **Cons:**
-- Language preference is lost on every page load — a player who always plays Python must re-select it every time
+- Language preference is lost on every page load — a player who always plays the same language must re-select it every time
 - Audio settings (volume levels) reset — a player who muted music must re-mute it every session
 - Multiple user stories explicitly call out preference persistence as a core requirement (Simar US-10, Shubhi US-10)
 
@@ -92,7 +92,7 @@ All keys are namespaced under `phantomtype.v1.` to enable future schema migratio
 
 | Key | Type | Description |
 |-----|------|-------------|
-| `phantomtype.v1.language` | `'javascript' \| 'python'` | Last selected language |
+| `phantomtype.v1.language` | `'javascript' \| 'html' \| 'css'` | Last selected language |
 | `phantomtype.v1.musicVolume` | `number (0–1)` | Music volume |
 | `phantomtype.v1.sfxVolume` | `number (0–1)` | SFX volume |
 | `phantomtype.v1.muted` | `boolean` | Mute state |
@@ -102,7 +102,7 @@ All keys are namespaced under `phantomtype.v1.` to enable future schema migratio
 
 ```js
 export function getPreferences()              // returns object with all preference keys
-export function saveLanguage(language)        // 'javascript' | 'python'
+export function saveLanguage(language)        // 'javascript' | 'html' | 'css'
 export function saveAudioSettings(music, sfx, muted)
 export function markTutorialSeen()
 export function resetToDefaults()             // clears all phantomtype.v1.* keys

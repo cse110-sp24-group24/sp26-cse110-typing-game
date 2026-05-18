@@ -150,7 +150,7 @@ All modules read and write a single `RunState` object created fresh at the start
 // state.js
 export function createRunState(language) {
   return {
-    language,               // 'javascript' | 'python'
+    language,               // 'javascript' | 'html' | 'css'
     lives: 3,
     score: 0,
     wave: 1,

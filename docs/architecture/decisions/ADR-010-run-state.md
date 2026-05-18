@@ -102,7 +102,7 @@ Modules emit events (`bus.emit('life-lost')`) and subscribe to them (`bus.on('li
 export function createRunState(language) {
   return {
     // Identity
-    language,                     // 'javascript' | 'python'
+    language,                     // 'javascript' | 'html' | 'css'
 
     // Wave progression
     wave: 1,

@@ -1,0 +1,20 @@
+{
+  "name": "phantom-type",
+  "version": "1.0.0",
+  "description": "Haunted roguelite typing game — CSE 110 SP26",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint":         "eslint src/",
+    "lint:fix":     "eslint src/ --fix",
+    "format":       "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js":        "^9.0.0",
+    "eslint":            "^9.0.0",
+    "eslint-plugin-jsdoc": "^50.0.0",
+    "globals":           "^15.0.0",
+    "prettier":          "^3.0.0"
+  }
+}

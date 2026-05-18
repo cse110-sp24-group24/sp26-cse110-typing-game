@@ -17,7 +17,7 @@ Highlighting must NOT be applied to:
 4. **The player's typed input** — the `<input>` element cannot contain HTML; highlighting there is handled by the typo-feedback overlay (ADR-006)
 
 Requirements:
-- Supports JavaScript and Python (MVP); must be extensible to additional languages post-MVP
+- Supports JavaScript, HTML, and CSS (MVP); must be extensible to additional languages post-MVP
 - Must run entirely client-side (no server-side render)
 - Must not noticeably lag on every keypress (only applied to static display elements, not the live input)
 - Bundle size should be modest for a no-build-tool project
@@ -39,7 +39,7 @@ Use **Prism.js** loaded via CDN, applied only to the static code display element
 Prism.js is a lightweight syntax highlighter (~7KB core, ~2KB per language grammar). It provides `Prism.highlight(code, grammar, language)` which returns an HTML string with `<span class="token ...">` elements.
 
 **Pros:**
-- Very lightweight: ~9KB total for JS + Python grammars (minified + gzipped)
+- Very lightweight: ~10KB total for JS + HTML + CSS grammars (minified + gzipped)
 - CDN-available; no build step needed
 - `Prism.highlight()` is a synchronous pure function — easy to call when assembling the code panel
 - Token class names (`token keyword`, `token string`, etc.) are stable and well-documented; CSS themes are easy to customize for the horror aesthetic
@@ -65,20 +65,20 @@ Highlight.js auto-detects language or accepts an explicit language hint. It is a
 
 ### Option 3: Custom Tokenizer
 
-Write a minimal tokenizer for JavaScript and Python that identifies keywords, strings, numbers, and operators.
+Write a minimal tokenizer for JavaScript, HTML, and CSS that identifies keywords, strings, numbers, and operators.
 
 **Pros:**
 - Zero external dependency
 - Full control over which tokens are highlighted and how
 
 **Cons:**
-- Writing a correct tokenizer for JavaScript and Python is a significant engineering task (regular expressions alone cannot handle string escapes, template literals, multi-line strings, or nested structures correctly)
+- Writing a correct tokenizer for JavaScript, HTML, and CSS is a significant engineering task (regular expressions alone cannot handle string escapes, template literals, nested tags, or selector specificity correctly)
 - Maintenance burden: any language version change (e.g., new JS syntax) requires updating the tokenizer
 - Prism.js already solves this problem correctly and is proven — a custom solution would be reinventing a solved wheel
 
 ## Decision Outcome
 
-**Option 1 (Prism.js)** was chosen. It is stored locally in `lib/prism.min.js` and `lib/prism-python.min.js` to eliminate the CDN dependency during development.
+**Option 1 (Prism.js)** was chosen. It is stored locally in `lib/prism.min.js` with the HTML and CSS grammar components included, eliminating the CDN dependency during development.
 
 ### Integration Points
 
