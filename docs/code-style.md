@@ -1,4 +1,4 @@
-# Code Style Guide — Phantom Type
+# Code Style Guide
 
 This document is the single source of truth for how we write code on this project. ESLint and Prettier enforce most of these rules automatically — the CI pipeline will block PRs that violate them. This guide explains the *why* behind each rule so teammates can write compliant code from the start, not just fix errors after the fact.
 
@@ -99,7 +99,7 @@ function spawnEnemy(state, snippet) {
   ...
 }
 
-// ❌ Bad
+// Bad
 function spawnEnemy(state, snippet)
 {
   ...
