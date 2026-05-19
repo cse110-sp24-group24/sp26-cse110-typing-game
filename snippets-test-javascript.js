@@ -26,7 +26,9 @@ function compileSnippet(snippet) {
 
 function assertEquals(actual, expected, message) {
   if (actual !== expected) {
-    throw new Error(`${message} failed: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+    throw new Error(
+      `${message} failed: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`
+    );
   }
 }
 
