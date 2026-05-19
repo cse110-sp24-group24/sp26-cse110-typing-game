@@ -7,16 +7,15 @@
  * Implemented by Issue #11.
  */
 
-/** @param {object} state - RunState */
-export function init(state) {
+/** @param {object} _state - RunState */
+export function init(_state) {
   // Issue #11
 }
 
 /**
- *
- * @param state
- * @param snippet
+ * @param _state
+ * @param _snippet
  */
-export function startBoss(state, snippet) {
+export function startBoss(_state, _snippet) {
   // Issue #11
 }

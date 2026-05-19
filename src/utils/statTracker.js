@@ -7,21 +7,20 @@
  * Implemented by Issue #17.
  */
 
-/** @param {object} state - RunState */
-export function init(state) {
+/** @param {object} _state - RunState */
+export function init(_state) {
   // Issue #17
 }
 
 /**
- *
- * @param correct
+ * @param _correct
  */
-export function recordKeystroke(correct) {
+export function recordKeystroke(_correct) {
   // Issue #17
 }
 
 /**
- *
+ * @returns {number}
  */
 export function getWpm() {
   // Issue #17
@@ -29,7 +28,7 @@ export function getWpm() {
 }
 
 /**
- *
+ * @returns {number}
  */
 export function getAccuracy() {
   // Issue #17
@@ -38,9 +37,9 @@ export function getAccuracy() {
 
 /**
  * Saves current wave stats into state.stats.waveData and resets counters.
- * @param state
- * @param mistakes
+ * @param _state
+ * @param _mistakes
  */
-export function commitWave(state, mistakes) {
+export function commitWave(_state, _mistakes) {
   // Issue #17
 }

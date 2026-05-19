@@ -7,24 +7,22 @@
  * Implemented by Issue #9.
  */
 
-/** @param {object} state - RunState */
-export function init(state) {
+/** @param {object} _state - RunState */
+export function init(_state) {
   // Issue #9
 }
 
 /**
- *
- * @param functionSignature
+ * @param _functionSignature
  */
-export function setHeader(functionSignature) {
+export function setHeader(_functionSignature) {
   // Issue #9
 }
 
 /**
- *
- * @param line
+ * @param _line
  */
-export function addLine(line) {
+export function addLine(_line) {
   // Issue #9
 }
 

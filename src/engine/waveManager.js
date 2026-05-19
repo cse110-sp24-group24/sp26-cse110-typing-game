@@ -7,24 +7,22 @@
  * Implemented by Issue #7.
  */
 
-/** @param {object} state - RunState */
-export function init(state) {
+/** @param {object} _state - RunState */
+export function init(_state) {
   // Issue #7
 }
 
 /**
- *
- * @param state
+ * @param _state
  */
-export function startWave(state) {
+export function startWave(_state) {
   // Issue #7
 }
 
 /**
- *
- * @param state
- * @param callback
+ * @param _state
+ * @param _callback
  */
-export function onWaveClear(state, callback) {
+export function onWaveClear(_state, _callback) {
   // Issue #7
 }

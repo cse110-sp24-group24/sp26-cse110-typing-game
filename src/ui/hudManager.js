@@ -7,39 +7,35 @@
  * Implemented by Issue #18.
  */
 
-/** @param {object} state - RunState */
-export function init(state) {
+/** @param {object} _state - RunState */
+export function init(_state) {
   // Issue #18
 }
 
 /**
- *
- * @param score
+ * @param _score
  */
-export function updateScore(score) {
+export function updateScore(_score) {
   // Issue #18
 }
 
 /**
- *
- * @param lives
+ * @param _lives
  */
-export function updateLives(lives) {
+export function updateLives(_lives) {
   // Issue #18
 }
 
 /**
- *
- * @param wave
+ * @param _wave
  */
-export function updateWave(wave) {
+export function updateWave(_wave) {
   // Issue #18
 }
 
 /**
- *
- * @param upgradeIds
+ * @param _upgradeIds
  */
-export function updateUpgrades(upgradeIds) {
+export function updateUpgrades(_upgradeIds) {
   // Issue #18
 }

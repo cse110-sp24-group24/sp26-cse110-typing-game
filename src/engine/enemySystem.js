@@ -7,17 +7,16 @@
  * Implemented by Issue #6.
  */
 
-/** @param {object} state - RunState */
-export function init(state) {
+/** @param {object} _state - RunState */
+export function init(_state) {
   // Issue #6
 }
 
 /**
- *
- * @param state
- * @param snippet
+ * @param _state
+ * @param _snippet
  */
-export function spawnEnemy(state, snippet) {
+export function spawnEnemy(_state, _snippet) {
   // Issue #6
 }
 

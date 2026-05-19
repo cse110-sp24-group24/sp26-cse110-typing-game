@@ -8,16 +8,15 @@
  * Implemented by Issue #5.
  */
 
-/** @param {object} state - RunState */
-export function init(state) {
+/** @param {object} _state - RunState */
+export function init(_state) {
   // Issue #5
 }
 
 /**
- *
- * @param line
+ * @param _line
  */
-export function setTarget(line) {
+export function setTarget(_line) {
   // Issue #5
 }
 

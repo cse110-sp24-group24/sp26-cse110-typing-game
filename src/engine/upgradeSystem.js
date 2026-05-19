@@ -7,25 +7,26 @@
  * Implemented by Issue #12.
  */
 
-/** @param {object} state - RunState */
-export function init(state) {
+/** @param {object} _state - RunState */
+export function init(_state) {
   // Issue #12
 }
 
 /**
  * Returns 3 randomly selected upgrade definitions.
- * @param state
+ * @param _state
+ * @returns {Array}
  */
-export function drawUpgrades(state) {
+export function drawUpgrades(_state) {
   // Issue #12
   return [];
 }
 
 /**
  * Applies the chosen upgrade to state.
- * @param state
- * @param upgradeId
+ * @param _state
+ * @param _upgradeId
  */
-export function applyUpgrade(state, upgradeId) {
+export function applyUpgrade(_state, _upgradeId) {
   // Issue #12
 }

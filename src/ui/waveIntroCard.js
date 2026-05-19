@@ -10,11 +10,11 @@
 
 /**
  * Shows the wave intro card and resolves when the player dismisses it.
- * @param {object} state - RunState
- * @param {object} waveData - { wave, snippet }
+ * @param {object} _state - RunState
+ * @param {object} _waveData - { wave, snippet }
  * @returns {Promise<void>}
  */
-export function show(state, waveData) {
+export function show(_state, _waveData) {
   // Issue #10
   return Promise.resolve();
 }

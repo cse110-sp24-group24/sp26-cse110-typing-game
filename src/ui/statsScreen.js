@@ -7,7 +7,7 @@
  * Implemented by Issue #20.
  */
 
-/** @param {object} state - RunState */
-export function show(state) {
+/** @param {object} _state - RunState */
+export function show(_state) {
   // Issue #20
 }
