@@ -19,7 +19,12 @@ export default [
 
     rules: {
       // ── Naming ──────────────────────────────────────────────────
-      'camelcase': ['error', { properties: 'always' }],
+      // Allow SCREAMING_SNAKE_CASE for module-level constants (UPGRADES, MAX_LIVES, etc.)
+      // as documented in code-style.md section 1.
+      'camelcase': ['error', {
+        properties: 'always',
+        allow: ['^[A-Z][A-Z0-9_]+$'],
+      }],
 
       // ── Variables ───────────────────────────────────────────────
       'no-var':        'error',
