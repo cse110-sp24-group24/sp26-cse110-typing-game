@@ -51,7 +51,8 @@ export function init(inputEl, feedbackEl, onDefeated, onKeystroke) {
 }
 
 /**
- * @param _line
+ * Sets the current target string the player must type.
+ * @param {string} _line - The target string to match.
  */
 export function setTarget(_line) {
   // Issue #5
@@ -66,7 +67,7 @@ export function setTarget(_line) {
 }
 
 /**
- *
+ * Clears the active target and wipes the feedback overlay.
  */
 export function clearTarget() {
   // Issue #5
@@ -85,7 +86,9 @@ export function clearTarget() {
  * Re-attaches the `input` event listener so the engine processes keystrokes.
  */
 export function activate() {
-  if (_active || !_inputEl) return;
+  if (_active || !_inputEl) {
+    return;
+  }
   _inputEl.addEventListener('input', handleInput);
   _active = true;
 }
@@ -94,7 +97,9 @@ export function activate() {
  * Removes the `input` event listener so keystrokes are ignored.
  */
 export function deactivate() {
-  if (!_active || !_inputEl) return;
+  if (!_active || !_inputEl) {
+    return;
+  }
   _inputEl.removeEventListener('input', handleInput);
   _active = false;
 }
@@ -127,7 +132,9 @@ function escapeHtml(ch) {
  * @param {string} typed - Current value of the input element.
  */
 function renderFeedback(typed) {
-  if (!_feedbackEl) return;
+  if (!_feedbackEl) {
+    return;
+  }
 
   let html = '';
   let errorFound = false;
@@ -153,7 +160,9 @@ function renderFeedback(typed) {
  *
  */
 function handleInput() {
-  if (!_inputEl || !_target) return;
+  if (!_inputEl || !_target) {
+    return;
+  }
 
   const typed = _inputEl.value;
 
