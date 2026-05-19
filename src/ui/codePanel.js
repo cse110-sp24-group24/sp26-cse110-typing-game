@@ -12,14 +12,25 @@ export function init(state) {
   // Issue #9
 }
 
+/**
+ *
+ * @param functionSignature
+ */
 export function setHeader(functionSignature) {
   // Issue #9
 }
 
+/**
+ *
+ * @param line
+ */
 export function addLine(line) {
   // Issue #9
 }
 
+/**
+ *
+ */
 export function clearPanel() {
   // Issue #9
 }

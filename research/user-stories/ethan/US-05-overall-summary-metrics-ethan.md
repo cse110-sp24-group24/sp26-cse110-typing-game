@@ -8,7 +8,7 @@
 
 ## Acceptance criteria
 
-- [ ] The game tracks total keystrokes and total *incorrect* keystrokes during the wave.
+- [ ] The game tracks total keystrokes and total _incorrect_ keystrokes during the wave.
 - [ ] Accuracy is calculated as a percentage `((Total - Incorrect) / Total) * 100`.
 - [ ] The "Wave Complete" screen is updated to display the final accuracy percentage and the average CPM for that wave.
 - [ ] The internal trackers reset to zero when a new wave is initiated.

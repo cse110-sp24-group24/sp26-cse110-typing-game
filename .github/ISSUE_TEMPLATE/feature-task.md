@@ -1,7 +1,7 @@
 ---
 name: Feature Task
 about: Implementing a component from the sprint plan
-title: "[SPRINT X] Component Name — brief description"
+title: '[SPRINT X] Component Name — brief description'
 labels: ''
 assignees: ''
 ---
@@ -35,6 +35,7 @@ assignees: ''
 ## Dependencies
 
 <!-- List other issues or modules that must be merged before this one can start. -->
+
 - Blocked by: #<!-- issue number -->
 
 ## Definition of Done

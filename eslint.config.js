@@ -1,5 +1,5 @@
-import js     from '@eslint/js';
-import jsdoc  from 'eslint-plugin-jsdoc';
+import js from '@eslint/js';
+import jsdoc from 'eslint-plugin-jsdoc';
 import globals from 'globals';
 
 export default [
@@ -13,7 +13,7 @@ export default [
       ecmaVersion: 2022,
       sourceType: 'module',
       globals: {
-        ...globals.browser,   // window, document, localStorage, etc.
+        ...globals.browser, // window, document, localStorage, etc.
       },
     },
 
@@ -21,39 +21,45 @@ export default [
       // ── Naming ──────────────────────────────────────────────────
       // Allow SCREAMING_SNAKE_CASE for module-level constants (UPGRADES, MAX_LIVES, etc.)
       // as documented in code-style.md section 1.
-      'camelcase': ['error', {
-        properties: 'always',
-        allow: ['^[A-Z][A-Z0-9_]+$'],
-      }],
+      camelcase: [
+        'error',
+        {
+          properties: 'always',
+          allow: ['^[A-Z][A-Z0-9_]+$'],
+        },
+      ],
 
       // ── Variables ───────────────────────────────────────────────
-      'no-var':        'error',
-      'prefer-const':  'error',
+      'no-var': 'error',
+      'prefer-const': 'error',
 
       // ── Code quality ────────────────────────────────────────────
-      'eqeqeq':            ['error', 'always'],
+      eqeqeq: ['error', 'always'],
       'consistent-return': 'error',
-      'curly':             ['error', 'all'],
-      'no-unused-vars':    ['error', { argsIgnorePattern: '^_' }],
-      'no-console':        ['warn', { allow: ['warn', 'error'] }],
+      curly: ['error', 'all'],
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
 
       // ── JSDoc ────────────────────────────────────────────────────
       // Require JSDoc on exported functions; warn (not error) so
       // stub files don't block the pipeline during early development.
-      'jsdoc/require-jsdoc': ['warn', {
-        publicOnly: true,
-        require: {
-          FunctionDeclaration:    true,
-          ArrowFunctionExpression: false,
-          MethodDefinition:       false,
+      'jsdoc/require-jsdoc': [
+        'warn',
+        {
+          publicOnly: true,
+          require: {
+            FunctionDeclaration: true,
+            ArrowFunctionExpression: false,
+            MethodDefinition: false,
+          },
         },
-      }],
-      'jsdoc/require-param':           'warn',
-      'jsdoc/require-param-type':      'warn',
+      ],
+      'jsdoc/require-param': 'warn',
+      'jsdoc/require-param-type': 'warn',
       'jsdoc/require-param-description': 'warn',
-      'jsdoc/require-returns':         'warn',
-      'jsdoc/check-param-names':       'error',
-      'jsdoc/check-types':             'error',
+      'jsdoc/require-returns': 'warn',
+      'jsdoc/check-param-names': 'error',
+      'jsdoc/check-types': 'error',
     },
   },
 

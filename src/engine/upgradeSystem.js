@@ -12,13 +12,20 @@ export function init(state) {
   // Issue #12
 }
 
-/** Returns 3 randomly selected upgrade definitions. */
+/**
+ * Returns 3 randomly selected upgrade definitions.
+ * @param state
+ */
 export function drawUpgrades(state) {
   // Issue #12
   return [];
 }
 
-/** Applies the chosen upgrade to state. */
+/**
+ * Applies the chosen upgrade to state.
+ * @param state
+ * @param upgradeId
+ */
 export function applyUpgrade(state, upgradeId) {
   // Issue #12
 }

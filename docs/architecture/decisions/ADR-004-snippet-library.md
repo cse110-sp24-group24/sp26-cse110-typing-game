@@ -13,6 +13,7 @@ The snippet library is the educational core of the game. Every wave, every boss 
 - Whether the game can filter by language, complexity, or concept
 
 The library must support at minimum:
+
 - JavaScript, HTML, and CSS (MVP)
 - At least 5 functions per language (MVP), expandable post-MVP
 - Per-function: name, lines[], plain-English description, concept tags
@@ -35,11 +36,13 @@ Use **ES module files** — one per language (`snippets/javascript.js`, `snippet
 Snippets live in `.json` files. The game fetches the appropriate file after language selection using `fetch()`.
 
 **Pros:**
+
 - JSON is universally readable by non-JS contributors
 - Files can be validated against a schema
 - Trivially editable in any text editor
 
 **Cons:**
+
 - Requires a network request, adding latency before the first wave
 - `fetch()` fails if the page is opened as `file://` locally (no server), breaking development workflow
 - No IDE autocompletion on the snippet objects
@@ -50,12 +53,14 @@ Snippets live in `.json` files. The game fetches the appropriate file after lang
 Snippets are JS arrays in `.js` files, imported via `import { SNIPPETS } from './snippets/javascript.js'`. They are bundled with the page at load time.
 
 **Pros:**
+
 - Zero network request for snippet data — available instantly
 - Works offline and with `file://` during development
 - IDE provides autocompletion and inline type hints for the snippet object shape
 - Content contributors edit plain JS object literals — no harder than JSON, but with the option to use template literals for multi-line strings
 
 **Cons:**
+
 - Slightly less "data-like" than JSON; contributors must be careful not to add executable logic
 - All languages load at startup, even if the player picks only one (acceptable: the data is small, ~10KB total)
 
@@ -64,10 +69,12 @@ Snippets are JS arrays in `.js` files, imported via `import { SNIPPETS } from '.
 Snippets are stored in a database (Airtable, Supabase, a custom API) and fetched dynamically.
 
 **Pros:**
+
 - Non-technical contributors can edit snippets in a friendly UI
 - Snippets can be updated without a code deploy
 
 **Cons:**
+
 - Requires a backend or third-party service account, adding operational complexity
 - The game must work offline per the no-backend constraint (ADR-001)
 - Authentication, rate limits, and service availability become game availability concerns
@@ -116,11 +123,13 @@ export function getSnippetById(id)                  // direct lookup
 ```
 
 ### Positive Consequences
+
 - Content contributors work entirely within `snippets/javascript.js`, `snippets/html.js`, or `snippets/css.js`; no game logic is exposed to them
 - The `snippets/index.js` public API means the rest of the game is insulated from the data format
 - Each language ships with at least 5 functions at MVP; adding more requires touching only that language's file
 - Adding a new language post-MVP requires creating one new file and a one-line addition to `index.js`
 
 ### Negative Consequences
+
 - Snippets are locked at deploy time; fixing a typo in a function requires a code push
 - The fixed concept tag vocabulary must be agreed on before Sprint 1 snippet authoring begins

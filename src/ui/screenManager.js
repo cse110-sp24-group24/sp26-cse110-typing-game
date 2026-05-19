@@ -8,12 +8,12 @@ const VALID_SCREEN_IDS = new Set([
   'stats-screen',
 ]);
 
-let currentScreenId =
-  document.querySelector('.screen.active')?.id || 'menu-screen';
+let currentScreenId = document.querySelector('.screen.active')?.id || 'menu-screen';
 
 /**
  * Show one screen and hide every other screen.
  * The CSS transition system handles the visual fade via the .active class.
+ * @param screenId
  */
 export function showScreen(screenId) {
   if (!VALID_SCREEN_IDS.has(screenId)) {

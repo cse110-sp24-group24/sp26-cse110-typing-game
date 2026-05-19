@@ -9,14 +9,15 @@ Accepted
 Multiple user stories call for syntax highlighting on the code the player sees — not on the input they type, but on the code assembly panel (Nishant US-02, Ryan US-02, Soohwan US-04). Several stories also mention that highlighting should match what students see in their real IDE, reinforcing pattern recognition.
 
 Syntax highlighting must be applied to:
+
 1. **The code assembly panel** — completed and upcoming function lines shown in a side panel
 2. **The active enemy target line** — the line currently displayed above the input field
 3. **The boss typing display** — the full function shown during the boss fight
 
-Highlighting must NOT be applied to:
-4. **The player's typed input** — the `<input>` element cannot contain HTML; highlighting there is handled by the typo-feedback overlay (ADR-006)
+Highlighting must NOT be applied to: 4. **The player's typed input** — the `<input>` element cannot contain HTML; highlighting there is handled by the typo-feedback overlay (ADR-006)
 
 Requirements:
+
 - Supports JavaScript, HTML, and CSS (MVP); must be extensible to additional languages post-MVP
 - Must run entirely client-side (no server-side render)
 - Must not noticeably lag on every keypress (only applied to static display elements, not the live input)
@@ -39,6 +40,7 @@ Use **Prism.js** loaded via CDN, applied only to the static code display element
 Prism.js is a lightweight syntax highlighter (~7KB core, ~2KB per language grammar). It provides `Prism.highlight(code, grammar, language)` which returns an HTML string with `<span class="token ...">` elements.
 
 **Pros:**
+
 - Very lightweight: ~10KB total for JS + HTML + CSS grammars (minified + gzipped)
 - CDN-available; no build step needed
 - `Prism.highlight()` is a synchronous pure function — easy to call when assembling the code panel
@@ -46,6 +48,7 @@ Prism.js is a lightweight syntax highlighter (~7KB core, ~2KB per language gramm
 - Used by thousands of projects; unlikely to break or be abandoned
 
 **Cons:**
+
 - CDN dependency: if the CDN is unavailable (offline development), highlighting degrades to plain text. Mitigation: a local copy in `lib/prism.js` is used instead
 - Prism uses `innerHTML` to inject highlighted spans; this is safe for code snippets from a trusted static library but requires that `snippets/` data is never sourced from user input
 
@@ -54,10 +57,12 @@ Prism.js is a lightweight syntax highlighter (~7KB core, ~2KB per language gramm
 Highlight.js auto-detects language or accepts an explicit language hint. It is a more "batteries-included" alternative to Prism.
 
 **Pros:**
+
 - Supports more languages out of the box
 - Auto-detection can be convenient
 
 **Cons:**
+
 - Larger base bundle (~50KB+ for the language-detecting core)
 - Auto-detection adds latency and can misclassify short snippets
 - The API (`hljs.highlightElement(el)`) mutates the DOM element in place, which is less composable than Prism's `highlight()` string API
@@ -68,10 +73,12 @@ Highlight.js auto-detects language or accepts an explicit language hint. It is a
 Write a minimal tokenizer for JavaScript, HTML, and CSS that identifies keywords, strings, numbers, and operators.
 
 **Pros:**
+
 - Zero external dependency
 - Full control over which tokens are highlighted and how
 
 **Cons:**
+
 - Writing a correct tokenizer for JavaScript, HTML, and CSS is a significant engineering task (regular expressions alone cannot handle string escapes, template literals, nested tags, or selector specificity correctly)
 - Maintenance burden: any language version change (e.g., new JS syntax) requires updating the tokenizer
 - Prism.js already solves this problem correctly and is proven — a custom solution would be reinventing a solved wheel
@@ -85,12 +92,14 @@ Write a minimal tokenizer for JavaScript, HTML, and CSS that identifies keywords
 Prism is called in exactly three places:
 
 1. **`ui/codePanel.js`** — when appending a completed line to the assembly panel:
+
    ```js
    import Prism from '../lib/prism.min.js';
    lineEl.innerHTML = Prism.highlight(line, grammar, language);
    ```
 
 2. **`ui/codePanel.js`** — when rendering the static target line display at enemy spawn:
+
    ```js
    targetDisplay.innerHTML = Prism.highlight(line, grammar, language);
    ```
@@ -108,16 +117,19 @@ Prism is called in exactly three places:
 ### Custom Theme
 
 Prism's default token CSS is overridden in `styles.css` with a horror-themed palette:
+
 - Keywords: pale blue (`rgba(130, 200, 255, 0.9)`)
 - Strings: ghostly green (`rgba(100, 255, 180, 0.9)`)
 - Comments: dim gray (dimmed, as comments are excluded from snippets per content guidelines)
 - Punctuation: off-white
 
 ### Positive Consequences
+
 - The code panel looks like a real terminal from the first day of Sprint 2
 - Token colors can be tuned in one CSS block without touching JS
 - Prism's grammar files for additional languages (C, Java) can be added post-MVP by dropping a new file in `lib/`
 
 ### Negative Consequences
+
 - `innerHTML` assignment is used; all inputs to Prism must come from the trusted snippet library, not user input
 - Local copies of Prism files must be kept up-to-date if security issues are discovered in the library

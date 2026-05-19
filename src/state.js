@@ -7,13 +7,17 @@
  * Implemented by Issue #2.
  */
 
+/**
+ *
+ * @param language
+ */
 export function createRunState(language) {
   return {
-    language,               // 'javascript' | 'html' | 'css'
+    language, // 'javascript' | 'html' | 'css'
     lives: 3,
     score: 0,
     wave: 1,
-    upgrades: [],           // array of upgrade ids collected this run
+    upgrades: [], // array of upgrade ids collected this run
     fallSpeedMultiplier: 1.0,
     scoreMultiplier: 1.0,
     bossScoreMultiplier: 1.0,
@@ -22,10 +26,11 @@ export function createRunState(language) {
     lifePerWave: false,
     revealNext: false,
     speedBonusActive: false,
-    stats: {                // populated by statTracker
+    stats: {
+      // populated by statTracker
       totalKeystrokes: 0,
       totalErrors: 0,
-      waveData: []          // per-wave { wpm, accuracy, mistakes[] }
-    }
+      waveData: [], // per-wave { wpm, accuracy, mistakes[] }
+    },
   };
 }

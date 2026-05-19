@@ -1,19 +1,19 @@
 # Code Style Guide
 
-This document is the single source of truth for how we write code on this project. ESLint and Prettier enforce most of these rules automatically — the CI pipeline will block PRs that violate them. This guide explains the *why* behind each rule so teammates can write compliant code from the start, not just fix errors after the fact.
+This document is the single source of truth for how we write code on this project. ESLint and Prettier enforce most of these rules automatically — the CI pipeline will block PRs that violate them. This guide explains the _why_ behind each rule so teammates can write compliant code from the start, not just fix errors after the fact.
 
 ---
 
 ## 1. Naming Conventions
 
-| Thing | Convention | Example |
-|-------|-----------|---------|
-| Variables | `camelCase` | `fallSpeed`, `currentWave` |
-| Functions | `camelCase` | `spawnEnemy()`, `updateScore()` |
-| Constants (module-level, fixed value) | `SCREAMING_SNAKE_CASE` | `MAX_LIVES`, `BASE_FALL_SPEED` |
-| Classes | `PascalCase` | `RunState`, `AudioPool` |
-| Files | `camelCase` | `enemySystem.js`, `waveManager.js` |
-| CSS classes / IDs | `kebab-case` | `#play-area`, `.enemy-code` |
+| Thing                                 | Convention             | Example                            |
+| ------------------------------------- | ---------------------- | ---------------------------------- |
+| Variables                             | `camelCase`            | `fallSpeed`, `currentWave`         |
+| Functions                             | `camelCase`            | `spawnEnemy()`, `updateScore()`    |
+| Constants (module-level, fixed value) | `SCREAMING_SNAKE_CASE` | `MAX_LIVES`, `BASE_FALL_SPEED`     |
+| Classes                               | `PascalCase`           | `RunState`, `AudioPool`            |
+| Files                                 | `camelCase`            | `enemySystem.js`, `waveManager.js` |
+| CSS classes / IDs                     | `kebab-case`           | `#play-area`, `.enemy-code`        |
 
 **Never use single-letter variable names** outside of short loop counters (`i`, `j`) or mathematical formulas. Names must be descriptive: `enemy` not `e`, `snippet` not `s`.
 
@@ -41,6 +41,7 @@ let name = 'Phantom'; // name never changes — use const
 Every **exported function** must have a JSDoc comment. Internal helper functions should have one if their purpose isn't immediately obvious from the name.
 
 **Required tags:**
+
 - `@param` for each parameter (with type and description)
 - `@returns` if the function returns a value
 
@@ -64,7 +65,7 @@ export function spawnEnemy(state, snippet) { ... }
 export function spawnEnemy(state, snippet) { ... }
 ```
 
-**Inline comments** (`//`) should explain *why*, not *what*. If the code says what it does, the comment should explain the reason.
+**Inline comments** (`//`) should explain _why_, not _what_. If the code says what it does, the comment should explain the reason.
 
 ```js
 // Good
@@ -113,7 +114,7 @@ function spawnEnemy(state, snippet)
 const prefs = { language: 'javascript', muted: false };
 
 // Bad
-const prefs = {language: 'javascript', muted: false};
+const prefs = { language: 'javascript', muted: false };
 ```
 
 ---
@@ -133,7 +134,7 @@ function getSnippet(language) {
 // Bad — mixes return; and return value;
 function getSnippet(language) {
   const pool = LIBRARIES[language];
-  if (!pool) return;           // bare return
+  if (!pool) return; // bare return
   return pool[Math.floor(Math.random() * pool.length)]; // return value
 }
 ```
@@ -148,13 +149,13 @@ function getSnippet(language) {
 
 ```js
 // Good
-import { createRunState }     from './state.js';
-import { showScreen }         from './ui/screenManager.js';
+import { createRunState } from './state.js';
+import { showScreen } from './ui/screenManager.js';
 import { init as initTyping } from './engine/typingEngine.js';
 
 // Bad
 import typingEngine from './engine/typingEngine.js'; // default import
-const { createRunState } = require('./state.js');    // CommonJS
+const { createRunState } = require('./state.js'); // CommonJS
 ```
 
 ---
@@ -177,20 +178,21 @@ if (state.lives == 0) { ... }
 
 These are enforced automatically by Prettier — you don't need to memorize them, just run `npm run format` before committing.
 
-| Rule | Value |
-|------|-------|
-| Indentation | 2 spaces (no tabs) |
-| Semicolons | Required |
-| Quotes | Single quotes (`'`) |
-| Trailing commas | ES5 style (objects, arrays — not function parameters) |
-| Max line length | 100 characters |
-| Arrow function parens | Always (`(x) => x`, not `x => x`) |
+| Rule                  | Value                                                 |
+| --------------------- | ----------------------------------------------------- |
+| Indentation           | 2 spaces (no tabs)                                    |
+| Semicolons            | Required                                              |
+| Quotes                | Single quotes (`'`)                                   |
+| Trailing commas       | ES5 style (objects, arrays — not function parameters) |
+| Max line length       | 100 characters                                        |
+| Arrow function parens | Always (`(x) => x`, not `x => x`)                     |
 
 ---
 
 ## 9. File and Module Structure
 
 Each file should follow this order:
+
 1. JSDoc file-level comment (module purpose, issue number)
 2. `import` statements
 3. Module-level constants (`const MAX_LIVES = 3;`)

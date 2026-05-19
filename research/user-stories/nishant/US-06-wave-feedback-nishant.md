@@ -17,7 +17,7 @@
 
 ## Notes
 
-This is one of the most educationally valuable screens in the game. Showing *which* characters were mistyped (e.g., missing a semicolon, confusing `==` with `===`) helps students connect in-game mistakes to real syntax habits. Keep the screen brief — it should inform, not interrupt. A 3–5 second auto-advance with the option to linger is a good pattern.
+This is one of the most educationally valuable screens in the game. Showing _which_ characters were mistyped (e.g., missing a semicolon, confusing `==` with `===`) helps students connect in-game mistakes to real syntax habits. Keep the screen brief — it should inform, not interrupt. A 3–5 second auto-advance with the option to linger is a good pattern.
 
 ## Dependencies
 

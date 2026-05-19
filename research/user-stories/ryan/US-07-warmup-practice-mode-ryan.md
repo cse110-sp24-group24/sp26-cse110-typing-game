@@ -9,7 +9,7 @@
 ## Acceptance criteria
 
 - [ ] From the main flow, the player can enter “Warmup” without unlocking anything special beyond practice
-- [ ] Warmup pulls snippets from the same language and quality bar as the main game 
+- [ ] Warmup pulls snippets from the same language and quality bar as the main game
 - [ ] No permanent run state: exiting warmup does not corrupt an in-progress run
 - [ ] Clear on-screen label distinguishes warmup from a real run at all times
 - [ ] Player can jump from warmup to starting a real run in two steps or fewer

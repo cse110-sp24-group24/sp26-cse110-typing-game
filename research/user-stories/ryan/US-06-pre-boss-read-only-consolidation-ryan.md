@@ -8,16 +8,16 @@
 
 ## Acceptance criteria
 
-- [ ] After the last regular enemy and before boss input accepts keys, the assembled function is shown complete for a fixed short window  or until the player presses “Ready”. 
+- [ ] After the last regular enemy and before boss input accepts keys, the assembled function is shown complete for a fixed short window or until the player presses “Ready”.
 - [ ] Input is disabled during this window; no health loss from idle
-- [ ] The view is identical in layout to what the boss will require 
+- [ ] The view is identical in layout to what the boss will require
 - [ ] Skipping is allowed after a minimum dwell time (e.g., 1s) to prevent instant misclicks for learners who need the time
 
 ---
 
 ## Notes
 
-We'll probably need to decide how lenient to make this window.  Window could also be customizable with some overhead
+We'll probably need to decide how lenient to make this window. Window could also be customizable with some overhead
 
 ## Dependencies
 

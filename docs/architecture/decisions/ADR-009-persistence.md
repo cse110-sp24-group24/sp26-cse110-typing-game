@@ -34,10 +34,12 @@ Use **`localStorage` for Category A (user preferences) only**. Run state (Catego
 All state lives in JavaScript variables. Refreshing the page loses everything.
 
 **Pros:**
+
 - Zero complexity; no storage API to debug
 - No stale state bugs (old data from a previous session interfering with a new run)
 
 **Cons:**
+
 - Language preference is lost on every page load — a player who always plays the same language must re-select it every time
 - Audio settings (volume levels) reset — a player who muted music must re-mute it every session
 - Multiple user stories explicitly call out preference persistence as a core requirement (Simar US-10, Shubhi US-10)
@@ -47,10 +49,12 @@ All state lives in JavaScript variables. Refreshing the page loses everything.
 `sessionStorage` persists within one browser tab session. Closing the tab clears it.
 
 **Pros:**
+
 - Slightly simpler lifecycle than `localStorage` — no need to worry about stale data from weeks ago
 - Same API as `localStorage`
 
 **Cons:**
+
 - Closing the tab and reopening loses preferences — the same UX failure as no persistence
 - Opening the game in a second tab creates an independent session, which is fine but may surprise users
 
@@ -59,12 +63,14 @@ All state lives in JavaScript variables. Refreshing the page loses everything.
 `localStorage` persists indefinitely (until the user clears browser data) within the same origin. It provides ~5MB of storage, which is more than sufficient.
 
 **Pros:**
+
 - Preferences survive tab close, browser restart, and system restart
 - Same simple key-value API as `sessionStorage`
 - No external service or account required
 - Widely supported and well-understood by the team
 
 **Cons:**
+
 - Synchronous API: `localStorage.getItem()` and `.setItem()` are blocking. For the small amount of data involved (a few hundred bytes), this is imperceptible
 - Data persists across sessions in potentially unexpected ways if the storage schema changes between deployments. Mitigation: versioned key schema (see below)
 - No expiry mechanism — stale preference data could theoretically persist indefinitely. Acceptable for user preferences
@@ -74,10 +80,12 @@ All state lives in JavaScript variables. Refreshing the page loses everything.
 IndexedDB is an asynchronous, transaction-based client-side database that can store structured data and binary blobs.
 
 **Pros:**
+
 - Handles large datasets; supports indexes and cursors
 - Asynchronous API does not block the main thread
 
 **Cons:**
+
 - Significantly more complex API than `localStorage` — requires transactions, object stores, version upgrades
 - For storing 4–6 user preference values, IndexedDB is massively over-engineered
 - The async API would complicate the synchronous "load preferences on startup" flow in `main.js`
@@ -90,13 +98,13 @@ IndexedDB is an asynchronous, transaction-based client-side database that can st
 
 All keys are namespaced under `phantomtype.v1.` to enable future schema migrations without conflicting with other apps on the same origin.
 
-| Key | Type | Description |
-|-----|------|-------------|
-| `phantomtype.v1.language` | `'javascript' \| 'html' \| 'css'` | Last selected language |
-| `phantomtype.v1.musicVolume` | `number (0–1)` | Music volume |
-| `phantomtype.v1.sfxVolume` | `number (0–1)` | SFX volume |
-| `phantomtype.v1.muted` | `boolean` | Mute state |
-| `phantomtype.v1.tutorialSeen` | `boolean` | Tutorial completion flag (for post-MVP tutorial) |
+| Key                           | Type                              | Description                                      |
+| ----------------------------- | --------------------------------- | ------------------------------------------------ |
+| `phantomtype.v1.language`     | `'javascript' \| 'html' \| 'css'` | Last selected language                           |
+| `phantomtype.v1.musicVolume`  | `number (0–1)`                    | Music volume                                     |
+| `phantomtype.v1.sfxVolume`    | `number (0–1)`                    | SFX volume                                       |
+| `phantomtype.v1.muted`        | `boolean`                         | Mute state                                       |
+| `phantomtype.v1.tutorialSeen` | `boolean`                         | Tutorial completion flag (for post-MVP tutorial) |
 
 ### `storage.js` Public API
 
@@ -111,6 +119,7 @@ export function resetToDefaults()             // clears all phantomtype.v1.* key
 ### Run State Is Not Persisted
 
 `RunState` (score, lives, upgrades, wave) is deliberately held only in memory. Rationale:
+
 - A run is 10–20 minutes; losing a run to a page refresh is acceptable and expected behavior for a browser game in this scope
 - Persisting run state introduces complex edge cases: what if the upgrade pool changed between sessions? What if a snippet was removed? Replaying a partially-corrupted run state would be worse than starting fresh
 - The pause menu already handles the "I need to stop mid-run" case cleanly by routing to the stats screen
@@ -119,17 +128,19 @@ export function resetToDefaults()             // clears all phantomtype.v1.* key
 
 When historical stats tracking is added (Shubhi US-07), `storage.js` adds:
 
-| Key | Type | Description |
-|-----|------|-------------|
-| `phantomtype.v1.bestScore` | `number` | All-time best score |
-| `phantomtype.v1.bestWpm` | `number` | All-time best WPM |
-| `phantomtype.v1.runsPlayed` | `number` | Total runs played |
+| Key                         | Type     | Description         |
+| --------------------------- | -------- | ------------------- |
+| `phantomtype.v1.bestScore`  | `number` | All-time best score |
+| `phantomtype.v1.bestWpm`    | `number` | All-time best WPM   |
+| `phantomtype.v1.runsPlayed` | `number` | Total runs played   |
 
 ### Positive Consequences
+
 - Returning players see their preferred language pre-selected and audio at their preferred level
 - All persistence is isolated to `storage.js` — the rest of the codebase calls named functions and never touches `localStorage` directly
 - The v1 key namespace allows a clean migration if the schema ever changes
 
 ### Negative Consequences
+
 - `localStorage` is synchronous; if a future preference set grows large, reading it on startup could cause a detectable delay. Highly unlikely for the data volumes in scope
 - Browser private/incognito mode may block `localStorage` on some browsers. `storage.js` wraps all calls in a try/catch and falls back to in-memory defaults silently

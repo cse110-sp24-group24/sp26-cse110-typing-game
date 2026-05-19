@@ -7,22 +7,28 @@
  * Implemented by Issue #1.
  */
 
-import { snippets as jsSnippets }   from './javascript.js';
+import { snippets as jsSnippets } from './javascript.js';
 import { snippets as htmlSnippets } from './html.js';
-import { snippets as cssSnippets }  from './css.js';
+import { snippets as cssSnippets } from './css.js';
 
 const LIBRARIES = {
   javascript: jsSnippets,
-  html:       htmlSnippets,
-  css:        cssSnippets,
+  html: htmlSnippets,
+  css: cssSnippets,
 };
 
-/** Returns all snippets for a language. */
+/**
+ * Returns all snippets for a language.
+ * @param language
+ */
 export function getSnippetsForLanguage(language) {
   return LIBRARIES[language] ?? [];
 }
 
-/** Returns a single random snippet for the given language. */
+/**
+ * Returns a single random snippet for the given language.
+ * @param language
+ */
 export function getSnippet(language) {
   const pool = getSnippetsForLanguage(language);
   return pool[Math.floor(Math.random() * pool.length)];

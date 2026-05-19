@@ -1,7 +1,7 @@
 ---
 name: Bug Report
 about: Something is broken or behaving incorrectly
-title: "[BUG] Short description of the problem"
+title: '[BUG] Short description of the problem'
 labels: bug
 assignees: ''
 ---
@@ -23,6 +23,7 @@ assignees: ''
 ## Module / Component
 
 <!-- Which part of the codebase is likely responsible? -->
+
 - [ ] engine/typingEngine.js
 - [ ] engine/enemySystem.js
 - [ ] engine/waveManager.js
@@ -45,6 +46,7 @@ assignees: ''
 ## Sprint
 
 <!-- Which sprint introduced this? -->
+
 - [ ] Sprint 1
 - [ ] Sprint 2
 - [ ] Sprint 3

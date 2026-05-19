@@ -12,21 +12,35 @@ export function init(state) {
   // Issue #17
 }
 
+/**
+ *
+ * @param correct
+ */
 export function recordKeystroke(correct) {
   // Issue #17
 }
 
+/**
+ *
+ */
 export function getWpm() {
   // Issue #17
   return 0;
 }
 
+/**
+ *
+ */
 export function getAccuracy() {
   // Issue #17
   return 0;
 }
 
-/** Saves current wave stats into state.stats.waveData and resets counters. */
+/**
+ * Saves current wave stats into state.stats.waveData and resets counters.
+ * @param state
+ * @param mistakes
+ */
 export function commitWave(state, mistakes) {
   // Issue #17
 }

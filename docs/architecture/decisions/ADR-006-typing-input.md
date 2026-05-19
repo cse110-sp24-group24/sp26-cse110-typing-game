@@ -15,6 +15,7 @@ The typing input system is the most latency-sensitive part of the game. Every ke
 5. Prevent the input from ever losing focus mid-wave
 
 Secondary requirements from user stories:
+
 - On incorrect character: do NOT clear the field; player corrects in place (Nishant US-01, Sam US-03)
 - On correct submission: field clears instantly, focus stays (Sam US-03)
 - Field must be auto-focused at wave start without requiring a click (Sam US-03)
@@ -36,6 +37,7 @@ Use a single **`<input type="text">`** element with `autocomplete="off"`, `autoc
 One persistent `<input>` element exists in the DOM throughout the game screen. Its `value` is cleared and `.focus()` called each time a new enemy becomes active. Typo feedback is rendered in a separate, read-only overlay positioned above the input (or directly beside the target line).
 
 **Pros:**
+
 - Native browser focus management: mobile virtual keyboard behavior is well-defined, `:focus` CSS state is reliable, autofill can be disabled trivially
 - `input` event fires synchronously on every character change, including autocorrect behavior (which we suppress)
 - Blocking paste is a one-liner: `input.addEventListener('paste', e => e.preventDefault())`
@@ -43,7 +45,8 @@ One persistent `<input>` element exists in the DOM throughout the game screen. I
 - Mobile browser support is mature and predictable
 
 **Cons:**
-- The visual feedback for correct/incorrect characters must be rendered in a *separate* element (a span overlay), not inside the input itself, since `<input>` doesn't support mixed character styling. This requires keeping the overlay synchronized with the input value.
+
+- The visual feedback for correct/incorrect characters must be rendered in a _separate_ element (a span overlay), not inside the input itself, since `<input>` doesn't support mixed character styling. This requires keeping the overlay synchronized with the input value.
 - Browser autofill dropdowns can appear on certain browsers despite `autocomplete="off"`; requires `autocomplete="new-password"` as a workaround
 
 ### Option 2: `contenteditable` Div
@@ -51,10 +54,12 @@ One persistent `<input>` element exists in the DOM throughout the game screen. I
 A `<div contenteditable="true">` accepts typed input and can have mixed inline styling (green/red spans per character).
 
 **Pros:**
+
 - Mixed character styling is native — no separate overlay element needed
 - The visual "caret" position is part of the element, making it look more like a real code editor
 
 **Cons:**
+
 - `contenteditable` has notoriously inconsistent behavior across browsers for programmatic value manipulation (`textContent = ''` does not always work as expected)
 - Paste behavior is much harder to fully suppress — pasted rich text, HTML, or formatted content can bypass simple `paste` event prevention
 - Mobile browser support for `contenteditable` is fragmented, especially for autocorrect/autocapitalize suppression
@@ -66,10 +71,12 @@ A `<div contenteditable="true">` accepts typed input and can have mixed inline s
 Listen to `keydown` on `window`, maintain a JavaScript string buffer, and render the buffer character-by-character onto a canvas or custom element.
 
 **Pros:**
+
 - Full control: no browser auto-behaviors to suppress
 - Works even if the game renders on `<canvas>`
 
 **Cons:**
+
 - Dead keys, IME (input method editor) support, and composed characters (accents, international keyboards) require reimplementing browser-native input handling — a large and bug-prone surface
 - Mobile support is essentially impossible (no hardware keyboard guarantee)
 - The game targets student laptops with standard keyboards, but the input handling complexity is not worth the control gained
@@ -81,6 +88,7 @@ Listen to `keydown` on `window`, maintain a JavaScript string buffer, and render
 ### Feedback Rendering
 
 On every `input` event, `typingEngine.js`:
+
 1. Reads `input.value` (the current player buffer)
 2. Compares it character-by-character against the active target string
 3. Rebuilds the `target-line-display` HTML:
@@ -117,10 +125,12 @@ function activateEnemy(enemy) {
 ```
 
 ### Positive Consequences
+
 - Reliable cross-browser focus, autocorrect suppression, and paste blocking with minimal code
 - `typingEngine.js` is a pure function over `(inputValue, targetString) → feedbackHTML` — easy to unit test
 - The input element is always in the DOM; no creation/destruction overhead per enemy
 
 ### Negative Consequences
+
 - The feedback overlay must be kept visually aligned with the input element via CSS; layout shifts must be tested across browser zoom levels
 - Autofill suppression requires `autocomplete="new-password"` (a known hack) that may stop working in future browser versions

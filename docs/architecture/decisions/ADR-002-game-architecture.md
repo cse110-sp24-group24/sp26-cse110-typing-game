@@ -31,10 +31,12 @@ Use **CSS animations for enemy fall movement** combined with **DOM `input` event
 A central `gameLoop(timestamp)` function runs on every frame. It updates enemy Y positions, checks deadline crossings, and re-renders the UI.
 
 **Pros:**
+
 - Single place to reason about timing
 - Familiar pattern from game development
 
 **Cons:**
+
 - Typing response latency: a keypress must wait for the next frame before the UI updates, adding up to 16ms of visible lag at 60fps. For a typing game, this is perceptible
 - All UI updates happen in the loop even when nothing has changed (wasted work on idle frames)
 - Complex to pause/resume correctly
@@ -44,11 +46,13 @@ A central `gameLoop(timestamp)` function runs on every frame. It updates enemy Y
 CSS `animation` handles enemy movement (keyframes from top to deadline). JS listens to `animationend` or uses `IntersectionObserver` for deadline detection. Typing is handled by DOM events only.
 
 **Pros:**
+
 - Zero JS frame cost for movement — the browser handles it on the GPU compositor thread
 - Instant typing response (no frame wait)
 - Pause is trivially implemented by toggling `animation-play-state: paused` on all enemies
 
 **Cons:**
+
 - Difficulty detecting the exact frame an enemy crosses the deadline without polling
 - CSS animations cannot be easily modified mid-flight (e.g., when a "Slow Fall" upgrade is applied mid-wave — you cannot change `animation-duration` on a running animation without restarting it)
 
@@ -57,6 +61,7 @@ CSS `animation` handles enemy movement (keyframes from top to deadline). JS list
 CSS animations drive the visual fall. DOM events drive the typing engine. A lightweight rAF loop reads `getBoundingClientRect()` on each enemy once per frame to detect deadline crossing.
 
 **Pros:**
+
 - Typing response is instant (DOM event → synchronous handler)
 - Enemy movement is buttery-smooth (CSS compositor thread)
 - Deadline detection is accurate to within one frame (~16ms)
@@ -64,6 +69,7 @@ CSS animations drive the visual fall. DOM events drive the typing engine. A ligh
 - The "Slow Fall" upgrade can be applied by restarting the CSS animation with a new duration, which is an acceptable UX because the visual jank is hidden by the upgrade selection screen transition
 
 **Cons:**
+
 - Slightly more complex: two execution paths (rAF + events) instead of one
 - `getBoundingClientRect()` in rAF forces a layout recalculation per frame; acceptable for the small number of enemies on screen (~5–8) but must not be called outside of rAF
 
@@ -74,12 +80,14 @@ CSS animations drive the visual fall. DOM events drive the typing engine. A ligh
 The pause mechanic applies `animation-play-state: paused` to all `.enemy` elements and cancels the rAF loop until resumed.
 
 ### Positive Consequences
+
 - Instant, imperceptible typing feedback — no frame-wait latency
 - Smooth 60fps enemy movement driven by the browser's compositor
 - Clean separation: `typingEngine` never touches rAF; `enemySystem` never touches the input field
 - Pause is a single CSS property change
 
 ### Negative Consequences
+
 - The "Slow Fall" upgrade requires restarting CSS animations on live enemies with a new duration. This is visually seamless only when applied between waves (during upgrade selection), not mid-wave.
 - `getBoundingClientRect()` must be gated to the rAF callback; calling it elsewhere triggers synchronous layout and hurts performance.
 

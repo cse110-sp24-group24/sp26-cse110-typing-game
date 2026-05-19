@@ -13,10 +13,17 @@ export function init(state) {
   // Issue #5
 }
 
+/**
+ *
+ * @param line
+ */
 export function setTarget(line) {
   // Issue #5
 }
 
+/**
+ *
+ */
 export function clearTarget() {
   // Issue #5
 }

@@ -10,12 +10,15 @@
 const KEY = 'phantomtype_prefs';
 
 const DEFAULTS = {
-  language:    'javascript',
+  language: 'javascript',
   musicVolume: 0.5,
-  sfxVolume:   0.7,
-  muted:       false,
+  sfxVolume: 0.7,
+  muted: false,
 };
 
+/**
+ *
+ */
 export function getPreferences() {
   try {
     const stored = localStorage.getItem(KEY);
@@ -25,6 +28,10 @@ export function getPreferences() {
   }
 }
 
+/**
+ *
+ * @param prefs
+ */
 export function savePreferences(prefs) {
   try {
     localStorage.setItem(KEY, JSON.stringify(prefs));

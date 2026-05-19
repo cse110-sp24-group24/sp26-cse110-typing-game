@@ -32,6 +32,7 @@ Use **vanilla HTML, CSS, and JavaScript with ES modules**. No build step. No fra
 The game runs from an `index.html` that imports JS modules via `<script type="module">`. All DOM manipulation is done with native browser APIs. CSS handles animations and layout.
 
 **Pros:**
+
 - Zero setup — any team member can open `index.html` in a browser and have a working game
 - No build artifacts to configure or maintain
 - The MVP prototype already works this way; switching frameworks would require rewriting working code
@@ -39,6 +40,7 @@ The game runs from an `index.html` that imports JS modules via `<script type="mo
 - Deployable to GitHub Pages with no CI pipeline
 
 **Cons:**
+
 - No component model; team must maintain their own DOM structure discipline
 - No hot module replacement during development (full page reload on change)
 - Tree-shaking not available; all imported modules load
@@ -48,11 +50,13 @@ The game runs from an `index.html` that imports JS modules via `<script type="mo
 React's component model would organize the UI well. Vite provides fast HMR.
 
 **Pros:**
+
 - Strong component abstraction for screens and UI elements
 - React state management is familiar to some team members
 - Vite's HMR speeds up iteration
 
 **Cons:**
+
 - Requires Node.js + npm install before any team member can work
 - Game loop (rAF) and React's render cycle are philosophically at odds; mixing them requires careful discipline to avoid performance issues
 - Henry's individual prototype used React/Vite and was notably more complex to set up than the vanilla prototypes
@@ -64,10 +68,12 @@ React's component model would organize the UI well. Vite provides fast HMR.
 Phaser is a purpose-built 2D game framework with a built-in physics engine, asset loader, input manager, and scene graph.
 
 **Pros:**
+
 - Built-in game loop, camera, sprite management, audio, and input handling
 - Large community and extensive documentation
 
 **Cons:**
+
 - Phaser is designed for canvas-based games; Phantom Type's UI (code panel, HUD overlays, typing input) is inherently HTML — mixing Phaser canvas with HTML DOM elements is awkward and a known pain point
 - Bundle size (~1MB minified) is significant for a small game
 - Steep learning curve for the whole team; none of the existing prototypes use it
@@ -83,11 +89,13 @@ Phaser is a purpose-built 2D game framework with a built-in physics engine, asse
 4. GitHub Pages deployment requires no build step
 
 ### Positive Consequences
+
 - Any team member can open the project with no install
 - The full game is readable as plain source files
 - Changing one module does not risk breaking framework-specific behavior elsewhere
 
 ### Negative Consequences
+
 - The team must enforce their own module boundary discipline without a framework's help
 - No HMR; development iteration uses full page reloads
 - Third-party libraries (Prism.js, audio files) are loaded via CDN or placed in a `lib/` directory manually

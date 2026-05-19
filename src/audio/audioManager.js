@@ -12,10 +12,16 @@ export function init(prefs) {
   // Issue #15
 }
 
+/**
+ *
+ */
 export function playAmbient() {
   // Issue #15
 }
 
+/**
+ *
+ */
 export function stopAmbient() {
   // Issue #15
 }
@@ -25,14 +31,26 @@ export function playSfx(name) {
   // Issue #15
 }
 
+/**
+ *
+ * @param vol
+ */
 export function setMusicVolume(vol) {
   // Issue #15
 }
 
+/**
+ *
+ * @param vol
+ */
 export function setSfxVolume(vol) {
   // Issue #15
 }
 
+/**
+ *
+ * @param muted
+ */
 export function setMuted(muted) {
   // Issue #15
 }

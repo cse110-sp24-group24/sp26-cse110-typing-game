@@ -12,6 +12,11 @@ export function init(state) {
   // Issue #11
 }
 
+/**
+ *
+ * @param state
+ * @param snippet
+ */
 export function startBoss(state, snippet) {
   // Issue #11
 }

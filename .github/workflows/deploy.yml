@@ -9,12 +9,12 @@ on:
 # Allow the workflow to write to GitHub Pages
 permissions:
   contents: read
-  pages:    write
+  pages: write
   id-token: write
 
 # Only allow one deployment at a time; cancel any in-progress run
 concurrency:
-  group:              pages
+  group: pages
   cancel-in-progress: true
 
 jobs:

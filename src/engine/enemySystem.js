@@ -12,10 +12,18 @@ export function init(state) {
   // Issue #6
 }
 
+/**
+ *
+ * @param state
+ * @param snippet
+ */
 export function spawnEnemy(state, snippet) {
   // Issue #6
 }
 
+/**
+ *
+ */
 export function clearAllEnemies() {
   // Issue #6
 }

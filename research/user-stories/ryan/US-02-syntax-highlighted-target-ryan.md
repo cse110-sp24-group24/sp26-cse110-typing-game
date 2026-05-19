@@ -2,21 +2,21 @@
 
 ## Reading code the way my editor shows it
 
-**As a new CS student**, I want the code I must type to use familiar syntax highlighting (keywords, strings, literals, comments), so that my eyes learn the same color patterns I see when doing assignments and coding in my personal IDE.  Also, makes code look nicer.
+**As a new CS student**, I want the code I must type to use familiar syntax highlighting (keywords, strings, literals, comments), so that my eyes learn the same color patterns I see when doing assignments and coding in my personal IDE. Also, makes code look nicer.
 
 ---
 
 ## Acceptance criteria
 
 - [ ] The active enemy line (and boss target) is rendered with a consistent token-color scheme for the selected language
-- [ ] Contrast meets readability on the haunted/dark UI background.  Perhaps change in color scheme for light and dark.
+- [ ] Contrast meets readability on the haunted/dark UI background. Perhaps change in color scheme for light and dark.
 - [ ] Performance stays smooth on keypress (no visible lag)
 
 ---
 
 ## Notes
 
-Syntax highlighting is not just cosmetic for beginners, but can help them learn through pattern reconiztion. 
+Syntax highlighting is not just cosmetic for beginners, but can help them learn through pattern reconiztion.
 
 ## Dependencies
 

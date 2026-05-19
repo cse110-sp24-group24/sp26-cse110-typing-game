@@ -7,6 +7,7 @@ Accepted
 ## Context
 
 Ghost enemies are the visual centrepiece of each wave. Each enemy:
+
 - Displays a single line of code as its "target text"
 - Falls downward at a configurable speed
 - Has a themed ghost sprite
@@ -32,11 +33,13 @@ Use **DOM `<div>` elements with inline SVG sprites, positioned absolutely and an
 Enemies and their code text are drawn on a `<canvas>` element inside a `requestAnimationFrame` loop.
 
 **Pros:**
+
 - Maximum control over rendering; pixel-perfect positioning
 - No DOM layout cost for enemy positions
 - Easy to draw arbitrary shapes and effects
 
 **Cons:**
+
 - Text rendering on Canvas is primitive compared to HTML — no syntax highlighting, no CSS fonts, poor subpixel rendering
 - The code panel, HUD, input field, and overlays are all HTML elements; mixing canvas enemies with HTML UI creates two parallel rendering systems that are difficult to keep synchronized
 - Accessibility: Canvas content is invisible to screen readers; `role="img"` workarounds are inadequate for code text
@@ -47,6 +50,7 @@ Enemies and their code text are drawn on a `<canvas>` element inside a `requestA
 Each enemy is a `<div class="enemy">` containing an SVG sprite and a code text span. Downward movement is handled by a CSS `@keyframes` animation from `top: -10%` to `top: 100%`. The animation duration is derived from the current `fallSpeedMultiplier` in `RunState`.
 
 **Pros:**
+
 - CSS compositor thread handles movement with no JS frame cost
 - Ghost SVG sprites from the MVP prototype work directly, no conversion needed
 - Text in DOM supports proper subpixel rendering, font features, and eventually syntax highlighting overlay
@@ -55,6 +59,7 @@ Each enemy is a `<div class="enemy">` containing an SVG sprite and a code text s
 - The deadline detection uses one `getBoundingClientRect()` call per enemy per frame — cheap and accurate (see ADR-002)
 
 **Cons:**
+
 - Changing animation speed mid-flight (mid-wave slow-fall upgrade) requires restarting the animation, which causes a brief visual stutter. This is acceptable because slow-fall is applied only between waves (during upgrade selection)
 - Absolute positioning of 4–8 enemies must be managed carefully to avoid overlap. Enemies spawn at different horizontal positions (randomized within a safe range) to prevent visual collisions
 
@@ -63,10 +68,12 @@ Each enemy is a `<div class="enemy">` containing an SVG sprite and a code text s
 The play area is a single `<svg>` element. Enemy groups (`<g>`) are translated with SVG `animateTransform` or CSS transforms.
 
 **Pros:**
+
 - All rendering is in one coordinate system
 - SVG `text` elements preserve code text in the accessibility tree
 
 **Cons:**
+
 - SVG `text` has weaker CSS support than HTML `span` — no `line-height`, limited `white-space` handling, which matters for the code text display
 - Mixing SVG with the HTML-based HUD and input field still requires two coordinate systems
 - Browser support for SVG animations via CSS is inconsistent across older targets
@@ -101,9 +108,11 @@ deadlineBreached()
 The MVP prototype includes 5 distinct SVG ghost designs. `enemySystem.js` selects a sprite using `lineIndex % ENEMY_SHAPES.length` to ensure variety within a wave without randomness causing the same sprite twice in a row.
 
 ### Positive Consequences
+
 - Instant pause/resume with no game loop changes
 - Defeat animation is pure CSS — no JS timing coordination required
 - Ghost sprites are reused directly from the MVP prototype
 
 ### Negative Consequences
+
 - Mid-wave "slow fall" upgrade creates a visual restart of the CSS animation if applied during active gameplay. Mitigation: the upgrade selection screen only appears between waves, so this scenario cannot occur in normal gameplay.

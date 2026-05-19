@@ -12,10 +12,19 @@ export function init(state) {
   // Issue #7
 }
 
+/**
+ *
+ * @param state
+ */
 export function startWave(state) {
   // Issue #7
 }
 
+/**
+ *
+ * @param state
+ * @param callback
+ */
 export function onWaveClear(state, callback) {
   // Issue #7
 }

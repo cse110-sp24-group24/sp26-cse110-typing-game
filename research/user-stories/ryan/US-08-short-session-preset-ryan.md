@@ -10,14 +10,14 @@
 
 - [ ] At run start, the player can pick at least one “short” preset alongside a default/normal run
 - [ ] End-of-run stats clearly label the preset used
-- [ ] Short presets still award a coherent arc: at least one upgrade decision if the arc includes multiple waves 
+- [ ] Short presets still award a coherent arc: at least one upgrade decision if the arc includes multiple waves
 - [ ] No hidden penalties to XP/score that punish students for choosing shorter sessions—only transparent scaling if scores are compared
 
 ---
 
 ## Notes
 
-New students might not have time to do full-on runs that can may go for extended periods of time.  
+New students might not have time to do full-on runs that can may go for extended periods of time.
 
 ## Dependencies
 

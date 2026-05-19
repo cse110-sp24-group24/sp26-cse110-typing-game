@@ -9,7 +9,7 @@
 ## Acceptance criteria
 
 - [ ] Typing a character that matches the first letter of an enemy's code line "locks" the player onto that enemy, visually highlighting it.
-- [ ] While locked, all subsequent keystrokes apply *only* to the locked enemy, ignoring others.
+- [ ] While locked, all subsequent keystrokes apply _only_ to the locked enemy, ignoring others.
 - [ ] If multiple enemies start with the exact same character, the game prioritizes and locks onto the enemy closest to the bottom of the screen.
 - [ ] Pressing `Esc`, or pressing `Backspace` when no characters are currently typed on the locked enemy, releases the target lock.
 

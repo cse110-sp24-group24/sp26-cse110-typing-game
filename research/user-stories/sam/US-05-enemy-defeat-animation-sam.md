@@ -17,7 +17,7 @@
 
 ## Notes
 
-The defeat animation is the main feedback loop reward. Without it, correct typing just makes text disappear — with it, the player *killed a ghost*. That emotional beat is what makes the theme land. The animation should feel supernatural: dissolve into particles, melt upward, flicker out. The 500ms cap is important — if it runs longer the game starts to feel sluggish, especially in later waves with more enemies. The audio cue must be distinct from the background ambience so it reads clearly even without looking at the screen.
+The defeat animation is the main feedback loop reward. Without it, correct typing just makes text disappear — with it, the player _killed a ghost_. That emotional beat is what makes the theme land. The animation should feel supernatural: dissolve into particles, melt upward, flicker out. The 500ms cap is important — if it runs longer the game starts to feel sluggish, especially in later waves with more enemies. The audio cue must be distinct from the background ambience so it reads clearly even without looking at the screen.
 
 ## Dependencies
 

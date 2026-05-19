@@ -9,7 +9,7 @@
 ## Acceptance criteria
 
 - [ ] Before or during a wave, the UI shows 1–3 compact tags describing the dominant concepts in the upcoming function
-- [ ] Tags are in plain english or easily understandable for the learning student.  Tags are accurate
+- [ ] Tags are in plain english or easily understandable for the learning student. Tags are accurate
 - [ ] Tags do not obscure typing targets or shrink the input area below usability thresholds
 - [ ] End-of-run stats optionally summarize which tags appeared vs which waves the player failed
 

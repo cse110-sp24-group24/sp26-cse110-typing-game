@@ -9,9 +9,13 @@
 
 export const snippets = [
   // Placeholder snippets — expand to full library in Issue #1
-  { line: '<h1 class="title">Hello, World!</h1>',               fn: 'heading',   tags: ['element', 'text'] },
-  { line: '<p id="intro">Welcome to the page.</p>',             fn: 'paragraph', tags: ['element', 'text'] },
-  { line: '<img src="photo.jpg" alt="A photo">',                fn: 'image',     tags: ['element', 'media'] },
-  { line: '<a href="https://example.com">Click here</a>',       fn: 'anchor',    tags: ['element', 'link'] },
-  { line: '<input type="text" placeholder="Enter name...">',    fn: 'input',     tags: ['element', 'form'] },
+  { line: '<h1 class="title">Hello, World!</h1>', fn: 'heading', tags: ['element', 'text'] },
+  { line: '<p id="intro">Welcome to the page.</p>', fn: 'paragraph', tags: ['element', 'text'] },
+  { line: '<img src="photo.jpg" alt="A photo">', fn: 'image', tags: ['element', 'media'] },
+  { line: '<a href="https://example.com">Click here</a>', fn: 'anchor', tags: ['element', 'link'] },
+  {
+    line: '<input type="text" placeholder="Enter name...">',
+    fn: 'input',
+    tags: ['element', 'form'],
+  },
 ];

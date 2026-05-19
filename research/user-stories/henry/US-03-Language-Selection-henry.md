@@ -28,4 +28,3 @@ This feature personalizes the learning experience and supports replayability.
 ## Definition of done
 
 A player can select a language and receive matching snippets throughout gameplay.
-

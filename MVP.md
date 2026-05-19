@@ -35,6 +35,3 @@ Once the MVP is stable, the team aims to explore:
 - **Jump scares and advanced horror effects** — Glitch effects, panic mode on low health, and atmospheric escalation as waves progress.
 - **Conceptual question obstacles** — Certain enemies trigger a multiple-choice code comprehension question, answered by typing the correct option, blending typing practice with conceptual learning.
 - **Leaderboard / high score tracking** — Persistent scoring across sessions.
-
-
-
