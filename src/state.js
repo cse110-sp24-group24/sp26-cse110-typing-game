@@ -1,36 +1,38 @@
 /**
- * state.js — RunState factory.
+ * Creates and returns a fresh RunState object for a new game run.
  *
- * Creates a fresh RunState object at the start of each run.
- * All modules receive a reference to this object; no global variables.
+ * This state object is shared across game systems and stores
+ * all mutable run-specific data such as score, lives, wave info,
+ * upgrades, modifiers, and typing statistics.
  *
- * Implemented by Issue #2.
- */
-
-/**
+ * @param {string} language - Selected language for the run
+ * ('javascript', 'html', or 'css')
  *
- * @param language
+ * @returns {object} A newly initialized RunState object
  */
 export function createRunState(language) {
   return {
-    language, // 'javascript' | 'html' | 'css'
-    lives: 3,
+    language, // Selected programming language for this run
+    wave: 1, // Current wave number
+    currentSnippetId: null, // ID of the currently active code snippet
+    lives: 3, // Player state
     score: 0,
-    wave: 1,
-    upgrades: [], // array of upgrade ids collected this run
-    fallSpeedMultiplier: 1.0,
-    scoreMultiplier: 1.0,
+    scoreMultiplier: 1.0, // Score modifiers
     bossScoreMultiplier: 1.0,
+    speedBonusActive: false, // Gameplay modifiers and upgrades
+    upgrades: [],
+    fallSpeedMultiplier: 1.0,
     waveFreezeMs: 0,
     shieldPerWave: false,
     lifePerWave: false,
     revealNext: false,
-    speedBonusActive: false,
+
     stats: {
-      // populated by statTracker
+      // Typing and run statistics
       totalKeystrokes: 0,
       totalErrors: 0,
-      waveData: [], // per-wave { wpm, accuracy, mistakes[] }
+      startTime: null, // Timestamp for when the run starts
+      waveData: [], // Stores per-wave statistics such as WPM and accuracy
     },
   };
 }
