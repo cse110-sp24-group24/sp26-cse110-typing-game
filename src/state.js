@@ -8,7 +8,7 @@
  * @param {string} language - Selected language for the run
  * ('javascript', 'html', or 'css')
  *
- * @returns {Object} A newly initialized RunState object
+ * @returns {object} A newly initialized RunState object
  */
 export function createRunState(language) {
   return {
@@ -27,7 +27,8 @@ export function createRunState(language) {
     lifePerWave: false,
     revealNext: false,
 
-    stats: { // Typing and run statistics
+    stats: {
+      // Typing and run statistics
       totalKeystrokes: 0,
       totalErrors: 0,
       startTime: null, // Timestamp for when the run starts
