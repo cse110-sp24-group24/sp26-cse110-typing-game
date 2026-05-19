@@ -1,15 +1,14 @@
 /**
- * state.js — RunState factory.
+ * Creates and returns a fresh RunState object for a new game run.
  *
- * Creates a fresh RunState object at the start of each run.
- * All modules receive a reference to this object; no global variables.
+ * This state object is shared across game systems and stores
+ * all mutable run-specific data such as score, lives, wave info,
+ * upgrades, modifiers, and typing statistics.
  *
- * Implemented by Issue #2.
- */
-
-/**
+ * @param {string} language - Selected language for the run
+ * ('javascript', 'html', or 'css')
  *
- * @param language
+ * @returns {Object} A newly initialized RunState object
  */
 export function createRunState(language) {
   return {
