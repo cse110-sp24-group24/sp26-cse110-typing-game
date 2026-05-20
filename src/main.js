@@ -211,7 +211,7 @@ function showStatic() {
   let running = true;
 
   function tick() {
-    if (!running) return;
+    if (!running) { return; }
     const img = ctx.createImageData(320, 180);
     const d = img.data;
     for (let i = 0; i < d.length; i += 4) {
@@ -274,7 +274,7 @@ function startZombieChromaKey() {
   );
 
   function drawFrame() {
-    if (!running) return;
+    if (!running) { return; }
 
     if (zombie.readyState >= 2 && !zombie.paused && !zombie.ended) {
       chromaCtx.clearRect(0, 0, chromaCanvas.width, chromaCanvas.height);
@@ -369,7 +369,7 @@ function playLanguageTransition(onComplete) {
 
       let done = false;
       const proceed = () => {
-        if (done) return;
+        if (done) { return; }
         done = true;
         onComplete();
         setTimeout(() => {
