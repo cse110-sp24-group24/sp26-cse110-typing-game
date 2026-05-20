@@ -617,14 +617,17 @@ button {
 .game-hud {
   grid-area: hud;
 }
+
 .play-area {
   grid-area: play;
   position: relative;
   overflow: hidden;
 }
+
 .code-panel {
   grid-area: code;
 }
+
 .typing-area {
   grid-area: typing;
 }
@@ -638,6 +641,7 @@ button {
   height: 3px;
   background: var(--color-warning);
   box-shadow: 0 0 12px var(--color-warning);
+  z-index: 5;
 }
 
 /* Typing input */
@@ -669,35 +673,10 @@ button {
 #target-line-display .correct {
   color: var(--color-success);
 }
+
 #target-line-display .incorrect {
   color: var(--color-error);
   text-decoration: underline;
-}
-
-/* ── Enemy Defeat Animation ───────────────────────────────────── */
-/* Triggered by enemySystem.js adding .dissolving class (Issue #16) */
-
-@keyframes dissolve {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-    filter: blur(0px);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(1.2);
-    filter: blur(2px);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(0.5);
-    filter: blur(6px);
-  }
-}
-
-.enemy.dissolving {
-  animation: dissolve 0.5s ease-out forwards;
-  pointer-events: none;
 }
 
 /* ── Enemy Fall Animation ─────────────────────────────────────── */
@@ -707,6 +686,7 @@ button {
   from {
     top: -12%;
   }
+
   to {
     top: 105%;
   }
@@ -714,11 +694,33 @@ button {
 
 .enemy {
   position: absolute;
+  top: -12%;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.3rem;
+  pointer-events: none;
+  z-index: 2;
   animation: enemyFall linear forwards;
+  will-change: top;
+}
+
+/* Inline SVG ghost sprite inside each enemy */
+.enemy-sprite {
+  width: 48px;
+  height: 48px;
+  filter: drop-shadow(0 0 8px var(--color-primary));
+  animation: ghostFloat 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes ghostFloat {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(4px);
+  }
 }
 
 .enemy .enemy-code {
@@ -733,6 +735,57 @@ button {
   max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
+  box-shadow: 0 0 8px rgba(130, 200, 255, 0.12);
+}
+
+/* ── Enemy Defeat Animation ───────────────────────────────────── */
+/* Triggered by enemySystem.js adding .dissolving class */
+
+@keyframes dissolve {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0px);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+    filter: blur(2px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.5);
+    filter: blur(6px);
+  }
+}
+
+.enemy.dissolving {
+  animation: dissolve 0.5s ease-out forwards;
+  pointer-events: none;
+}
+
+/* ── Enemy Deadline Breach Visual Cue ─────────────────────────── */
+/* Triggered by enemySystem.js adding .breached class */
+
+@keyframes enemyBreach {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: drop-shadow(0 0 4px var(--color-error));
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.75);
+    filter: drop-shadow(0 0 16px var(--color-error));
+  }
+}
+
+.enemy.breached {
+  animation: enemyBreach 0.35s ease-out forwards;
+  pointer-events: none;
 }
 
 /* ── Screen-edge Flash on Life Loss ──────────────────────────── */
@@ -740,9 +793,11 @@ button {
   0% {
     box-shadow: inset 0 0 0px 0px var(--color-error);
   }
+
   30% {
     box-shadow: inset 0 0 60px 20px var(--color-error);
   }
+
   100% {
     box-shadow: inset 0 0 0px 0px var(--color-error);
   }
