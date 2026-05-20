@@ -134,14 +134,14 @@ button {
 }
 
 #scare-overlay {
-  background: #000;
+  background: transparent;
   z-index: 300;
 }
 
-#scare-img {
+#scare-canvas {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  display: block;
 }
 
 /* ── Utility Classes ──────────────────────────────────────────── */

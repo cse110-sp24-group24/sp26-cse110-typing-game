@@ -187,12 +187,6 @@ const LAUGH_SRCS = [
   'media/Music%3ASound%20Effects/EvilLaughs/EvilLaugh3.mp3',
 ];
 
-const SCARE_SRCS = [
-  'media/Images%3AVideos/SpookyGhosts/806f58fc232af3448744d7a9ee9edb60_565ca43ff639fbd79141d944106c5e72.avif',
-  'media/Images%3AVideos/SpookyGhosts/b1850465bd6924a070c94ac980cbd240.jpg',
-  'media/Images%3AVideos/SpookyGhosts/ghostly-figure-shrouded-in-mist-on-a-transparent-background-evokes-a-sense-of-mystery-paranormal-ghost-background-free-png.webp',
-  'media/Images%3AVideos/SpookyGhosts/haunted.webp',
-];
 
 function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -240,8 +234,95 @@ function showStatic() {
 }
 
 /**
- * Plays the countdown video full-screen, then shows TV static for 1 s,
- * then fires the scream and ghost image scare before calling onComplete.
+ * Chroma-keys the zombie jumpscare video onto #scare-canvas in real time,
+ * removing the green background so the TV static shows through transparently.
+ * When the video ends the last frame stays frozen on the canvas until the
+ * caller hides the overlay (scream audio controls the navigation timing).
+ */
+function startZombieChromaKey() {
+  const scareOverlay = document.getElementById('scare-overlay');
+  const scareCanvas = document.getElementById('scare-canvas');
+  const ctx = scareCanvas.getContext('2d');
+
+  const CHROMA_W = 480;
+  const chromaCanvas = document.createElement('canvas');
+  const chromaCtx = chromaCanvas.getContext('2d', { willReadFrequently: true });
+
+  const zombie = document.createElement('video');
+  silenceDecorativeVideo(zombie);
+  zombie.src = 'media/Images%3AVideos/ZombieJumpScare.mp4';
+  zombie.playsInline = true;
+  zombie.style.cssText =
+    'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;';
+  document.body.appendChild(zombie);
+
+  scareCanvas.width = window.innerWidth;
+  scareCanvas.height = window.innerHeight;
+  scareOverlay.classList.remove('hidden');
+
+  let running = true;
+
+  zombie.addEventListener(
+    'loadedmetadata',
+    () => {
+      chromaCanvas.width = CHROMA_W;
+      chromaCanvas.height = Math.ceil(CHROMA_W / (zombie.videoWidth / zombie.videoHeight));
+      zombie.play().catch(() => {});
+      requestAnimationFrame(drawFrame);
+    },
+    { once: true },
+  );
+
+  function drawFrame() {
+    if (!running) return;
+
+    if (zombie.readyState >= 2 && !zombie.paused && !zombie.ended) {
+      chromaCtx.clearRect(0, 0, chromaCanvas.width, chromaCanvas.height);
+      chromaCtx.drawImage(
+        zombie,
+        0, 0, zombie.videoWidth, zombie.videoHeight,
+        0, 0, chromaCanvas.width, chromaCanvas.height,
+      );
+
+      const frame = chromaCtx.getImageData(0, 0, chromaCanvas.width, chromaCanvas.height);
+      const px = frame.data;
+      for (let i = 0; i < px.length; i += 4) {
+        const r = px[i], g = px[i + 1], b = px[i + 2];
+        if (g > 100 && g - r > 35 && g - b > 35) { px[i + 3] = 0; continue; }
+        const dominance = Math.min(g - r, g - b);
+        if (g > 80 && dominance > 15) {
+          px[i + 3] = Math.floor(px[i + 3] * (1 - (dominance - 15) / 25));
+        }
+      }
+      chromaCtx.putImageData(frame, 0, 0);
+
+      // Cover-fit: fill the full canvas, cropping if needed
+      const cw = scareCanvas.width, ch = scareCanvas.height;
+      const aspect = chromaCanvas.width / chromaCanvas.height;
+      let dw, dh;
+      if (cw / ch > aspect) { dw = cw; dh = cw / aspect; }
+      else { dh = ch; dw = ch * aspect; }
+      ctx.clearRect(0, 0, cw, ch);
+      ctx.drawImage(chromaCanvas, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+    }
+
+    requestAnimationFrame(drawFrame);
+  }
+
+  // On video end: stop the render loop (last frame stays frozen on canvas).
+  zombie.addEventListener(
+    'ended',
+    () => {
+      running = false;
+      document.body.removeChild(zombie);
+    },
+    { once: true },
+  );
+}
+
+/**
+ * Plays the countdown video full-screen, then simultaneously starts TV static,
+ * the chroma-keyed zombie jumpscare video, and the scream SFX.
  * Evil laugh plays immediately on language select.
  * @param {() => void} onComplete - Called once the scare sequence finishes.
  */
@@ -249,13 +330,35 @@ function playLanguageTransition(onComplete) {
   const countdownOverlay = document.getElementById('countdown-overlay');
   const countdownVideo = document.getElementById('countdown-video');
   const scareOverlay = document.getElementById('scare-overlay');
-  const scareImg = document.getElementById('scare-img');
 
   new Audio(pickRandom(LAUGH_SRCS)).play().catch(() => {});
 
+  // Step 1: fade language screen to black
+  countdownVideo.style.opacity = '0';
   countdownOverlay.classList.remove('hidden');
-  countdownVideo.src = 'media/Images%3AVideos/Countdown.mp4';
-  countdownVideo.play().catch(() => {});
+  countdownOverlay.style.opacity = '0';
+  countdownOverlay.style.transition = 'opacity 0.5s ease';
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      countdownOverlay.style.opacity = '1';
+    }),
+  );
+
+  // Step 2: once fully black, start video and fade it in
+  countdownOverlay.addEventListener(
+    'transitionend',
+    () => {
+      countdownVideo.style.transition = 'opacity 0.6s ease';
+      countdownVideo.src = 'media/Images%3AVideos/3secs.mp4';
+      countdownVideo.play().catch(() => {});
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          countdownVideo.style.opacity = '1';
+        }),
+      );
+    },
+    { once: true },
+  );
 
   countdownVideo.addEventListener(
     'ended',
@@ -268,22 +371,19 @@ function playLanguageTransition(onComplete) {
       const proceed = () => {
         if (done) return;
         done = true;
-        stopStatic();
         onComplete();
-        setTimeout(() => scareOverlay.classList.add('hidden'), 250);
+        setTimeout(() => {
+          scareOverlay.classList.add('hidden');
+          stopStatic();
+        }, 250);
       };
 
-      setTimeout(() => {
-        const scream = new Audio('media/Music%3ASound%20Effects/SCREAM.mp3');
-        scream.play().catch(() => {});
-        scream.addEventListener('ended', proceed, { once: true });
-        setTimeout(proceed, 5000);
-      }, 250);
+      const scream = new Audio('media/Music%3ASound%20Effects/SCREAM.mp3');
+      scream.play().catch(() => {});
+      scream.addEventListener('ended', proceed, { once: true });
+      setTimeout(proceed, 8000);
 
-      setTimeout(() => {
-        scareImg.src = pickRandom(SCARE_SRCS);
-        scareOverlay.classList.remove('hidden');
-      }, 750);
+      startZombieChromaKey();
     },
     { once: true },
   );

@@ -13,7 +13,7 @@ const AUTOPLAY_RESUME_EVENTS = ['pointerdown', 'keydown', 'touchstart'];
 
 /** @type {HTMLAudioElement|null} */
 let ambientAudio = null;
-let musicVolume = 0.5;
+let musicVolume = 0.575;
 let sfxVolume = 0.7;
 let muted = false;
 
@@ -26,7 +26,7 @@ let muted = false;
  * @param {boolean} prefs.muted - Whether all audio starts muted.
  */
 export function init(prefs) {
-  musicVolume = prefs.musicVolume ?? 0.5;
+  musicVolume = prefs.musicVolume ?? 0.575;
   sfxVolume = prefs.sfxVolume ?? 0.7;
   muted = prefs.muted ?? false;
 
