@@ -26,7 +26,10 @@ function startServer() {
   return new Promise((resolve) => {
     const srv = http.createServer((req, res) => {
       const urlPath = req.url.split('?')[0];
-      const filePath = path.join(ROOT, decodeURIComponent(urlPath === '/' ? '/index.html' : urlPath));
+      const filePath = path.join(
+        ROOT,
+        decodeURIComponent(urlPath === '/' ? '/index.html' : urlPath)
+      );
 
       if (!filePath.startsWith(ROOT)) {
         res.writeHead(403);
@@ -88,7 +91,7 @@ async function freshPage() {
 test('main menu screen is active on page load', async () => {
   await freshPage();
   const isActive = await page.evaluate(() =>
-    document.getElementById('menu-screen').classList.contains('active'),
+    document.getElementById('menu-screen').classList.contains('active')
   );
   expect(isActive).toBe(true);
 });
@@ -96,7 +99,14 @@ test('main menu screen is active on page load', async () => {
 test('all other screens are inactive on page load', async () => {
   await freshPage();
   const inactiveScreens = await page.evaluate(() => {
-    const ids = ['language-screen', 'wave-intro-screen', 'game-screen', 'wave-stats-screen', 'upgrade-screen', 'stats-screen'];
+    const ids = [
+      'language-screen',
+      'wave-intro-screen',
+      'game-screen',
+      'wave-stats-screen',
+      'upgrade-screen',
+      'stats-screen',
+    ];
     return ids.filter((id) => document.getElementById(id).classList.contains('active'));
   });
   expect(inactiveScreens).toHaveLength(0);
@@ -116,7 +126,12 @@ test('decorative ghost video is silenced and hidden off-screen', async () => {
   const video = await page.evaluate(() => {
     const v = document.querySelector('body > video');
     return v
-      ? { muted: v.muted, defaultMuted: v.defaultMuted, volume: v.volume, inBody: document.body.contains(v) }
+      ? {
+          muted: v.muted,
+          defaultMuted: v.defaultMuted,
+          volume: v.volume,
+          inBody: document.body.contains(v),
+        }
       : null;
   });
   expect(video).not.toBeNull();
@@ -143,10 +158,13 @@ test('ambient music plays on main menu and keeps playing on language select scre
   await page.waitForSelector('audio', { timeout: 5000 });
 
   // Wait until play() resolves and the audio is no longer paused
-  await page.waitForFunction(() => {
-    const audio = document.querySelector('audio');
-    return audio !== null && audio.paused === false;
-  }, { timeout: 5000 });
+  await page.waitForFunction(
+    () => {
+      const audio = document.querySelector('audio');
+      return audio !== null && audio.paused === false;
+    },
+    { timeout: 5000 }
+  );
 
   // ── Main Menu: verify audio is set up and playing ──────────────
   const mainMenuAudio = await page.evaluate(() => {
@@ -213,7 +231,7 @@ test('clicking Play navigates to the language selection screen', async () => {
   await freshPage();
   await page.click('#play-btn');
   const isActive = await page.evaluate(() =>
-    document.getElementById('language-screen').classList.contains('active'),
+    document.getElementById('language-screen').classList.contains('active')
   );
   expect(isActive).toBe(true);
 });
@@ -222,7 +240,7 @@ test('clicking Play deactivates the main menu screen', async () => {
   await freshPage();
   await page.click('#play-btn');
   const menuActive = await page.evaluate(() =>
-    document.getElementById('menu-screen').classList.contains('active'),
+    document.getElementById('menu-screen').classList.contains('active')
   );
   expect(menuActive).toBe(false);
 });
@@ -249,7 +267,7 @@ test('language buttons have correct data-language values', async () => {
   await freshPage();
   await page.click('#play-btn');
   const languages = await page.$$eval('.btn-language', (btns) =>
-    btns.map((b) => b.dataset.language),
+    btns.map((b) => b.dataset.language)
   );
   expect(languages).toEqual(expect.arrayContaining(['javascript', 'html', 'css']));
 });
@@ -276,7 +294,7 @@ test.each([['javascript'], ['html'], ['css']])(
       return prefs.language;
     });
     expect(saved).toBe(lang);
-  },
+  }
 );
 
 // ══════════════════════════════════════════════════════════════════
@@ -286,7 +304,10 @@ test.each([['javascript'], ['html'], ['css']])(
 test('countdown, static, and scare overlays exist in the DOM', async () => {
   await freshPage();
   const ids = ['countdown-overlay', 'static-overlay', 'scare-overlay'];
-  const present = await page.evaluate((ids) => ids.every((id) => document.getElementById(id) !== null), ids);
+  const present = await page.evaluate(
+    (ids) => ids.every((id) => document.getElementById(id) !== null),
+    ids
+  );
   expect(present).toBe(true);
 });
 
@@ -294,16 +315,16 @@ test('countdown, static, and scare overlays are hidden on page load', async () =
   await freshPage();
   const allHidden = await page.evaluate(() =>
     ['countdown-overlay', 'static-overlay', 'scare-overlay'].every((id) =>
-      document.getElementById(id).classList.contains('hidden'),
-    ),
+      document.getElementById(id).classList.contains('hidden')
+    )
   );
   expect(allHidden).toBe(true);
 });
 
 test('countdown overlay contains a video element', async () => {
   await freshPage();
-  const hasVideo = await page.evaluate(() =>
-    document.getElementById('countdown-overlay').querySelector('video') !== null,
+  const hasVideo = await page.evaluate(
+    () => document.getElementById('countdown-overlay').querySelector('video') !== null
   );
   expect(hasVideo).toBe(true);
 });
@@ -312,8 +333,8 @@ test('clicking a language button immediately shows the countdown overlay', async
   await freshPage();
   await page.click('#play-btn');
   await page.click('[data-language="javascript"]');
-  const visible = await page.evaluate(() =>
-    !document.getElementById('countdown-overlay').classList.contains('hidden'),
+  const visible = await page.evaluate(
+    () => !document.getElementById('countdown-overlay').classList.contains('hidden')
   );
   expect(visible).toBe(true);
 });
@@ -328,8 +349,8 @@ test('after countdown video ends, static overlay becomes visible', async () => {
     document.getElementById('countdown-video').dispatchEvent(new Event('ended'));
   });
 
-  const staticVisible = await page.evaluate(() =>
-    !document.getElementById('static-overlay').classList.contains('hidden'),
+  const staticVisible = await page.evaluate(
+    () => !document.getElementById('static-overlay').classList.contains('hidden')
   );
   expect(staticVisible).toBe(true);
 });
@@ -344,7 +365,7 @@ test('after countdown video ends, countdown overlay is hidden', async () => {
   });
 
   const countdownHidden = await page.evaluate(() =>
-    document.getElementById('countdown-overlay').classList.contains('hidden'),
+    document.getElementById('countdown-overlay').classList.contains('hidden')
   );
   expect(countdownHidden).toBe(true);
 });
@@ -361,7 +382,7 @@ test('scare image appears after static and transitions to wave-intro-screen', as
   // Wait for the 750 ms image delay, then check scare overlay is visible
   await page.waitForFunction(
     () => !document.getElementById('scare-overlay').classList.contains('hidden'),
-    { timeout: 3000 },
+    { timeout: 3000 }
   );
 
   const scareImg = await page.$eval('#scare-img', (el) => el.src);
@@ -377,11 +398,11 @@ test('scare image appears after static and transitions to wave-intro-screen', as
 
   await page.waitForFunction(
     () => document.getElementById('wave-intro-screen').classList.contains('active'),
-    { timeout: 3000 },
+    { timeout: 3000 }
   );
 
   const waveActive = await page.evaluate(() =>
-    document.getElementById('wave-intro-screen').classList.contains('active'),
+    document.getElementById('wave-intro-screen').classList.contains('active')
   );
   expect(waveActive).toBe(true);
 });

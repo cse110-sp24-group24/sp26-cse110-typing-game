@@ -59,7 +59,8 @@ function initGhostCanvas() {
   video.src = 'media/Images%3AVideos/MainMenuGhostAni.mp4';
   video.loop = true;
   video.playsInline = true;
-  video.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;';
+  video.style.cssText =
+    'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;';
   document.body.appendChild(video);
 
   // Ghost occupies 85% of the screen and is centred.
@@ -187,7 +188,6 @@ const LAUGH_SRCS = [
   'media/Music%3ASound%20Effects/EvilLaughs/EvilLaugh3.mp3',
 ];
 
-
 function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -211,7 +211,9 @@ function showStatic() {
   let running = true;
 
   function tick() {
-    if (!running) { return; }
+    if (!running) {
+      return;
+    }
     const img = ctx.createImageData(320, 180);
     const d = img.data;
     for (let i = 0; i < d.length; i += 4) {
@@ -270,25 +272,38 @@ function startZombieChromaKey() {
       zombie.play().catch(() => {});
       requestAnimationFrame(drawFrame);
     },
-    { once: true },
+    { once: true }
   );
 
   function drawFrame() {
-    if (!running) { return; }
+    if (!running) {
+      return;
+    }
 
     if (zombie.readyState >= 2 && !zombie.paused && !zombie.ended) {
       chromaCtx.clearRect(0, 0, chromaCanvas.width, chromaCanvas.height);
       chromaCtx.drawImage(
         zombie,
-        0, 0, zombie.videoWidth, zombie.videoHeight,
-        0, 0, chromaCanvas.width, chromaCanvas.height,
+        0,
+        0,
+        zombie.videoWidth,
+        zombie.videoHeight,
+        0,
+        0,
+        chromaCanvas.width,
+        chromaCanvas.height
       );
 
       const frame = chromaCtx.getImageData(0, 0, chromaCanvas.width, chromaCanvas.height);
       const px = frame.data;
       for (let i = 0; i < px.length; i += 4) {
-        const r = px[i], g = px[i + 1], b = px[i + 2];
-        if (g > 100 && g - r > 35 && g - b > 35) { px[i + 3] = 0; continue; }
+        const r = px[i],
+          g = px[i + 1],
+          b = px[i + 2];
+        if (g > 100 && g - r > 35 && g - b > 35) {
+          px[i + 3] = 0;
+          continue;
+        }
         const dominance = Math.min(g - r, g - b);
         if (g > 80 && dominance > 15) {
           px[i + 3] = Math.floor(px[i + 3] * (1 - (dominance - 15) / 25));
@@ -297,11 +312,17 @@ function startZombieChromaKey() {
       chromaCtx.putImageData(frame, 0, 0);
 
       // Cover-fit: fill the full canvas, cropping if needed
-      const cw = scareCanvas.width, ch = scareCanvas.height;
+      const cw = scareCanvas.width,
+        ch = scareCanvas.height;
       const aspect = chromaCanvas.width / chromaCanvas.height;
       let dw, dh;
-      if (cw / ch > aspect) { dw = cw; dh = cw / aspect; }
-      else { dh = ch; dw = ch * aspect; }
+      if (cw / ch > aspect) {
+        dw = cw;
+        dh = cw / aspect;
+      } else {
+        dh = ch;
+        dw = ch * aspect;
+      }
       ctx.clearRect(0, 0, cw, ch);
       ctx.drawImage(chromaCanvas, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
     }
@@ -316,7 +337,7 @@ function startZombieChromaKey() {
       running = false;
       document.body.removeChild(zombie);
     },
-    { once: true },
+    { once: true }
   );
 }
 
@@ -341,7 +362,7 @@ function playLanguageTransition(onComplete) {
   requestAnimationFrame(() =>
     requestAnimationFrame(() => {
       countdownOverlay.style.opacity = '1';
-    }),
+    })
   );
 
   // Step 2: once fully black, start video and fade it in
@@ -354,10 +375,10 @@ function playLanguageTransition(onComplete) {
       requestAnimationFrame(() =>
         requestAnimationFrame(() => {
           countdownVideo.style.opacity = '1';
-        }),
+        })
       );
     },
-    { once: true },
+    { once: true }
   );
 
   countdownVideo.addEventListener(
@@ -369,7 +390,9 @@ function playLanguageTransition(onComplete) {
 
       let done = false;
       const proceed = () => {
-        if (done) { return; }
+        if (done) {
+          return;
+        }
         done = true;
         onComplete();
         setTimeout(() => {
@@ -385,7 +408,7 @@ function playLanguageTransition(onComplete) {
 
       startZombieChromaKey();
     },
-    { once: true },
+    { once: true }
   );
 }
 
