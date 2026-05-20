@@ -9,6 +9,7 @@
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "test": "node --experimental-vm-modules node_modules/jest-cli/bin/jest.js"
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest"
   },
   "jest": {
@@ -24,6 +25,11 @@
     "eslint-plugin-jsdoc": "^50.0.0",
     "globals": "^15.0.0",
     "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
+    "prettier": "^3.0.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom"
     "prettier": "^3.0.0",
     "puppeteer": "^24.43.1"
   }
