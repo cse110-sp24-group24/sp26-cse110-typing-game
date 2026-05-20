@@ -289,6 +289,18 @@ button {
   text-overflow: ellipsis;
 }
 
+.enemy-sprite {
+  width: 48px;
+  height: 48px;
+  filter: drop-shadow(0 0 8px var(--color-primary));
+}
+
+.enemy.breached {
+  animation-play-state: paused;
+  filter: drop-shadow(0 0 12px var(--color-error));
+  opacity: 0.85;
+}
+
 /* ── Screen-edge Flash on Life Loss ──────────────────────────── */
 @keyframes lifeFlash {
   0% {
