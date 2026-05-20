@@ -1,8 +1,8 @@
 /**
  * engine/enemySystem.js — Enemy spawning, movement, and deadline detection.
  *
- * Owns: DOM enemy elements, CSS fall animation timing, deadline
- * breach detection via requestAnimationFrame, life deduction signal.
+ * Owns DOM enemy elements, CSS fall animation timing, deadline breach detection
+ * via requestAnimationFrame, and the life deduction signal.
  *
  * Implemented by Issue #6.
  */
@@ -11,10 +11,15 @@ let playAreaElRef = null;
 let deadlineElRef = null;
 let stateRef = null;
 let onDeadlineBreachRef = null;
-let deadlineY = Infinity;
+let requestAnimationFrameId = null;
+let isPaused = false;
+
+const activeEnemies = new Set();
 
 const BASE_FALL_DURATION_SECONDS = 8;
 const DISSOLVE_DURATION_MS = 500;
+const BREACH_REMOVE_DELAY_MS = 350;
+const MIN_FALL_SPEED_MULTIPLIER = 0.1;
 
 const ENEMY_MARKUP = `
   <svg class="enemy-sprite" viewBox="0 0 64 64" aria-hidden="true">
@@ -50,13 +55,7 @@ export function init(playAreaEl, deadlineEl, state, onDeadlineBreach) {
   deadlineElRef = deadlineEl;
   stateRef = state;
   onDeadlineBreachRef = onDeadlineBreach;
-  if (!deadlineElRef) {
-    deadlineY = Infinity;
-    return;
-  }
-
-  const deadlineRect = deadlineElRef.getBoundingClientRect();
-  deadlineY = deadlineRect.top;
+  isPaused = false;
 }
 
 /**
@@ -65,7 +64,7 @@ export function init(playAreaEl, deadlineEl, state, onDeadlineBreach) {
  * @param {number} lineIndex - The wave line index used for horizontal positioning.
  * @returns {HTMLElement | null} The spawned enemy element, or null if the system is not initialized.
  */
-export function spawnEnemy(line, lineIndex) {
+export function spawnEnemy(line, lineIndex = 0) {
   if (!playAreaElRef) {
     return null;
   }
@@ -73,16 +72,21 @@ export function spawnEnemy(line, lineIndex) {
   const enemyEl = document.createElement('div');
   enemyEl.className = 'enemy';
   enemyEl.style.left = `${10 + (lineIndex % 5) * 17}%`;
-  const speedMultiplier = stateRef?.fallSpeedMultiplier ?? 1;
-  enemyEl.style.animationDuration = `${BASE_FALL_DURATION_SECONDS * speedMultiplier}s`;
+
+  const speedMultiplier = Math.max(stateRef?.fallSpeedMultiplier ?? 1, MIN_FALL_SPEED_MULTIPLIER);
+  enemyEl.style.animationDuration = `${BASE_FALL_DURATION_SECONDS / speedMultiplier}s`;
 
   enemyEl.innerHTML = ENEMY_MARKUP;
+
   const codeEl = enemyEl.querySelector('.enemy-code');
   if (codeEl) {
     codeEl.textContent = line;
   }
 
   playAreaElRef.appendChild(enemyEl);
+  activeEnemies.add(enemyEl);
+
+  startDeadlineLoop();
 
   return enemyEl;
 }
@@ -96,39 +100,43 @@ export function defeatEnemy(enemyEl) {
   if (!enemyEl || !enemyEl.isConnected) {
     return;
   }
+
+  activeEnemies.delete(enemyEl);
   enemyEl.classList.add('dissolving');
+
   window.setTimeout(() => {
     enemyEl.remove();
+    stopLoopIfNoActiveEnemies();
   }, DISSOLVE_DURATION_MS);
 }
 
 /**
- * Pauses all active enemy fall animations.
+ * Pauses all active enemy fall animations and deadline checks.
  * @returns {void}
  */
 export function pauseAll() {
-  if (!playAreaElRef) {
-    return;
-  }
+  isPaused = true;
 
-  const enemies = playAreaElRef.querySelectorAll('.enemy:not(.dissolving)');
-  for (const enemyEl of enemies) {
+  for (const enemyEl of activeEnemies) {
     enemyEl.style.animationPlayState = 'paused';
   }
+
+  stopDeadlineLoop();
 }
 
 /**
- * Resumes all active enemy fall animations.
+ * Resumes all active enemy fall animations and deadline checks.
  * @returns {void}
  */
 export function resumeAll() {
-  if (!playAreaElRef) {
-    return;
+  isPaused = false;
+
+  for (const enemyEl of activeEnemies) {
+    enemyEl.style.animationPlayState = 'running';
   }
 
-  const enemies = playAreaElRef.querySelectorAll('.enemy:not(.dissolving)');
-  for (const enemyEl of enemies) {
-    enemyEl.style.animationPlayState = 'running';
+  if (activeEnemies.size > 0) {
+    startDeadlineLoop();
   }
 }
 
@@ -137,9 +145,95 @@ export function resumeAll() {
  * @returns {void}
  */
 export function clearAll() {
-  if (!playAreaElRef) {
+  for (const enemyEl of activeEnemies) {
+    enemyEl.remove();
+  }
+
+  activeEnemies.clear();
+
+  if (playAreaElRef) {
+    playAreaElRef.querySelectorAll('.enemy').forEach((enemyEl) => {
+      enemyEl.remove();
+    });
+  }
+
+  stopDeadlineLoop();
+}
+
+/**
+ * Starts the requestAnimationFrame deadline detection loop.
+ * @returns {void}
+ */
+function startDeadlineLoop() {
+  if (requestAnimationFrameId !== null || isPaused || activeEnemies.size === 0) {
     return;
   }
 
-  playAreaElRef.querySelectorAll('.enemy').forEach((enemyEl) => enemyEl.remove());
+  requestAnimationFrameId = window.requestAnimationFrame(checkDeadlineBreaches);
+}
+
+/**
+ * Stops the requestAnimationFrame deadline detection loop.
+ * @returns {void}
+ */
+function stopDeadlineLoop() {
+  if (requestAnimationFrameId === null) {
+    return;
+  }
+
+  window.cancelAnimationFrame(requestAnimationFrameId);
+  requestAnimationFrameId = null;
+}
+
+/**
+ * Stops the rAF loop when no active enemies remain.
+ * @returns {void}
+ */
+function stopLoopIfNoActiveEnemies() {
+  if (activeEnemies.size === 0) {
+    stopDeadlineLoop();
+  }
+}
+
+/**
+ * Checks active enemies against the deadline once per animation frame.
+ * @returns {void}
+ */
+function checkDeadlineBreaches() {
+  requestAnimationFrameId = null;
+
+  if (isPaused || !deadlineElRef || activeEnemies.size === 0) {
+    stopLoopIfNoActiveEnemies();
+    return;
+  }
+
+  const deadlineRect = deadlineElRef.getBoundingClientRect();
+  const deadlineY = deadlineRect.top;
+
+  for (const enemyEl of [...activeEnemies]) {
+    if (!enemyEl.isConnected) {
+      activeEnemies.delete(enemyEl);
+      continue;
+    }
+
+    const enemyRect = enemyEl.getBoundingClientRect();
+
+    if (enemyRect.bottom >= deadlineY) {
+      activeEnemies.delete(enemyEl);
+      enemyEl.classList.add('breached');
+
+      if (typeof onDeadlineBreachRef === 'function') {
+        onDeadlineBreachRef(enemyEl);
+      }
+
+      window.setTimeout(() => {
+        enemyEl.remove();
+        stopLoopIfNoActiveEnemies();
+      }, BREACH_REMOVE_DELAY_MS);
+    }
+  }
+
+  if (activeEnemies.size > 0 && !isPaused) {
+    startDeadlineLoop();
+  }
 }
