@@ -10,6 +10,14 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "node --experimental-vm-modules node_modules/jest-cli/bin/jest.js"
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "transform": {}
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
@@ -22,5 +30,7 @@
   },
   "jest": {
     "testEnvironment": "jsdom"
+    "prettier": "^3.0.0",
+    "puppeteer": "^24.43.1"
   }
 }

@@ -27,6 +27,13 @@
   /* Typography */
   --font-mono: 'Courier New', Courier, monospace;
   --font-display: Georgia, serif;
+  --font-horror: 'Creepster', Georgia, serif;
+  --font-terminal: 'VT323', 'Courier New', monospace;
+
+  /* Ghost green — main menu palette */
+  --color-ghost: #00ff41;
+  --color-ghost-dim: rgba(0, 255, 65, 0.45);
+  --color-ghost-glow: rgba(0, 255, 65, 0.12);
 
   /* Spacing */
   --radius: 6px;
@@ -47,7 +54,7 @@ body {
   height: 100%;
   width: 100%;
   overflow: hidden;
-  background: var(--color-bg);
+  background: #1a1a1a;
   color: var(--color-text);
   font-family: var(--font-mono);
 }
@@ -75,6 +82,7 @@ button {
   pointer-events: none;
   transition: opacity 0.25s ease;
   background: var(--color-bg);
+  z-index: 1;
 }
 
 .screen.active {
@@ -101,6 +109,39 @@ button {
 
 .overlay.hidden {
   display: none;
+}
+
+#countdown-overlay {
+  background: #000;
+  z-index: 200;
+}
+
+#static-overlay {
+  background: #000;
+  z-index: 250;
+}
+
+#static-canvas {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+#countdown-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#scare-overlay {
+  background: transparent;
+  z-index: 300;
+}
+
+#scare-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 /* ── Utility Classes ──────────────────────────────────────────── */
@@ -142,6 +183,411 @@ button {
 
 .btn-icon:hover {
   color: var(--color-text);
+}
+
+/* ── Main Menu Screen ─────────────────────────────────────────── */
+
+#menu-screen,
+#language-screen {
+  overflow: hidden;
+  background: transparent;
+  /* Periodic full-screen distortion — fires for ~8% of each 7s cycle */
+  animation: screenGlitch 7s steps(1) infinite;
+}
+
+/* Scanline static overlay — flashes briefly on its own slower cycle */
+.menu-static {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.12) 2px,
+    rgba(0, 0, 0, 0.12) 4px
+  );
+  opacity: 0;
+  animation: staticFlash 8s steps(1) infinite;
+}
+
+@keyframes staticFlash {
+  0%,
+  88%,
+  100% {
+    opacity: 0;
+  }
+  89% {
+    opacity: 0.9;
+  }
+  90% {
+    opacity: 0;
+  }
+  92% {
+    opacity: 0.6;
+  }
+  93% {
+    opacity: 0;
+  }
+  95% {
+    opacity: 0.8;
+  }
+  96% {
+    opacity: 0;
+  }
+}
+
+/* Full-screen skew + hue burst glitch */
+@keyframes screenGlitch {
+  0%,
+  91%,
+  100% {
+    transform: none;
+    filter: none;
+  }
+  92% {
+    transform: skewX(-0.5deg) translateX(3px);
+    filter: brightness(1.2) saturate(1.8);
+  }
+  93% {
+    transform: skewX(0.5deg) translateX(-3px);
+    filter: brightness(0.8) hue-rotate(25deg);
+  }
+  94% {
+    transform: translateX(2px);
+    filter: brightness(1.1);
+  }
+  95% {
+    transform: none;
+    filter: none;
+  }
+  97% {
+    transform: translateX(-2px) skewX(-0.2deg);
+    filter: hue-rotate(-20deg) brightness(1.05);
+  }
+  98%,
+  99% {
+    transform: none;
+    filter: none;
+  }
+}
+
+/* Menu content sits above the ghost canvas */
+.menu-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+/* Ghost animation canvas — fixed behind all screens, chroma-keyed by main.js */
+#ghost-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ── Game title ───────────────────────────────────────────────── */
+
+.game-title {
+  position: relative;
+  font-family: var(--font-horror);
+  font-size: clamp(3rem, 10vw, 6rem);
+  color: var(--color-ghost);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow:
+    0 0 8px var(--color-ghost),
+    0 0 24px var(--color-ghost-dim),
+    0 0 60px var(--color-ghost-glow);
+  animation:
+    titleFloat 4s ease-in-out infinite,
+    titleFlicker 6s steps(1) infinite;
+}
+
+/* RGB-split ghost duplicates rendered via data-text attribute */
+.game-title::before,
+.game-title::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.game-title::before {
+  color: rgba(0, 255, 255, 0.8);
+  animation: glitchCyan 7s steps(1) infinite;
+}
+
+.game-title::after {
+  color: rgba(255, 0, 200, 0.8);
+  animation: glitchMagenta 7s steps(1) infinite;
+}
+
+/* Gentle hover float */
+@keyframes titleFloat {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Fluorescent-tube style flicker */
+@keyframes titleFlicker {
+  0%,
+  18%,
+  22%,
+  26%,
+  55%,
+  59%,
+  100% {
+    opacity: 1;
+    text-shadow:
+      0 0 8px var(--color-ghost),
+      0 0 24px var(--color-ghost-dim),
+      0 0 60px var(--color-ghost-glow);
+  }
+  20%,
+  24% {
+    opacity: 0.25;
+    text-shadow: none;
+  }
+  57% {
+    opacity: 0.5;
+    text-shadow: 0 0 4px var(--color-ghost-dim);
+  }
+}
+
+/* Cyan channel — slices left */
+@keyframes glitchCyan {
+  0%,
+  84%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+    clip-path: none;
+  }
+  85% {
+    opacity: 0.85;
+    transform: translateX(-4px);
+    clip-path: inset(15% 0 62% 0);
+  }
+  86% {
+    opacity: 0.85;
+    transform: translateX(3px);
+    clip-path: inset(58% 0 8% 0);
+  }
+  87% {
+    opacity: 0;
+  }
+  91% {
+    opacity: 0.6;
+    transform: translateX(-2px);
+    clip-path: inset(38% 0 42% 0);
+  }
+  92% {
+    opacity: 0;
+  }
+}
+
+/* Magenta channel — slices right */
+@keyframes glitchMagenta {
+  0%,
+  87%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+    clip-path: none;
+  }
+  88% {
+    opacity: 0.75;
+    transform: translateX(4px);
+    clip-path: inset(5% 0 78% 0);
+  }
+  89% {
+    opacity: 0.75;
+    transform: translateX(-3px);
+    clip-path: inset(72% 0 2% 0);
+  }
+  90% {
+    opacity: 0;
+  }
+  93% {
+    opacity: 0.5;
+    transform: translateX(2px);
+    clip-path: inset(44% 0 28% 0);
+  }
+  94% {
+    opacity: 0;
+  }
+}
+
+/* ── Tagline ──────────────────────────────────────────────────── */
+
+.tagline {
+  font-family: var(--font-terminal);
+  font-size: clamp(1.05rem, 2.8vw, 1.45rem);
+  color: var(--color-ghost-dim);
+  letter-spacing: 0.12em;
+  text-align: center;
+  line-height: 1.6;
+  max-width: 38ch;
+  animation: taglineFlicker 9s steps(1) infinite;
+}
+
+@keyframes taglineFlicker {
+  0%,
+  93%,
+  100% {
+    opacity: 0.8;
+  }
+  94% {
+    opacity: 0.15;
+  }
+  95% {
+    opacity: 0.8;
+  }
+  97% {
+    opacity: 0.1;
+  }
+  98% {
+    opacity: 0.8;
+  }
+}
+
+/* ── Play button ──────────────────────────────────────────────── */
+
+#play-btn {
+  margin-top: 0.5rem;
+  padding: 0.8rem 3.5rem;
+  font-family: var(--font-terminal);
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--color-ghost);
+  border: 1px solid var(--color-ghost-dim);
+  background: transparent;
+  box-shadow:
+    0 0 10px var(--color-ghost-glow),
+    inset 0 0 10px var(--color-ghost-glow);
+  animation: btnFlicker 5s steps(1) infinite;
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s;
+}
+
+#play-btn:hover {
+  border-color: var(--color-ghost);
+  box-shadow:
+    0 0 22px var(--color-ghost-dim),
+    0 0 50px var(--color-ghost-glow),
+    inset 0 0 18px var(--color-ghost-glow);
+}
+
+@keyframes btnFlicker {
+  0%,
+  89%,
+  100% {
+    opacity: 1;
+    box-shadow:
+      0 0 10px var(--color-ghost-glow),
+      inset 0 0 10px var(--color-ghost-glow);
+  }
+  90% {
+    opacity: 0.3;
+    box-shadow: none;
+  }
+  91% {
+    opacity: 1;
+  }
+  94% {
+    opacity: 0.55;
+  }
+  95% {
+    opacity: 1;
+  }
+}
+
+/* ── Language Selection Screen ────────────────────────────────── */
+
+.language-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3rem;
+}
+
+.screen-title {
+  font-family: var(--font-horror);
+  font-size: clamp(2rem, 7vw, 4rem);
+  color: var(--color-ghost);
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-shadow:
+    0 0 8px var(--color-ghost),
+    0 0 24px var(--color-ghost-dim),
+    0 0 60px var(--color-ghost-glow);
+  animation: titleFlicker 6s steps(1) infinite;
+}
+
+.language-buttons {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-language {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.4rem 2.2rem;
+  font-family: var(--font-terminal);
+  color: var(--color-ghost);
+  border: 1px solid var(--color-ghost-dim);
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow:
+    0 0 10px var(--color-ghost-glow),
+    inset 0 0 10px var(--color-ghost-glow);
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s,
+    background 0.2s;
+  min-width: 120px;
+}
+
+.btn-language:hover {
+  border-color: var(--color-ghost);
+  background: rgba(0, 255, 65, 0.08);
+  box-shadow:
+    0 0 22px var(--color-ghost-dim),
+    0 0 50px var(--color-ghost-glow),
+    inset 0 0 18px var(--color-ghost-glow);
+}
+
+.lang-icon {
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  font-weight: bold;
+  letter-spacing: 0.08em;
+}
+
+.lang-name {
+  font-size: clamp(0.9rem, 2vw, 1.15rem);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-ghost-dim);
 }
 
 /* ── Game Screen Layout ───────────────────────────────────────── */

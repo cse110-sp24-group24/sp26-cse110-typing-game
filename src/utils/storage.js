@@ -11,7 +11,7 @@ const KEY = 'phantomtype_prefs';
 
 const DEFAULTS = {
   language: 'javascript',
-  musicVolume: 0.5,
+  musicVolume: 0.575,
   sfxVolume: 0.7,
   muted: false,
 };
