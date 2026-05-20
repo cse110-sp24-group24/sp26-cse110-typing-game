@@ -806,3 +806,23 @@ button {
 body.life-lost {
   animation: lifeFlash 0.5s ease-out;
 }
+
+/* ── HUD: Lives Display (Issue #12) ───────────────────────────── */
+/* Rendered by main.js as a row of ♥ spans inside #lives-display.   */
+/* Hearts fade individually if you ever want a per-heart loss anim. */
+
+.hud-lives {
+  display: flex;
+  gap: 0.25rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--color-error);
+  text-shadow: 0 0 6px var(--color-error);
+  min-width: 4rem;
+}
+
+.hud-lives .heart {
+  display: inline-block;
+  transition: transform 0.15s ease-out;
+}

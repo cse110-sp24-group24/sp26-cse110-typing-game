@@ -9,8 +9,10 @@
  */
 
 import { getPreferences, savePreferences } from './utils/storage.js';
-import { init as initAudio, playAmbient } from './audio/audioManager.js';
+import { init as initAudio, playAmbient, playSfx } from './audio/audioManager.js';
 import { showScreen } from './ui/screenManager.js';
+import { createRunState } from './state.js';
+import * as enemySystem from './engine/enemySystem.js';
 
 // Imports are added as each Issue is completed. Example structure:
 //
@@ -31,6 +33,103 @@ import { showScreen } from './ui/screenManager.js';
 const prefs = getPreferences();
 initAudio(prefs);
 playAmbient();
+
+// ── Lives System (Issue #12) ───────────────────────────────────
+// One RunState per run; created when the player picks a language.
+// The enemy system fires onDeadlineBreach when a ghost crosses the
+// deadline; main.js owns the life-deduction + run-end logic so the
+// engine never has to import UI modules (see ADR-003).
+
+/** @type {ReturnType<typeof createRunState> | null} */
+let runState = null;
+
+const livesDisplayEl = document.getElementById('lives-display');
+const playAreaEl = document.getElementById('play-area');
+const deadlineEl = document.getElementById('deadline-line');
+
+/**
+ * Begins a new run: creates the shared RunState, wires the enemy
+ * system to our deadline-breach handler, and paints the initial HUD.
+ * Called from the language-select button after the scare transition.
+ * @param {string} language - 'javascript' | 'html' | 'css'.
+ * @returns {void}
+ */
+function startRun(language) {
+  runState = createRunState(language);
+  enemySystem.init(playAreaEl, deadlineEl, runState, onDeadlineBreach);
+  updateLivesDisplay();
+}
+
+/**
+ * Called by enemySystem when an enemy crosses the deadline.
+ * The enemy element is already removed by the engine, so we only
+ * deduct a life, refresh the HUD, play the flash effect, and end
+ * the run if lives have hit zero.
+ * @param {HTMLElement} _enemyEl - The breached enemy (already cleared by engine).
+ * @returns {void}
+ */
+function onDeadlineBreach(_enemyEl) {
+  // Guard against a late breach firing after the run already ended.
+  if (!runState || runState.lives <= 0) {
+    return;
+  }
+
+  runState.lives -= 1;
+  updateLivesDisplay();
+  playLifeLossEffect();
+
+  if (runState.lives <= 0) {
+    endRun();
+  }
+}
+
+/**
+ * Renders the current life count as heart icons in #lives-display.
+ * Safe to call before startRun(); falls back to an empty display.
+ * @returns {void}
+ */
+function updateLivesDisplay() {
+  if (!livesDisplayEl) {
+    return;
+  }
+  const lives = runState?.lives ?? 0;
+  // Rebuild the display each time so it stays in sync with state.
+  livesDisplayEl.innerHTML = '';
+  for (let i = 0; i < lives; i += 1) {
+    const heart = document.createElement('span');
+    heart.className = 'heart';
+    heart.setAttribute('aria-hidden', 'true');
+    heart.textContent = '♥';
+    livesDisplayEl.appendChild(heart);
+  }
+  livesDisplayEl.setAttribute('aria-label', `${lives} lives remaining`);
+}
+
+/**
+ * Triggers the red screen-edge flash defined by `body.life-lost` in
+ * styles.css. The class is removed and re-added on the next frame so
+ * the CSS animation restarts on every consecutive life loss.
+ * Audio is stubbed via audioManager.playSfx (Issue #15 wires the pool).
+ * @returns {void}
+ */
+function playLifeLossEffect() {
+  document.body.classList.remove('life-lost');
+  // Force reflow so the animation restarts even on back-to-back losses.
+  void document.body.offsetWidth;
+  document.body.classList.add('life-lost');
+  playSfx('life-loss');
+}
+
+/**
+ * Ends the current run: clears any remaining enemies and routes the
+ * player to the end-of-run Stats screen. statsScreen.show() (Issue #20)
+ * will populate the screen from runState when it lands.
+ * @returns {void}
+ */
+function endRun() {
+  enemySystem.clearAll();
+  showScreen('stats-screen');
+}
 
 // ── Ghost canvas — chroma-key compositing ──────────────────────
 
@@ -416,6 +515,7 @@ document.querySelectorAll('.btn-language').forEach((btn) => {
   btn.addEventListener('click', () => {
     const language = btn.dataset.language;
     savePreferences({ ...prefs, language });
+    startRun(language);
     playLanguageTransition(() => showScreen('wave-intro-screen'));
   });
 });
