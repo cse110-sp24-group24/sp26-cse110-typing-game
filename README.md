@@ -1,5 +1,7 @@
 # sp26-cse110-typing-game
 
+# Status Video 1: https://youtu.be/3QU3BJbv-cA
+
 ## Overview
 
 With our team formed and enough practice with GenAI, in both a code focused and design-focused manner, we are ready to take on a project utilizing modern Agile methodologies.
