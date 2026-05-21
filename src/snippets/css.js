@@ -16,7 +16,6 @@
 //   { line: 'transition: opacity 0.3s ease;', fn: 'animation', tags: ['motion'] },
 // ];
 
-
 export const snippets = [
   // --- Layout: Flexbox ---
   {
@@ -83,8 +82,7 @@ export const snippets = [
     id: 'css-typography-heading',
     name: 'typographyHeading',
     language: 'css',
-    description:
-      'Styles a heading with a large font size, bold weight, and centred alignment.',
+    description: 'Styles a heading with a large font size, bold weight, and centred alignment.',
     conceptTags: ['objects'],
     complexity: 1,
     lines: [
@@ -101,8 +99,7 @@ export const snippets = [
     id: 'css-fade-transition',
     name: 'fadeTransition',
     language: 'css',
-    description:
-      'Adds a smooth opacity fade on hover using the CSS transition property.',
+    description: 'Adds a smooth opacity fade on hover using the CSS transition property.',
     conceptTags: ['objects'],
     complexity: 1,
     lines: [
@@ -147,15 +144,10 @@ export const snippets = [
     id: 'css-card-shadow',
     name: 'cardShadow',
     language: 'css',
-    description:
-      'Applies a subtle drop shadow to lift a card element off the page.',
+    description: 'Applies a subtle drop shadow to lift a card element off the page.',
     conceptTags: ['objects'],
     complexity: 1,
-    lines: [
-      '.card {',
-      '  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);',
-      '}',
-    ],
+    lines: ['.card {', '  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);', '}'],
   },
 
   // --- Responsive: Media Query ---
@@ -163,8 +155,7 @@ export const snippets = [
     id: 'css-responsive-stack',
     name: 'responsiveStack',
     language: 'css',
-    description:
-      'Uses a media query to switch a flex row to a column layout on narrow screens.',
+    description: 'Uses a media query to switch a flex row to a column layout on narrow screens.',
     conceptTags: ['conditionals'],
     complexity: 2,
     lines: [

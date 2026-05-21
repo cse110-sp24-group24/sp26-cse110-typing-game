@@ -54,8 +54,7 @@ export const snippets = [
     id: 'html-nav-links',
     name: 'navLinks',
     language: 'html',
-    description:
-      'Creates a semantic navigation bar with three anchor links.',
+    description: 'Creates a semantic navigation bar with three anchor links.',
     conceptTags: ['arrays', 'objects'],
     complexity: 1,
     lines: [
@@ -73,8 +72,7 @@ export const snippets = [
     id: 'html-unordered-list',
     name: 'unorderedList',
     language: 'html',
-    description:
-      'Marks up a bulleted list of three items using <ul> and <li> elements.',
+    description: 'Marks up a bulleted list of three items using <ul> and <li> elements.',
     conceptTags: ['arrays'],
     complexity: 1,
     lines: [
@@ -109,8 +107,7 @@ export const snippets = [
     id: 'html-contact-form',
     name: 'contactForm',
     language: 'html',
-    description:
-      'Creates a simple contact form with a labelled text input and a submit button.',
+    description: 'Creates a simple contact form with a labelled text input and a submit button.',
     conceptTags: ['objects', 'strings'],
     complexity: 1,
     lines: [
