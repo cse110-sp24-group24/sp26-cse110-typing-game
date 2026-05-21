@@ -1,6 +1,6 @@
 # sp26-cse110-typing-game
 
-# Status Video 1: https://youtu.be/3QU3BJbv-cA 
+# Status Video 1: https://youtu.be/3QU3BJbv-cA
 
 ## Overview
 
