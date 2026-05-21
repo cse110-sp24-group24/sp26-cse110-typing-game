@@ -13,6 +13,9 @@ import { init as initAudio, playAmbient, playSfx } from './audio/audioManager.js
 import { showScreen } from './ui/screenManager.js';
 import { createRunState } from './state.js';
 import * as enemySystem from './engine/enemySystem.js';
+import * as waveManager from './engine/waveManager.js';
+import { init as initTyping } from './engine/typingEngine.js';
+import { show as showWaveIntro } from './ui/waveIntroCard.js';
 
 // Imports are added as each Issue is completed. Example structure:
 //
@@ -48,15 +51,28 @@ const playAreaEl = document.getElementById('play-area');
 const deadlineEl = document.getElementById('deadline-line');
 
 /**
- * Begins a new run: creates the shared RunState, wires the enemy
- * system to our deadline-breach handler, and paints the initial HUD.
+ * Begins a new run: creates the shared RunState, wires the enemy system,
+ * typing engine, and wave manager to our callbacks, and paints the initial HUD.
  * Called from the language-select button after the scare transition.
  * @param {string} language - 'javascript' | 'html' | 'css'.
  * @returns {void}
  */
 function startRun(language) {
   runState = createRunState(language);
+
   enemySystem.init(playAreaEl, deadlineEl, runState, onDeadlineBreach);
+
+  initTyping(
+    document.getElementById('typing-input'),
+    document.getElementById('target-line-display'),
+    // onDefeated: relay to waveManager so it can advance the wave.
+    () => waveManager.onEnemyDefeated(),
+    // onKeystroke: statTracker wires this in Issue #17.
+    () => {}
+  );
+
+  waveManager.init(runState, onWaveClear, onWaveStart);
+
   updateLivesDisplay();
 }
 
@@ -511,12 +527,58 @@ function playLanguageTransition(onComplete) {
   );
 }
 
+// ── Wave lifecycle callbacks ────────────────────────────────────
+
+/**
+ * Called by waveManager at the start of each wave.
+ * Updates the wave counter in the HUD. codePanel.setHeader() will be
+ * wired here when Issue #9 lands.
+ * @param {object} _snippet - The snippet chosen for this wave.
+ * @returns {void}
+ */
+function onWaveStart(_snippet) {
+  const waveDisplayEl = document.getElementById('wave-display');
+  if (waveDisplayEl) {
+    waveDisplayEl.textContent = `Wave ${runState.wave}`;
+  }
+  // codePanel.setHeader(_snippet.name); // Issue #9
+}
+
+/**
+ * Called by waveManager when all enemies in a wave are defeated.
+ * Advances to the next wave after a brief pause.
+ * bossSystem.startBoss() will be wired here when Issue #11 lands.
+ * @param {object} _snippet - The snippet that was just completed.
+ * @returns {void}
+ */
+function onWaveClear(_snippet) {
+  // bossSystem.startBoss(runState, _snippet); // Issue #11
+  // Temporary: start the next wave after a short pause so the last
+  // enemy dissolve animation can finish before new enemies spawn.
+  setTimeout(() => {
+    showScreen('wave-intro-screen');
+    showWaveIntro(runState, {}).then(() => {
+      showScreen('game-screen');
+      waveManager.startWave();
+    });
+  }, 800);
+}
+
 document.querySelectorAll('.btn-language').forEach((btn) => {
   btn.addEventListener('click', () => {
     const language = btn.dataset.language;
     savePreferences({ ...prefs, language });
     startRun(language);
-    playLanguageTransition(() => showScreen('wave-intro-screen'));
+    // After the scare, show wave intro then transition to the game screen.
+    // waveIntroCard.show() currently returns Promise.resolve() (Issue #10 stub)
+    // so this transitions immediately; it will gate on keypress once #10 lands.
+    playLanguageTransition(() => {
+      showScreen('wave-intro-screen');
+      showWaveIntro(runState, {}).then(() => {
+        showScreen('game-screen');
+        waveManager.startWave();
+      });
+    });
   });
 });
 
