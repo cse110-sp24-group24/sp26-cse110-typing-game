@@ -1,76 +1,238 @@
-# sp26-cse110-typing-game
+# Phantom Type
 
-# Status Video 1: https://youtu.be/3QU3BJbv-cA
+> A browser-based, haunted roguelite typing game where players defeat ghost enemies by typing real code line by line. Built by a 10-person team for CSE 110 (SP26) at UC San Diego.
 
-## Overview
+**Live demo:** <https://cse110-sp24-group24.github.io/sp26-cse110-typing-game/>
 
-With our team formed and enough practice with GenAI, in both a code focused and design-focused manner, we are ready to take on a project utilizing modern Agile methodologies.
+**Status Video 1:** <https://youtu.be/3QU3BJbv-cA>
 
-While the project deliverable in the form of working quality software is quite important, students are strongly reminded that the process we undertake is the actual focus in our academic exploration of SWE. **A repeatable and observable quality focused process that ends up producing less feature rich software will get a higher grade than a large feature rich piece of software done opaquely or with less process.**
+---
 
-TL;DR - For a course, **process >> product**. Beyond a course, that may not hold.
+## What This Is
 
-### Agile and Process Requirements
+Players choose a language (**JavaScript, HTML, or CSS**), then face successive waves of ghost enemies. Each enemy carries one line from a code function — typing the line correctly defeats the enemy. Over the course of a wave, the lines assemble into a complete function in a side panel. At the end of each wave, a **boss encounter** asks the player to type that full function in one go.
 
-Your team will be required to
+Between waves, a **randomized roguelite upgrade selection** (slower fall speed, extra lives, score multipliers, etc.) shapes the run. The aesthetic is haunted-horror throughout: ghost SVGs, ambient music, screen-edge flashes on life loss, dissolve animations on enemy defeat.
 
-- Perform a documented sprint planning meeting before starting work each sprint and capture the information in your repository (GitHub)
-- Hold stand-up meetings virtually (Slack) and/or in-person at least 3 times a week and capture the information in your repository (GitHub)
-- Tasks are captured in an issue tracker (GitHub Issues) and work happens and is documented in the issue tracker
-- Perform a sprint review and retrospective at least two times in the remaining time of the quarter. Information from the retrospective must be captured and there must be evidence of its incorporation
-- Meet with your TA weekly and capture the meeting information (GitHub)
-- Meet with the Prof once before the conclusion of the quarter
+The full MVP feature set and post-MVP roadmap is in [`MVP.md`](MVP.md).
 
-Some meetings may not include all team members. For example, TA or Prof meetings may be attended by two or three people, but planning and retrospective meetings must be attended by all.
+---
 
-## Repository, Process, and Tooling Requirements
+## Repository Map
 
-- All work including planning, meeting information, tests, and documentation must be captured in GitHub incrementally
-- GenAI may be used, and if used, must be exposed and discussed
-- Regardless of production mechanism (human or AI) work batches above 300 LoC must follow a pull-request path with evaluation by another human on the team
-- Branching should be demonstrated and used over the project process but approach can vary as you go
-- Versioning using [SemVer](https://semver.org/) must be employed
-- A CI/CD pipeline must be built using GitHub Actions
-- Deployment can happen to GitHub pages, Cloudflare, or as a downloadable asset, depending on the form.
-- Testing with unit and e2e must be demonstrated, and not be applied only at the conclusion of the project. Significant early efforts with testing should be verifiable in the repository. Testing approaches may vary in tooling.
-- Code documentation must be maintained as you go along in the project. This also includes commenting using JSDocs
-- Linting and quality checks should be performed both manually by developers and via a CI pipeline for software artifacts (this may go beyond JavaScript code)
-- Repositories should use a .gitignore file
-- Commit messages should be consistent and follow a format like [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
-- A changelog should be kept and may be generated manually, automatically, or some hybrid
-- A technical documentation site should be found either in a Github Wiki or private web site for future maintainers
+Everything below is tracked in `main`. The repo is organized so a brand-new contributor can find anything by reading directory names.
 
-## Technical Constraints
+```
+sp26-cse110-typing-game/
+│
+├── README.md                       ← You are here
+├── MVP.md                          ← What we committed to building (and what we explicitly did not)
+│
+├── index.html                      ← HTML contract: every screen + overlay div lives here
+├── styles.css                      ← All visual styling (variables, screens, animations)
+│
+├── src/                            ← All game source code (ES modules, no bundler)
+│   ├── main.js                       Entry point — wires every module together
+│   ├── state.js                      RunState factory (single mutable state object per run)
+│   │
+│   ├── snippets/                     Code snippet library (the typed content)
+│   │   ├── index.js                  Public API: getSnippet(), getSnippetsForLanguage()
+│   │   ├── javascript.js             JavaScript snippet pool (≥5 entries)
+│   │   ├── html.js                   HTML snippet pool (≥5 entries)
+│   │   └── css.js                    CSS snippet pool (≥5 entries)
+│   │
+│   ├── engine/                       Game logic (no UI imports)
+│   │   ├── waveManager.js            Wave lifecycle: snippet selection, spawn loop, clear signal
+│   │   ├── enemySystem.js            DOM enemies, CSS fall animation, deadline detection
+│   │   ├── bossSystem.js             Boss intro + full-function typing
+│   │   ├── typingEngine.js           Input comparison, typo highlighting, WPM/accuracy
+│   │   └── upgradeSystem.js          Upgrade pool draw + effect application
+│   │
+│   ├── ui/                           UI surface (depends on engine, never the reverse)
+│   │   ├── screenManager.js          Show/hide one of seven .screen divs
+│   │   ├── hudManager.js             Score, lives, wave, active upgrades panel
+│   │   ├── codePanel.js              Code assembly display with syntax highlighting
+│   │   ├── statsScreen.js            End-of-run summary
+│   │   └── waveIntroCard.js          Pre-wave function preview + dismiss
+│   │
+│   ├── audio/
+│   │   └── audioManager.js           Ambient music + SFX pool
+│   │
+│   ├── data/
+│   │   └── upgrades.js               Upgrade definitions (id, name, icon, description, effect)
+│   │
+│   └── utils/
+│       ├── statTracker.js            Per-keystroke + per-wave stat accumulation
+│       └── storage.js                localStorage wrapper for user preferences
+│
+├── tests/                          ← Unit + integration tests (Jest)
+│   ├── typingEngine.test.js
+│   ├── enemySystem.test.js
+│   ├── waveManager.test.js
+│   ├── MainMenuTests.test.js
+│   └── snippets-test-css-html.js
+│
+├── media/                          ← Game assets (committed)
+│   ├── audio/                        spookymusic.mp3, evil laughs, scream SFX
+│   └── visuals/                      Ghost sprites, countdown clips, jump-scare videos
+│
+├── lib/                            ← Vendored third-party JS (e.g., Prism.js)
+├── assets/                         ← Empty placeholders (audio/, images/) — see media/ for real assets
+│
+├── docs/                           ← All design + architecture documentation
+│   ├── code-style.md                 Team coding standard (camelCase, JSDoc, brackets, returns…)
+│   └── architecture/
+│       ├── README.md                 Architecture overview: module map, dependency rules, sprint build order
+│       └── decisions/                Ten ADRs in MADR format (one per major technical decision)
+│           ├── ADR-001-tech-stack.md
+│           ├── ADR-002-game-architecture.md
+│           ├── ADR-003-module-organization.md
+│           ├── ADR-004-snippet-library.md
+│           ├── ADR-005-enemy-rendering.md
+│           ├── ADR-006-typing-input.md
+│           ├── ADR-007-syntax-highlighting.md
+│           ├── ADR-008-audio.md
+│           ├── ADR-009-persistence.md
+│           └── ADR-010-run-state.md
+│
+├── research/                       ← Pre-code design artifacts
+│   ├── user-stories/                 100 user stories — 10 per contributor, in `<name>/` folders
+│   │   ├── ethan/   henry/   itai/   janoj/   nishant/
+│   │   ├── ryan/    sam/     shubhi/ simar/   soohwan/
+│   └── misc/
+│       └── other-ideas.md
+│
+├── prototypes/                     ← Pre-MVP exploration (kept for reference, not shipped)
+│   ├── individual-prototypes/        One folder per teammate's solo prototype
+│   └── mvp-prototype/                The combined prototype we built before settling on this architecture
+│
+├── admin/
+│   └── videos/                       Links to status update videos
+│
+├── .github/
+│   ├── ISSUE_TEMPLATE/               Feature task + bug report templates
+│   └── workflows/
+│       ├── lint.yml                  CI: runs ESLint + Prettier on every PR
+│       └── deploy.yml                CD: auto-deploys to GitHub Pages on push to main
+│
+├── .husky/                         ← Pre-commit hooks (run linter locally before commit)
+├── eslint.config.js                ← ESLint flat config (camelCase, no-var, JSDoc rules, etc.)
+├── .prettierrc                     ← Prettier formatting config
+└── package.json                    ← Dev dependencies only (no runtime deps — vanilla JS)
+```
 
-- You may use markdown, standards-based HTML, CSS without a framework, vanilla JavaScript without a framework, media assets such as audio, video, image, fonts, or PDF files, JSON files, and any .txt or configuration files needed
-- Any server-side based technologies must work on Cloudflare or Github pages only
-- All major technical decisions must be captured as Architectural Decision Records (ADRs) in [MADR](https://adr.github.io/madr/) format
-- Dependencies can only be added with agreement from your teaching assistant (which implies proper justification)
-- The form of what you build may include a traditional web application, progressive web application (Web app), wrapped mobile app (CapacitorJS), or a wrapped desktop app (ElectronJS). Chrome Extensions, VS Code extensions, and Slack extensions also have been seen and on occasion, REST endpoints for outside consumption make sense. Forms beyond any mentioned here must be given clearance.
-- All projects must have a website to document what is produced for end users
+---
 
-# Project Topic and Process
+## Where to Find…
 
-You will be given a topic as a prompt for you to clarify and design. Your TA mentor is your customer, and they work for the Prof who has driven the ideas. The topic itself will have many design decisions and open-ended aspects. You should do research and employ user-centered design throughout the project. This should include, minimally, a design brief, user personas, user stories, and wireframes. These artifacts should precede any non-exploratory work produced in the repository.
+| If you want to…                                 | Look at                                                                                       |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Understand what we're building                  | [`MVP.md`](MVP.md)                                                                            |
+| See the live game                               | <https://cse110-sp24-group24.github.io/sp26-cse110-typing-game/>                              |
+| Read every team member's feature ideas          | [`research/user-stories/`](research/user-stories/)                                            |
+| Understand how the code is organized            | [`docs/architecture/README.md`](docs/architecture/README.md)                                  |
+| Learn why we made a specific technical decision | [`docs/architecture/decisions/`](docs/architecture/decisions/) (ten ADRs)                     |
+| Check the team's coding standard                | [`docs/code-style.md`](docs/code-style.md)                                                    |
+| See current work in progress                    | [Issues](https://github.com/cse110-sp24-group24/sp26-cse110-typing-game/issues) tab on GitHub |
+| Open a new issue                                | Use the [feature task or bug report templates](.github/ISSUE_TEMPLATE/)                       |
+| See test coverage                               | [`tests/`](tests/)                                                                            |
+| See pre-MVP exploration                         | [`prototypes/`](prototypes/)                                                                  |
 
-You will run a one-week sprint, Sunday to Sunday, for orienting, which is light work-wise due to the midterm. Then, a one-week design and prototyping sprint with initial exploration. Your TA will gate you on these two sprints and, if you do not perform them before heavy coding, you will be forced to repeat it the week after.
+---
 
-Your sprints will continue after, with a review break sometime in week 9. The review break will involve another team in your cohort that will use your software, look at your code, evaluate it, and provide product and code feedback. You will do the same. Interaction, or even software evaluation, should happen once from the Prof before the end of week 10, and you are expected to interact with the TA weekly.
+## Getting Started
 
-# Your Project Prompt
+### Prerequisites
 
-_You Name It: Code Typing Game_ - Typing tutors of old are fun and all, but we want to have some real fun while getting our typing to Claude-level speeds. Ideas like https://keysoffury.com/ show that we can build a game with typing, but what about what we type - code? Be it &lt;html>, CSS, or JavaScript we want to challenge to jump, avoid falling code, shoot syntax, or whatever makes sense while learning about the syntax we need to write or recognize. A game is lot more fun than flash cards, but make sure it can be expanded with new packs for all the UNIX commands, Claude syntax, API methods, or whatever syntax it is you might need to learn by playing in the future. If we are waiting for class or bored, we might not have our laptop handy, so mobile friendliness is a must, and WiFI can't be required!
+- Node.js 20+ (only required for the dev tooling — the game itself is vanilla JS)
 
-# Final Advice (from Ayla)
+### First-time setup
 
-After all the build-up for the project, you're making... _a typing game_? Maybe it sounds a bit silly, or simple. And sure, you can probably make a _bad_ typing game in an afternoon. But how do you make a typing game that people actually want to play? How do you make a game that helps people learn new syntax? How do you make a game that is rewarding on replay? The project prompt is just a starting point. Run with it. Get creative!
+```bash
+git clone https://github.com/cse110-sp24-group24/sp26-cse110-typing-game.git
+cd sp26-cse110-typing-game
+npm install
+```
 
-Some advice:
+### Running the game locally
 
-1. **Make user first decisions.** The first phase of the project is all about planning. This is the most important step. It's tempting to start out by making a laundry list of features that would be cool. But this isn't where you should start, or at least not where you should stop. No one wants a system that's a hodgepodge of random features thrown together. Instead, start with high level questions: _What are our motivations for building this game?_ _Who is our audience?_ _What qualities do we care about in our game?_ A game that prioritizes addictiveness will look different from a game that prioritizes education. Once you have your high level design goals, you can evaluate whether or not each feature you want to implement supports those goals. The first idea is rarely the best. User needs inform design. Design informs architecture. Architecture informs code. The worst thing you can do is start with the code.
+Because the game uses ES modules, you need to serve it over HTTP rather than opening `index.html` directly. The simplest option:
 
-2. **Feedback should never be personal. Progress is made as a team.** Everyone has strengths they bring to the table and things to learn. An effective team is one that improves together. Retrospectives are a place to reflect on whole team process, not to point fingers. Code review is about assuring code quality and consistency, and sharing knowledge, not about calling people out for making mistakes. If you ever find yourself starting a sentence "If we had just done what I suggested..." **_stop_**.
+```bash
+npx http-server . -p 8080
+```
 
-3. **You can use AI, but do so deliberately.** Based on your experience in the warm-ups, your team is equipped to make an informed decision about how to use AI. AI can be a useful accelerant. With precise prompting and guardrails, it can produce some quality code. But AI does not replace you. It does not reason for you. And, at the end of the day, this is a class, and your goal should be to learn. If one thing you want to learn from this class is Javascript and HTML, then asking Claude to write all your code isn't going to serve you.
+Then open <http://localhost:8080> in your browser.
 
-4. **Be consistent. Don't cram.** In some classes you can cram a quarter's worth of a work into a few all-nighters. If that's how you approach this class, then you have missed the point.
+### Useful scripts
+
+| Command                | What it does                            |
+| ---------------------- | --------------------------------------- |
+| `npm run lint`         | Check JS for ESLint errors              |
+| `npm run lint:fix`     | Auto-fix what ESLint can                |
+| `npm run format`       | Auto-format all files with Prettier     |
+| `npm run format:check` | Check formatting without changing files |
+| `npm test`             | Run the Jest test suite                 |
+
+---
+
+## Development Workflow
+
+1. **Pick an issue** from the [Issues](https://github.com/cse110-sp24-group24/sp26-cse110-typing-game/issues) tab. Each issue is fully briefed — it lists the linked user stories, ADRs, acceptance criteria, dependencies, and definition of done.
+2. **Create a branch** from `main` (e.g., `feature/wave-manager`).
+3. **Write code and tests.** Follow [`docs/code-style.md`](docs/code-style.md).
+4. **Before committing:** run `npm run format` and `npm run lint`. A pre-commit hook (`.husky/pre-commit`) will run the linter automatically.
+5. **Open a pull request** against `main`. The **Lint** GitHub Actions workflow runs automatically — a failing check blocks the merge.
+6. **Get one human review** (required for any change >300 LoC per class policy).
+7. **Merge.** The **Deploy** workflow auto-publishes to GitHub Pages within ~30 seconds.
+
+---
+
+## Tech Stack
+
+**Production runtime — zero dependencies, no bundler:**
+
+- Vanilla HTML5, CSS3, and JavaScript (ES2022 modules)
+- Prism.js for syntax highlighting (vendored locally in `lib/`)
+
+**Development tooling (dev dependencies only):**
+
+- **ESLint 9** (flat config) — code quality and naming rules
+- **Prettier 3** — formatting
+- **eslint-plugin-jsdoc** — JSDoc enforcement
+- **Husky** — pre-commit hooks
+- **Jest** — unit and integration tests
+- **GitHub Actions** — CI (lint) and CD (Pages deploy)
+
+The full rationale for each choice is in [ADR-001 (Tech Stack)](docs/architecture/decisions/ADR-001-tech-stack.md).
+
+---
+
+## Architecture at a Glance
+
+The game is a single-page web application with **no backend**. All modules read and write a single shared `RunState` object (created fresh per run) and communicate through direct function calls. There is no event bus, no Redux store, and no global variables outside `RunState`.
+
+```
+ui/  ──depends on──►  engine/  ──depends on──►  data/  utils/  snippets/
+```
+
+Modules in `ui/` never import from `audio/`, and `audio/` never imports from `engine/`. `main.js` is the only file that wires layers together. The full dependency table and rationale lives in [ADR-003 (Module Organization)](docs/architecture/decisions/ADR-003-module-organization.md).
+
+For the complete module map, sprint build order, and the `RunState` shape, read [`docs/architecture/README.md`](docs/architecture/README.md).
+
+---
+
+## Team
+
+Ten contributors built this project together:
+
+| Ethan · Henry · Itai · Janoj · Nishant · Ryan · Sam · Shubhi · Simar · Soohwan |
+| ------------------------------------------------------------------------------ |
+
+Each teammate authored 10 user stories (visible under [`research/user-stories/<name>/`](research/user-stories/)) and owns one or more modules per the [suggested ownership table in ADR-003](docs/architecture/decisions/ADR-003-module-organization.md#ownership-assignments-suggested).
+
+---
+
+## License
+
+Coursework for CSE 110 at UC San Diego, Spring 2026. Not licensed for commercial use.
