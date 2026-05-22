@@ -142,18 +142,6 @@ sp26-cse110-typing-game/
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js 20+ (only required for the dev tooling — the game itself is vanilla JS)
-
-### First-time setup
-
-```bash
-git clone https://github.com/cse110-sp24-group24/sp26-cse110-typing-game.git
-cd sp26-cse110-typing-game
-npm install
-```
-
 ### Running the game locally
 
 Because the game uses ES modules, you need to serve it over HTTP rather than opening `index.html` directly. The simplest option:
@@ -173,18 +161,6 @@ Then open <http://localhost:8080> in your browser.
 | `npm run format`       | Auto-format all files with Prettier     |
 | `npm run format:check` | Check formatting without changing files |
 | `npm test`             | Run the Jest test suite                 |
-
----
-
-## Development Workflow
-
-1. **Pick an issue** from the [Issues](https://github.com/cse110-sp24-group24/sp26-cse110-typing-game/issues) tab. Each issue is fully briefed — it lists the linked user stories, ADRs, acceptance criteria, dependencies, and definition of done.
-2. **Create a branch** from `main` (e.g., `feature/wave-manager`).
-3. **Write code and tests.** Follow [`docs/code-style.md`](docs/code-style.md).
-4. **Before committing:** run `npm run format` and `npm run lint`. A pre-commit hook (`.husky/pre-commit`) will run the linter automatically.
-5. **Open a pull request** against `main`. The **Lint** GitHub Actions workflow runs automatically — a failing check blocks the merge.
-6. **Get one human review** (required for any change >300 LoC per class policy).
-7. **Merge.** The **Deploy** workflow auto-publishes to GitHub Pages within ~30 seconds.
 
 ---
 
