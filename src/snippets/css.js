@@ -16,59 +16,183 @@
 //   { line: 'transition: opacity 0.3s ease;', fn: 'animation', tags: ['motion'] },
 // ];
 
-/**
- * snippets/css.js — CSS code snippet library.
- *
- * Each snippet is one line of real CSS a beginner CS student would encounter.
- * Covers layout, color, typography, spacing, box model, effects, and interactivity.
- *
- * Implemented by Issue #1.
- */
-
 export const snippets = [
   // --- Layout: Flexbox ---
-  // display: flex turns the element into a flex container; children line up in a row by default
-  { line: 'display: flex;', fn: 'flexbox', tags: ['layout'] },
-  { line: 'justify-content: space-between;', fn: 'flexbox', tags: ['layout'] },
-  { line: 'align-items: center;', fn: 'flexbox', tags: ['layout'] },
+  {
+    id: 'css-flexbox-row',
+    name: 'flexboxRow',
+    language: 'css',
+    description:
+      'Creates a flex container whose children are laid out in a horizontal row and centred on the cross axis.',
+    conceptTags: ['objects'],
+    complexity: 1,
+    lines: ['.card {', '  display: flex;', '  align-items: center;', '  gap: 8px;', '}'],
+  },
 
   // --- Layout: Grid ---
-  { line: 'display: grid;', fn: 'grid', tags: ['layout'] },
-
-  // repeat(3, 1fr) creates three equal-width columns
-  { line: 'grid-template-columns: repeat(3, 1fr);', fn: 'grid', tags: ['layout'] },
-
-  // --- Layout: Positioning ---
-  // position: absolute removes the element from normal flow — pair with a positioned parent
-  { line: 'position: absolute;', fn: 'position', tags: ['layout'] },
-  { line: 'overflow: hidden;', fn: 'overflow', tags: ['layout'] },
+  {
+    id: 'css-grid-three-col',
+    name: 'gridThreeColumns',
+    language: 'css',
+    description:
+      'Creates a three-column equal-width grid layout using repeat() and the fr (fraction) unit.',
+    conceptTags: ['objects'],
+    complexity: 1,
+    lines: [
+      '.grid {',
+      '  display: grid;',
+      // repeat(3, 1fr) divides available space into three equal columns
+      '  grid-template-columns: repeat(3, 1fr);',
+      '  gap: 16px;',
+      '}',
+    ],
+  },
 
   // --- Sizing & Spacing ---
-  { line: 'width: 100%;', fn: 'sizing', tags: ['spacing'] },
+  {
+    id: 'css-box-model-card',
+    name: 'boxModelCard',
+    language: 'css',
+    description:
+      'Applies padding, a border, and border-radius to give an element a card-like appearance.',
+    conceptTags: ['objects'],
+    complexity: 1,
+    lines: [
+      '.card {',
+      '  padding: 12px 24px;',
+      '  border: 1px solid #cccccc;',
+      '  border-radius: 8px;',
+      '}',
+    ],
+  },
 
-  // shorthand: 12px top/bottom, 24px left/right
-  { line: 'padding: 12px 24px;', fn: 'spacing', tags: ['spacing'] },
-  { line: 'margin: 16px;', fn: 'spacing', tags: ['spacing'] },
-
-  // --- Box Model ---
-  { line: 'border-radius: 8px;', fn: 'border', tags: ['box-model'] },
-  { line: 'box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);', fn: 'shadow', tags: ['box-model'] },
-
-  // --- Color ---
-  { line: 'background-color: #1a1a2e;', fn: 'color', tags: ['color'] },
-  { line: 'color: #333333;', fn: 'color', tags: ['color'] },
-
-  // opacity affects the whole element including children — use rgba() for background-only transparency
-  { line: 'opacity: 0.8;', fn: 'color', tags: ['color'] },
+  // --- Color & Background ---
+  {
+    id: 'css-dark-theme-bg',
+    name: 'darkThemeBackground',
+    language: 'css',
+    description: 'Sets a dark background colour and contrasting white text for a dark-theme UI.',
+    conceptTags: ['objects'],
+    complexity: 1,
+    lines: ['.dark-theme {', '  background-color: #1a1a2e;', '  color: #ffffff;', '}'],
+  },
 
   // --- Typography ---
-  { line: 'font-size: 1.5rem;', fn: 'typography', tags: ['text'] },
-  { line: 'font-weight: 700;', fn: 'typography', tags: ['text'] },
-  { line: 'text-align: center;', fn: 'typography', tags: ['text'] },
+  {
+    id: 'css-typography-heading',
+    name: 'typographyHeading',
+    language: 'css',
+    description: 'Styles a heading with a large font size, bold weight, and centred alignment.',
+    conceptTags: ['objects'],
+    complexity: 1,
+    lines: [
+      '.heading {',
+      '  font-size: 2rem;',
+      '  font-weight: 700;',
+      '  text-align: center;',
+      '}',
+    ],
+  },
 
-  // --- Animation & Interactivity ---
-  { line: 'transition: opacity 0.3s ease;', fn: 'animation', tags: ['motion'] },
+  // --- Animation & Transition ---
+  {
+    id: 'css-fade-transition',
+    name: 'fadeTransition',
+    language: 'css',
+    description: 'Adds a smooth opacity fade on hover using the CSS transition property.',
+    conceptTags: ['objects'],
+    complexity: 1,
+    lines: [
+      '.btn {',
+      '  opacity: 1;',
+      // transition eases the change in opacity over 0.3 s
+      '  transition: opacity 0.3s ease;',
+      '}',
+      '',
+      '.btn:hover {',
+      '  opacity: 0.7;',
+      '}',
+    ],
+  },
 
-  // cursor: pointer signals to the user that this element is clickable
-  { line: 'cursor: pointer;', fn: 'interaction', tags: ['motion'] },
+  // --- Positioning ---
+  {
+    id: 'css-absolute-centre',
+    name: 'absoluteCentre',
+    language: 'css',
+    description:
+      'Centres a child element inside a positioned parent using absolute positioning and the transform trick.',
+    conceptTags: ['objects'],
+    complexity: 2,
+    lines: [
+      '.parent {',
+      '  position: relative;',
+      '}',
+      '',
+      '.child {',
+      '  position: absolute;',
+      '  top: 50%;',
+      '  left: 50%;',
+      // translate(-50%, -50%) shifts the element back by half its own size
+      '  transform: translate(-50%, -50%);',
+      '}',
+    ],
+  },
+
+  // --- Shadow & Effects ---
+  {
+    id: 'css-card-shadow',
+    name: 'cardShadow',
+    language: 'css',
+    description: 'Applies a subtle drop shadow to lift a card element off the page.',
+    conceptTags: ['objects'],
+    complexity: 1,
+    lines: ['.card {', '  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);', '}'],
+  },
+
+  // --- Responsive: Media Query ---
+  {
+    id: 'css-responsive-stack',
+    name: 'responsiveStack',
+    language: 'css',
+    description: 'Uses a media query to switch a flex row to a column layout on narrow screens.',
+    conceptTags: ['conditionals'],
+    complexity: 2,
+    lines: [
+      '.row {',
+      '  display: flex;',
+      '  flex-direction: row;',
+      '}',
+      '',
+      // conditionally override layout below 600 px viewport width
+      '@media (max-width: 600px) {',
+      '  .row {',
+      '    flex-direction: column;',
+      '  }',
+      '}',
+    ],
+  },
+
+  // --- Custom Properties (CSS Variables) ---
+  {
+    id: 'css-custom-properties',
+    name: 'customProperties',
+    language: 'css',
+    description:
+      'Declares CSS custom properties (variables) on :root and uses them for consistent theming.',
+    conceptTags: ['objects'],
+    complexity: 2,
+    lines: [
+      ':root {',
+      '  --color-primary: #4f46e5;',
+      '  --spacing-md: 16px;',
+      '}',
+      '',
+      '.btn {',
+      // var() reads the value declared on :root
+      '  background-color: var(--color-primary);',
+      '  padding: var(--spacing-md);',
+      '}',
+    ],
+  },
 ];
