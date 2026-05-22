@@ -8,7 +8,7 @@
  * Full SFX pool: Issue #15.
  */
 
-const AMBIENT_SRC = 'media/Music%3ASound%20Effects/spookymusic.mp3';
+const AMBIENT_SRC = 'media/audio/spookymusic.mp3';
 const AUTOPLAY_RESUME_EVENTS = ['pointerdown', 'keydown', 'touchstart'];
 
 /** @type {HTMLAudioElement|null} */

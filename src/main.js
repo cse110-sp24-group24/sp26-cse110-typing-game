@@ -56,7 +56,7 @@ function initGhostCanvas() {
 
   const video = document.createElement('video');
   silenceDecorativeVideo(video);
-  video.src = 'media/Images%3AVideos/MainMenuGhostAni.mp4';
+  video.src = 'media/visuals/MainMenuGhostAni.mp4';
   video.loop = true;
   video.playsInline = true;
   video.style.cssText =
@@ -183,9 +183,9 @@ document.getElementById('play-btn').addEventListener('click', () => {
 });
 
 const LAUGH_SRCS = [
-  'media/Music%3ASound%20Effects/EvilLaughs/EvilLaugh1.mp3',
-  'media/Music%3ASound%20Effects/EvilLaughs/EvilLaugh2.mp3',
-  'media/Music%3ASound%20Effects/EvilLaughs/EvilLaugh3.mp3',
+  'media/audio/EvilLaughs/EvilLaugh1.mp3',
+  'media/audio/EvilLaughs/EvilLaugh2.mp3',
+  'media/audio/EvilLaughs/EvilLaugh3.mp3',
 ];
 
 function pickRandom(arr) {
@@ -252,7 +252,7 @@ function startZombieChromaKey() {
 
   const zombie = document.createElement('video');
   silenceDecorativeVideo(zombie);
-  zombie.src = 'media/Images%3AVideos/ZombieJumpScare.mp4';
+  zombie.src = 'media/visuals/ZombieJumpScare.mp4';
   zombie.playsInline = true;
   zombie.style.cssText =
     'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;';
@@ -370,7 +370,7 @@ function playLanguageTransition(onComplete) {
     'transitionend',
     () => {
       countdownVideo.style.transition = 'opacity 0.6s ease';
-      countdownVideo.src = 'media/Images%3AVideos/3secs.mp4';
+      countdownVideo.src = 'media/visuals/3secs.mp4';
       countdownVideo.play().catch(() => {});
       requestAnimationFrame(() =>
         requestAnimationFrame(() => {
@@ -401,7 +401,7 @@ function playLanguageTransition(onComplete) {
         }, 250);
       };
 
-      const scream = new Audio('media/Music%3ASound%20Effects/SCREAM.mp3');
+      const scream = new Audio('media/audio/SCREAM.mp3');
       scream.play().catch(() => {});
       scream.addEventListener('ended', proceed, { once: true });
       setTimeout(proceed, 8000);
