@@ -32,16 +32,22 @@ export function show(_state, waveData) {
   const descEl = document.getElementById('wave-intro-desc');
   const hintEl = document.querySelector('.wave-intro-hint');
 
-  if (numberEl) {numberEl.textContent = `Wave ${waveData?.wave ?? ''}`.trim();}
-  if (functionNameEl) {functionNameEl.textContent = waveData?.snippet?.name ?? '';}
-  if (descEl) {descEl.textContent = waveData?.snippet?.description ?? '';}
-  if (hintEl) {hintEl.textContent = 'Press any key to begin...';}
+  if (numberEl) {
+    numberEl.textContent = `Wave ${waveData?.wave ?? ''}`.trim();
+  }
+  if (functionNameEl) {
+    functionNameEl.textContent = waveData?.snippet?.name ?? '';
+  }
+  if (descEl) {
+    descEl.textContent = waveData?.snippet?.description ?? '';
+  }
+  if (hintEl) {
+    hintEl.textContent = 'Press any key to begin...';
+  }
 
   if (tagsEl) {
     tagsEl.textContent = '';
-    const tags = Array.isArray(waveData?.snippet?.conceptTags)
-      ? waveData.snippet.conceptTags
-      : [];
+    const tags = Array.isArray(waveData?.snippet?.conceptTags) ? waveData.snippet.conceptTags : [];
 
     tags.forEach((tagText) => {
       const pillEl = document.createElement('span');
@@ -63,7 +69,9 @@ export function show(_state, waveData) {
     }, AUTO_DISMISS_MS);
 
     const dismiss = () => {
-      if (dismissed) {return;}
+      if (dismissed) {
+        return;
+      }
       dismissed = true;
       window.removeEventListener('keydown', keydownHandler);
       clearTimeout(timeoutId);
@@ -73,5 +81,3 @@ export function show(_state, waveData) {
     window.addEventListener('keydown', keydownHandler);
   });
 }
-
-

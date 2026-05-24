@@ -32,20 +32,25 @@ describe('ui/waveIntroCard.show', () => {
   });
 
   it('shows wave intro screen and populates all content from waveData', () => {
-    show({}, {
-      wave: 3,
-      snippet: {
-        name: 'renderHeader',
-        description: 'Render the app header.',
-        conceptTags: ['DOM', 'Functions', 'Template literals'],
-      },
-    });
+    show(
+      {},
+      {
+        wave: 3,
+        snippet: {
+          name: 'renderHeader',
+          description: 'Render the app header.',
+          conceptTags: ['DOM', 'Functions', 'Template literals'],
+        },
+      }
+    );
 
     expect(showScreenMock).toHaveBeenCalledWith('wave-intro-screen');
     expect(document.getElementById('wave-intro-number').textContent).toBe('Wave 3');
     expect(document.getElementById('wave-intro-function-name').textContent).toBe('renderHeader');
     expect(document.getElementById('wave-intro-desc').textContent).toBe('Render the app header.');
-    expect(document.querySelector('.wave-intro-hint').textContent).toBe('Press any key to begin...');
+    expect(document.querySelector('.wave-intro-hint').textContent).toBe(
+      'Press any key to begin...'
+    );
 
     const tags = [...document.querySelectorAll('#wave-intro-tags .wave-intro-tag')].map(
       (el) => el.textContent
@@ -54,7 +59,10 @@ describe('ui/waveIntroCard.show', () => {
   });
 
   it('dismisses immediately on keydown and resolves only once', async () => {
-    const promise = show({}, { wave: 1, snippet: { name: 'x', description: 'y', conceptTags: [] } });
+    const promise = show(
+      {},
+      { wave: 1, snippet: { name: 'x', description: 'y', conceptTags: [] } }
+    );
     const thenSpy = jest.fn();
     promise.then(thenSpy);
 
@@ -67,7 +75,10 @@ describe('ui/waveIntroCard.show', () => {
   });
 
   it('auto-dismisses after 3 seconds when no key is pressed', async () => {
-    const promise = show({}, { wave: 2, snippet: { name: 'y', description: 'z', conceptTags: [] } });
+    const promise = show(
+      {},
+      { wave: 2, snippet: { name: 'y', description: 'z', conceptTags: [] } }
+    );
     const thenSpy = jest.fn();
     promise.then(thenSpy);
 
@@ -83,7 +94,10 @@ describe('ui/waveIntroCard.show', () => {
   it('does not throw when optional DOM elements are missing', async () => {
     document.body.innerHTML = '<div id="wave-intro-screen" class="screen"></div>';
 
-    const promise = show({}, { wave: 1, snippet: { name: 'n', description: 'd', conceptTags: ['Tag'] } });
+    const promise = show(
+      {},
+      { wave: 1, snippet: { name: 'n', description: 'd', conceptTags: ['Tag'] } }
+    );
     jest.advanceTimersByTime(3000);
     await expect(promise).resolves.toBeUndefined();
   });
