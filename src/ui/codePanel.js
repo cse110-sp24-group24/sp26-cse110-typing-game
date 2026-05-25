@@ -23,15 +23,15 @@
 // ─── Module-private state ────────────────────────────────────────────────────
 
 /** @type {HTMLElement|null} Root panel element */
-// eslint-disable-next-line prefer-const
+
 let _panel = null;
 
 /** @type {HTMLElement|null} Header element that shows the function name */
-// eslint-disable-next-line prefer-const
+
 let _header = null;
 
 /** @type {HTMLElement|null} Container for all line elements */
-// eslint-disable-next-line prefer-const
+
 let _linesContainer = null;
 
 /**
@@ -236,7 +236,7 @@ export function clearPanel() {
  *
  * @returns {void}
  */
-// eslint-disable-next-line no-unused-vars
+
 function _buildStructure() {
   _panel.innerHTML = '';
   _panel.classList.add('cp-panel');

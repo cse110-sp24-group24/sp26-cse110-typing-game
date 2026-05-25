@@ -5,7 +5,8 @@
  * wave-clear detection, and transitioning to the boss sequence via callback.
  *
  * Flow per wave:
- *   startWave() → pick snippet → onWaveStart(snippet) → spawnCurrentLine()
+ *   prepareWave() → pick snippet (main shows wave intro with snippet data)
+ *   startWave() → onWaveStart(snippet) → spawnCurrentLine()
  *   player types line → typingEngine fires onDefeated → main calls onEnemyDefeated()
  *   onEnemyDefeated() → defeatEnemy → next line OR onWaveClear(snippet)
  *
@@ -33,7 +34,7 @@ const usedSnippetIds = [];
 
 /**
  * Stores run-level references and callbacks. Must be called once per run,
- * before the first startWave().
+ * before the first prepareWave() / startWave().
  * @param {object} state - Shared RunState for this run.
  * @param {Function} onWaveClear - Called with (snippet) when all lines are defeated.
  * @param {Function} onWaveStart - Called with (snippet) when a new wave begins.
@@ -52,11 +53,11 @@ export function init(state, onWaveClear, onWaveStart) {
 }
 
 /**
- * Begins the next wave: increments the wave counter (after the first wave),
- * picks a unique snippet, fires onWaveStart, and spawns the first enemy.
+ * Picks the next snippet and updates wave state without spawning enemies.
+ * Call before the wave intro card so main.js can pass snippet data to the UI.
  * @returns {void}
  */
-export function startWave() {
+export function prepareWave() {
   // state.wave starts at 1 from createRunState — only increment on subsequent waves.
   if (currentSnippet !== null) {
     stateRef.wave += 1;
@@ -66,7 +67,14 @@ export function startWave() {
   usedSnippetIds.push(currentSnippet.id);
   stateRef.currentSnippetId = currentSnippet.id;
   lineIndex = 0;
+}
 
+/**
+ * Starts combat for the current wave: fires onWaveStart and spawns the first enemy.
+ * Requires prepareWave() to have been called first.
+ * @returns {void}
+ */
+export function startWave() {
   onWaveStartRef(currentSnippet);
   spawnCurrentLine();
 }
@@ -95,11 +103,20 @@ export function onEnemyDefeated() {
 
 /**
  * Returns the snippet currently active in this wave.
- * Returns null before the first startWave() call.
+ * Returns null before the first prepareWave() call.
  * @returns {object | null} The current snippet object.
  */
 export function getCurrentSnippet() {
   return currentSnippet;
+}
+
+/**
+ * Returns the zero-based index of the line currently being fought.
+ * main.js reads this before onEnemyDefeated() to reveal the correct code-panel line.
+ * @returns {number}
+ */
+export function getCurrentLineIndex() {
+  return lineIndex;
 }
 
 // ── Private helpers ─────────────────────────────────────────────────────────

@@ -8,7 +8,7 @@
 
 import { showScreen } from './screenManager.js';
 
-const AUTO_DISMISS_MS = 3000;
+const AUTO_DISMISS_MS = 5000;
 
 /**
  * Shows the wave intro card and resolves when the player dismisses it.

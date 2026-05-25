@@ -28,7 +28,7 @@ jest.unstable_mockModule('../src/engine/typingEngine.js', () => ({
 }));
 
 // Dynamic imports after mock setup so waveManager loads the mocked modules.
-const { init, startWave, onEnemyDefeated, getCurrentSnippet } =
+const { init, prepareWave, startWave, onEnemyDefeated, getCurrentSnippet, getCurrentLineIndex } =
   await import('../src/engine/waveManager.js');
 const enemySystem = await import('../src/engine/enemySystem.js');
 const typingEngine = await import('../src/engine/typingEngine.js');
@@ -43,10 +43,19 @@ function makeState() {
   return { language: 'javascript', wave: 1, currentSnippetId: null };
 }
 
+/**
+ * Picks a snippet then starts combat (matches main.js flow after wave intro).
+ * @returns {void}
+ */
+function beginWave() {
+  prepareWave();
+  startWave();
+}
+
 // ── init ──────────────────────────────────────────────────────────────────
 
 describe('waveManager — init', () => {
-  it('getCurrentSnippet returns null before startWave is called', () => {
+  it('getCurrentSnippet returns null before prepareWave is called', () => {
     const state = makeState();
     init(state, jest.fn(), jest.fn());
     expect(getCurrentSnippet()).toBeNull();
@@ -55,7 +64,7 @@ describe('waveManager — init', () => {
   it('resets snippet state when called a second time', () => {
     const state = makeState();
     init(state, jest.fn(), jest.fn());
-    startWave();
+    beginWave();
     expect(getCurrentSnippet()).not.toBeNull();
 
     // Re-init must reset snippet back to null.
@@ -75,7 +84,7 @@ describe('waveManager — startWave', () => {
   it('picks a snippet and spawns the first enemy on startWave', () => {
     const state = makeState();
     init(state, jest.fn(), jest.fn());
-    startWave();
+    beginWave();
 
     const snippet = getCurrentSnippet();
     expect(snippet).not.toBeNull();
@@ -86,7 +95,7 @@ describe('waveManager — startWave', () => {
   it('sets the typing target to the first line on startWave', () => {
     const state = makeState();
     init(state, jest.fn(), jest.fn());
-    startWave();
+    beginWave();
 
     const snippet = getCurrentSnippet();
     expect(typingEngine.setTarget).toHaveBeenCalledWith(snippet.lines[0]);
@@ -96,7 +105,7 @@ describe('waveManager — startWave', () => {
     const state = makeState();
     const onWaveStart = jest.fn();
     init(state, jest.fn(), onWaveStart);
-    startWave();
+    beginWave();
 
     expect(onWaveStart).toHaveBeenCalledTimes(1);
     expect(onWaveStart).toHaveBeenCalledWith(getCurrentSnippet());
@@ -105,26 +114,26 @@ describe('waveManager — startWave', () => {
   it('sets state.currentSnippetId to the chosen snippet id', () => {
     const state = makeState();
     init(state, jest.fn(), jest.fn());
-    startWave();
+    beginWave();
 
     expect(state.currentSnippetId).toBe(getCurrentSnippet().id);
   });
 
   // Acceptance criterion 4: wave counter stays at 1 for first wave
-  it('does not increment state.wave on the first startWave call', () => {
+  it('does not increment state.wave on the first prepareWave call', () => {
     const state = makeState();
     init(state, jest.fn(), jest.fn());
-    startWave();
+    prepareWave();
 
     expect(state.wave).toBe(1);
   });
 
-  it('increments state.wave by 1 on each subsequent startWave call', () => {
+  it('increments state.wave by 1 on each subsequent prepareWave call', () => {
     const state = makeState();
     const onWaveClear = jest.fn();
     init(state, onWaveClear, jest.fn());
 
-    startWave();
+    beginWave();
     expect(state.wave).toBe(1);
 
     // Complete first wave, then start second.
@@ -132,6 +141,7 @@ describe('waveManager — startWave', () => {
     for (let i = 0; i < firstLen; i++) {
       onEnemyDefeated();
     }
+    prepareWave();
     startWave();
     expect(state.wave).toBe(2);
 
@@ -140,6 +150,7 @@ describe('waveManager — startWave', () => {
     for (let i = 0; i < secondLen; i++) {
       onEnemyDefeated();
     }
+    prepareWave();
     startWave();
     expect(state.wave).toBe(3);
   });
@@ -155,7 +166,7 @@ describe('waveManager — onEnemyDefeated', () => {
   it('calls defeatEnemy on the element returned by spawnEnemy', () => {
     const state = makeState();
     init(state, jest.fn(), jest.fn());
-    startWave();
+    beginWave();
 
     const spawnedEl = enemySystem.spawnEnemy.mock.results[0].value;
     onEnemyDefeated();
@@ -167,7 +178,7 @@ describe('waveManager — onEnemyDefeated', () => {
   it('spawns the next line after a defeat', () => {
     const state = makeState();
     init(state, jest.fn(), jest.fn());
-    startWave();
+    beginWave();
 
     const snippet = getCurrentSnippet();
     jest.clearAllMocks();
@@ -181,7 +192,7 @@ describe('waveManager — onEnemyDefeated', () => {
   it('advances through all lines in sequence', () => {
     const state = makeState();
     init(state, jest.fn(), jest.fn());
-    startWave();
+    beginWave();
 
     const snippet = getCurrentSnippet();
     jest.clearAllMocks();
@@ -198,7 +209,7 @@ describe('waveManager — onEnemyDefeated', () => {
     const state = makeState();
     const onWaveClear = jest.fn();
     init(state, onWaveClear, jest.fn());
-    startWave();
+    beginWave();
 
     const lineCount = getCurrentSnippet().lines.length;
     for (let i = 0; i < lineCount; i++) {
@@ -214,7 +225,7 @@ describe('waveManager — onEnemyDefeated', () => {
   it('does not spawn another enemy after onWaveClear fires', () => {
     const state = makeState();
     init(state, jest.fn(), jest.fn());
-    startWave();
+    beginWave();
 
     const lineCount = getCurrentSnippet().lines.length;
     jest.clearAllMocks();
@@ -226,6 +237,15 @@ describe('waveManager — onEnemyDefeated', () => {
     // The intermediate defeats each spawn the next line (lineCount - 1 total),
     // but the final defeat must NOT spawn a new enemy.
     expect(enemySystem.spawnEnemy).toHaveBeenCalledTimes(lineCount - 1);
+  });
+
+  it('getCurrentLineIndex returns the index of the current enemy', () => {
+    const state = makeState();
+    init(state, jest.fn(), jest.fn());
+    beginWave();
+    expect(getCurrentLineIndex()).toBe(0);
+    onEnemyDefeated();
+    expect(getCurrentLineIndex()).toBe(1);
   });
 });
 
@@ -254,7 +274,45 @@ describe('getRandomSnippet — no duplicate snippets in a run', () => {
     expect(result).toHaveProperty('id');
   });
 
-  // html and css snippets use the legacy flat-list format (no id field) pending
-  // Nishant updating them to ADR-004 schema. Tests for those languages are added
-  // once the schema is aligned.
+  it('returns a different html snippet when the previous one is in usedIds', async () => {
+    const { getRandomSnippet } = await import('../src/snippets/index.js');
+    const used = [];
+
+    const first = getRandomSnippet('html', used);
+    used.push(first.id);
+    const second = getRandomSnippet('html', used);
+
+    expect(first.id).not.toBe(second.id);
+  });
+
+  it('resets html pool and still returns a snippet when all have been used', async () => {
+    const { getRandomSnippet, getSnippetsForLanguage } = await import('../src/snippets/index.js');
+    const allIds = getSnippetsForLanguage('html').map((snippet) => snippet.id);
+
+    const result = getRandomSnippet('html', allIds);
+
+    expect(result).not.toBeNull();
+    expect(result).toHaveProperty('id');
+  });
+
+  it('returns a different css snippet when the previous one is in usedIds', async () => {
+    const { getRandomSnippet } = await import('../src/snippets/index.js');
+    const used = [];
+
+    const first = getRandomSnippet('css', used);
+    used.push(first.id);
+    const second = getRandomSnippet('css', used);
+
+    expect(first.id).not.toBe(second.id);
+  });
+
+  it('resets css pool and still returns a snippet when all have been used', async () => {
+    const { getRandomSnippet, getSnippetsForLanguage } = await import('../src/snippets/index.js');
+    const allIds = getSnippetsForLanguage('css').map((snippet) => snippet.id);
+
+    const result = getRandomSnippet('css', allIds);
+
+    expect(result).not.toBeNull();
+    expect(result).toHaveProperty('id');
+  });
 });
