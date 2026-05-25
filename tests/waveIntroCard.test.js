@@ -70,11 +70,11 @@ describe('ui/waveIntroCard.show', () => {
     await promise;
     expect(thenSpy).toHaveBeenCalledTimes(1);
 
-    jest.advanceTimersByTime(3000);
+    jest.advanceTimersByTime(5000);
     expect(thenSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('auto-dismisses after 3 seconds when no key is pressed', async () => {
+  it('auto-dismisses after 5 seconds when no key is pressed', async () => {
     const promise = show(
       {},
       { wave: 2, snippet: { name: 'y', description: 'z', conceptTags: [] } }
@@ -82,7 +82,7 @@ describe('ui/waveIntroCard.show', () => {
     const thenSpy = jest.fn();
     promise.then(thenSpy);
 
-    jest.advanceTimersByTime(2999);
+    jest.advanceTimersByTime(4999);
     await Promise.resolve();
     expect(thenSpy).toHaveBeenCalledTimes(0);
 
@@ -98,7 +98,7 @@ describe('ui/waveIntroCard.show', () => {
       {},
       { wave: 1, snippet: { name: 'n', description: 'd', conceptTags: ['Tag'] } }
     );
-    jest.advanceTimersByTime(3000);
+    jest.advanceTimersByTime(5000);
     await expect(promise).resolves.toBeUndefined();
   });
 });

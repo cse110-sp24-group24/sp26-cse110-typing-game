@@ -14,8 +14,20 @@ import { showScreen } from './ui/screenManager.js';
 import { createRunState } from './state.js';
 import * as enemySystem from './engine/enemySystem.js';
 import * as waveManager from './engine/waveManager.js';
-import { init as initTyping } from './engine/typingEngine.js';
+import {
+  init as initTyping,
+  activate as activateTyping,
+  deactivate as deactivateTyping,
+  clearTarget as clearTypingTarget,
+} from './engine/typingEngine.js';
 import { show as showWaveIntro } from './ui/waveIntroCard.js';
+// Issue #9 — code panel reveals snippet lines as enemies are defeated.
+import {
+  init as initCodePanel,
+  reset as resetCodePanel,
+  revealLine,
+  showFull,
+} from './ui/codePanel.js';
 
 // Imports are added as each Issue is completed. Example structure:
 //
@@ -49,6 +61,7 @@ let runState = null;
 const livesDisplayEl = document.getElementById('lives-display');
 const playAreaEl = document.getElementById('play-area');
 const deadlineEl = document.getElementById('deadline-line');
+const typingInputEl = document.getElementById('typing-input');
 
 /**
  * Begins a new run: creates the shared RunState, wires the enemy system,
@@ -63,15 +76,23 @@ function startRun(language) {
   enemySystem.init(playAreaEl, deadlineEl, runState, onDeadlineBreach);
 
   initTyping(
-    document.getElementById('typing-input'),
+    typingInputEl,
     document.getElementById('target-line-display'),
-    // onDefeated: relay to waveManager so it can advance the wave.
-    () => waveManager.onEnemyDefeated(),
+    // onDefeated: reveal the completed line in the code panel, then advance the wave.
+    () => {
+      const snippet = waveManager.getCurrentSnippet();
+      // Read index before onEnemyDefeated() — it increments lineIndex immediately.
+      const idx = waveManager.getCurrentLineIndex();
+      revealLine(snippet.lines[idx], runState.language);
+      waveManager.onEnemyDefeated();
+    },
     // onKeystroke: statTracker wires this in Issue #17.
     () => {}
   );
 
   waveManager.init(runState, onWaveClear, onWaveStart);
+  // codePanel builds its own DOM inside #code-panel (see codePanel.js).
+  initCodePanel(document.getElementById('code-panel'));
 
   updateLivesDisplay();
 }
@@ -530,34 +551,56 @@ function playLanguageTransition(onComplete) {
 // ── Wave lifecycle callbacks ────────────────────────────────────
 
 /**
+ * Shows the wave intro card with typing disabled until the player dismisses it.
+ * Call prepareWave() before this so waveData includes the chosen snippet.
+ * @returns {Promise<void>}
+ */
+function beginWaveIntro() {
+  deactivateTyping();
+  clearTypingTarget();
+  if (typingInputEl) {
+    typingInputEl.disabled = true;
+  }
+
+  return showWaveIntro(runState, {
+    wave: runState.wave,
+    snippet: waveManager.getCurrentSnippet(),
+  }).finally(() => {
+    if (typingInputEl) {
+      typingInputEl.disabled = false;
+    }
+    activateTyping();
+  });
+}
+
+/**
  * Called by waveManager at the start of each wave.
- * Updates the wave counter in the HUD. codePanel.setHeader() will be
- * wired here when Issue #9 lands.
- * @param {object} _snippet - The snippet chosen for this wave.
+ * Updates the HUD wave counter and resets the code panel placeholders.
+ * @param {object} snippet - The snippet chosen for this wave.
  * @returns {void}
  */
-function onWaveStart(_snippet) {
+function onWaveStart(snippet) {
   const waveDisplayEl = document.getElementById('wave-display');
   if (waveDisplayEl) {
     waveDisplayEl.textContent = `Wave ${runState.wave}`;
   }
-  // codePanel.setHeader(_snippet.name); // Issue #9
+  resetCodePanel(snippet.name, snippet.lines);
 }
 
 /**
  * Called by waveManager when all enemies in a wave are defeated.
- * Advances to the next wave after a brief pause.
- * bossSystem.startBoss() will be wired here when Issue #11 lands.
- * @param {object} _snippet - The snippet that was just completed.
+ * Reveals the full snippet, then shows the wave intro for the next wave.
+ * @param {object} snippet - The snippet that was just completed.
  * @returns {void}
  */
-function onWaveClear(_snippet) {
-  // bossSystem.startBoss(runState, _snippet); // Issue #11
-  // Temporary: start the next wave after a short pause so the last
-  // enemy dissolve animation can finish before new enemies spawn.
+function onWaveClear(snippet) {
+  showFull(snippet.lines, runState.language);
+  // bossSystem.startBoss(runState, snippet); // boss issue — wired when boss lands
+  // Brief pause so the last enemy dissolve animation can finish before the next wave.
   setTimeout(() => {
-    showScreen('wave-intro-screen');
-    showWaveIntro(runState, {}).then(() => {
+    // prepareWave picks the snippet before the intro card needs waveData.snippet.
+    waveManager.prepareWave();
+    beginWaveIntro().then(() => {
       showScreen('game-screen');
       waveManager.startWave();
     });
@@ -569,12 +612,10 @@ document.querySelectorAll('.btn-language').forEach((btn) => {
     const language = btn.dataset.language;
     savePreferences({ ...prefs, language });
     startRun(language);
-    // After the scare, show wave intro then transition to the game screen.
-    // waveIntroCard.show() currently returns Promise.resolve() (Issue #10 stub)
-    // so this transitions immediately; it will gate on keypress once #10 lands.
+    // After the scare: prepare snippet, show wave intro, then start combat.
     playLanguageTransition(() => {
-      showScreen('wave-intro-screen');
-      showWaveIntro(runState, {}).then(() => {
+      waveManager.prepareWave();
+      beginWaveIntro().then(() => {
         showScreen('game-screen');
         waveManager.startWave();
       });
