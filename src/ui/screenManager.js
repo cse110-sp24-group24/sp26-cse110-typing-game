@@ -13,7 +13,9 @@ let currentScreenId = document.querySelector('.screen.active')?.id || 'menu-scre
 /**
  * Show one screen and hide every other screen.
  * The CSS transition system handles the visual fade via the .active class.
- * @param screenId
+ *
+ * @param {string} screenId - The id of the screen to activate.
+ * @returns {void}
  */
 export function showScreen(screenId) {
   if (!VALID_SCREEN_IDS.has(screenId)) {
@@ -38,6 +40,8 @@ export function showScreen(screenId) {
 
 /**
  * Return the id of the screen currently marked as active.
+ *
+ * @returns {string} The currently active screen id.
  */
 export function getCurrentScreen() {
   return currentScreenId;

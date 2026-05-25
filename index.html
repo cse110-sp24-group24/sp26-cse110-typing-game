@@ -3,10 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><!-- Game name TBD --></title>
+    <title>Phantom Type</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Creepster&family=VT323&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <!-- Ghost canvas sits at body level so it renders behind both pre-game screens -->
+    <canvas id="ghost-canvas" aria-hidden="true"></canvas>
+
     <!-- ═══════════════════════════════════════════════════════════
        SCREENS — only one .screen is .active at a time.
        screenManager.js controls which one is visible.
@@ -14,21 +23,21 @@
 
     <!-- SCREEN 1: Main Menu -->
     <div id="menu-screen" class="screen active">
-      <!-- Populated by Issue #4 (Main Menu + Language Selection) -->
-      <div class="menu-fog"></div>
+      <!-- Populated by Issue #8 (Main Menu + Language Selection) -->
+      <div class="menu-static" aria-hidden="true"></div>
       <div class="menu-content">
-        <h1 class="game-title"><!-- title --></h1>
-        <p class="tagline"><!-- tagline --></p>
-        <button id="play-btn" class="btn btn-primary">Play</button>
+        <h1 class="game-title" data-text="PHANTOM TYPE">PHANTOM TYPE</h1>
+        <p class="tagline">Your errors never die — they become ghosts.<br />Type to survive.</p>
+        <button id="play-btn" class="btn btn-primary">▶ &nbsp;Play</button>
       </div>
     </div>
 
     <!-- SCREEN 2: Language Selection -->
     <div id="language-screen" class="screen">
-      <!-- Populated by Issue #4 (Main Menu + Language Selection) -->
+      <!-- Populated by Issue #8 (Main Menu + Language Selection) -->
+      <div class="menu-static" aria-hidden="true"></div>
       <div class="language-content">
-        <h2 class="screen-title">Choose Your Language</h2>
-        <p class="screen-subtitle">All code in your run will use this syntax.</p>
+        <h2 class="screen-title">Choose Your Doom</h2>
         <div class="language-buttons">
           <button class="btn btn-language" data-language="javascript">
             <span class="lang-icon">JS</span>
@@ -144,6 +153,21 @@
        OVERLAYS — appear on top of any screen. Hidden by default.
        Toggle .hidden class to show/hide.
        ═══════════════════════════════════════════════════════════ -->
+
+    <!-- Countdown Overlay — plays when a language is selected -->
+    <div id="countdown-overlay" class="overlay hidden">
+      <video id="countdown-video" playsinline></video>
+    </div>
+
+    <!-- TV Static Overlay — shown for 1s before the scare -->
+    <div id="static-overlay" class="overlay hidden">
+      <canvas id="static-canvas" aria-hidden="true"></canvas>
+    </div>
+
+    <!-- Scare Flash Overlay — chroma-keyed zombie video + scream at end of countdown -->
+    <div id="scare-overlay" class="overlay hidden">
+      <canvas id="scare-canvas" aria-hidden="true"></canvas>
+    </div>
 
     <!-- Pause Overlay — Issue #21 -->
     <div id="pause-overlay" class="overlay hidden">

@@ -8,13 +8,31 @@
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
+    "prepare": "husky"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "transform": {}
+  },
+  "lint-staged": {
+    "**/*": "prettier --write --ignore-unknown"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "cross-env": "^10.1.0",
     "eslint": "^9.0.0",
     "eslint-plugin-jsdoc": "^50.0.0",
     "globals": "^15.0.0",
-    "prettier": "^3.0.0"
+    "husky": "^9.1.7",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
+    "lint-staged": "^17.0.5",
+    "prettier": "^3.0.0",
+    "puppeteer": "^25.0.4"
   }
 }
