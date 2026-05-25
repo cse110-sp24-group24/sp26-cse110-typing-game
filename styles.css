@@ -540,17 +540,11 @@ button {
 
 .hud-center {
   justify-content: center;
+}
+
 #typing-input:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-}
-
-/* Typo feedback overlay (typingEngine renders correct/incorrect spans here) */
-#target-line-display {
-  font-family: var(--font-mono);
-  font-size: 1rem;
-  padding: 0.4rem 0.8rem;
-  min-height: 1.6rem;
 }
 
 .hud-right {
@@ -922,19 +916,6 @@ input[type='range'] {
   }
 }
 
-@keyframes titleJitter {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  30% {
-    transform: translate(-1px, 0);
-  }
-  65% {
-    transform: translate(1px, -1px);
-  }
-}
-
 @keyframes titleGlitch {
   0%,
   100% {
@@ -954,34 +935,6 @@ input[type='range'] {
   80% {
     transform: translate(1px, 0);
     filter: contrast(1.1);
-  }
-}
-
-@keyframes glitchSliceA {
-  0%,
-  100% {
-    transform: translate(-2px, 0);
-    clip-path: inset(8% 0 58% 0);
-    opacity: 0.45;
-  }
-  45% {
-    transform: translate(3px, -1px);
-    clip-path: inset(22% 0 42% 0);
-    opacity: 0.75;
-  }
-}
-
-@keyframes glitchSliceB {
-  0%,
-  100% {
-    transform: translate(2px, 0);
-    clip-path: inset(50% 0 12% 0);
-    opacity: 0.4;
-  }
-  40% {
-    transform: translate(-3px, 1px);
-    clip-path: inset(62% 0 6% 0);
-    opacity: 0.72;
   }
 }
 
