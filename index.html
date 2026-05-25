@@ -15,6 +15,13 @@
   <body>
     <!-- Ghost canvas sits at body level so it renders behind both pre-game screens -->
     <canvas id="ghost-canvas" aria-hidden="true"></canvas>
+    <div class="haunted-backdrop" aria-hidden="true">
+      <div class="blood-haze"></div>
+      <div class="graveyard-silhouette"></div>
+      <div class="fog fog-back"></div>
+      <div class="fog fog-front"></div>
+      <div class="vignette"></div>
+    </div>
 
     <!-- ═══════════════════════════════════════════════════════════
        SCREENS — only one .screen is .active at a time.
@@ -27,8 +34,8 @@
       <div class="menu-static" aria-hidden="true"></div>
       <div class="menu-content">
         <h1 class="game-title" data-text="PHANTOM TYPE">PHANTOM TYPE</h1>
-        <p class="tagline">Your errors never die — they become ghosts.<br />Type to survive.</p>
-        <button id="play-btn" class="btn btn-primary">▶ &nbsp;Play</button>
+        <p class="tagline">Your errors never die. They become ghosts.<br />Type to survive.</p>
+        <button id="play-btn" class="btn btn-primary">Play</button>
       </div>
     </div>
 
