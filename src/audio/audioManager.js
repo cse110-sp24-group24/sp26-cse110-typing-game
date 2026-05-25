@@ -1,118 +1,263 @@
-/**
- * audio/audioManager.js — Audio element pool and playback control.
- *
- * Owns: preloading audio files into an <audio> pool, play/pause,
- * per-channel volume, and mute-all. API shaped for post-MVP Howler.js swap.
- *
- * Ambient music: implemented (Issue #8).
- * Full SFX pool: Issue #15.
- */
+import { getPreferences, savePreferences } from '../utils/storage.js';
 
-const AMBIENT_SRC = 'media/audio/spookymusic.mp3';
-const AUTOPLAY_RESUME_EVENTS = ['pointerdown', 'keydown', 'touchstart'];
+const AUDIO_PATH = 'assets/audio/';
+const DEFEAT_POOL_SIZE = 4;
 
-/** @type {HTMLAudioElement|null} */
 let ambientAudio = null;
+let bossAmbientAudio = null;
+let currentAmbient = null;
+
+let sfxElements = {};
+let defeatPool = [];
+let defeatIndex = 0;
+
 let musicVolume = 0.575;
 let sfxVolume = 0.7;
-let muted = false;
+let isMuted = false;
 
 /**
- * Initialises the audio system. Must be called once before any other function.
- * Attaches the ambient <audio> element to the DOM for inspectability.
- * @param {object} prefs - User preference object.
- * @param {number} prefs.musicVolume - Music volume 0–1.
- * @param {number} prefs.sfxVolume - SFX volume 0–1.
- * @param {boolean} prefs.muted - Whether all audio starts muted.
+ * Creates audio elements and loads saved audio preferences.
  */
-export function init(prefs) {
-  musicVolume = prefs.musicVolume ?? 0.575;
-  sfxVolume = prefs.sfxVolume ?? 0.7;
-  muted = prefs.muted ?? false;
+export function init() {
+  const prefs = getPreferences();
 
-  ambientAudio = new Audio(AMBIENT_SRC);
-  ambientAudio.autoplay = true;
-  ambientAudio.loop = true;
-  ambientAudio.preload = 'auto';
-  ambientAudio.volume = muted ? 0 : musicVolume;
-  ambientAudio.setAttribute('autoplay', '');
+  musicVolume = prefs.musicVolume;
+  sfxVolume = prefs.sfxVolume;
+  isMuted = prefs.muted;
 
-  // Attached to DOM so tests and devtools can inspect the element.
-  document.body.appendChild(ambientAudio);
+  ambientAudio = createAudio('ambient-wave.mp3', true, musicVolume);
+  bossAmbientAudio = createAudio('ambient-boss.mp3', true, musicVolume);
+
+  sfxElements = {
+    error: createAudio('sfx-error.mp3', false, sfxVolume),
+    'boss-sting': createAudio('sfx-boss-sting.mp3', false, sfxVolume),
+    'life-loss': createAudio('sfx-life-loss.mp3', false, sfxVolume),
+  };
+
+  defeatPool = Array.from({ length: DEFEAT_POOL_SIZE }, () =>
+    createAudio('sfx-defeat.mp3', false, sfxVolume)
+  );
 }
 
 /**
- * Starts looping the ambient background music.
- * If autoplay is blocked, retries on the player's first interaction.
+ * Starts the normal wave ambient music.
  */
 export function playAmbient() {
-  if (!ambientAudio) {
+  switchAmbient(ambientAudio);
+}
+
+/**
+ * Stops all ambient music and resets it to the beginning.
+ */
+export function stopAmbient() {
+  stopAudio(ambientAudio);
+  stopAudio(bossAmbientAudio);
+  currentAmbient = null;
+}
+
+/**
+ * Pauses the currently playing ambient track.
+ */
+export function pause() {
+  if (currentAmbient) {
+    currentAmbient.pause();
+  }
+}
+
+/**
+ * Resumes the currently selected ambient track.
+ */
+export function resume() {
+  if (currentAmbient && !isMuted) {
+    currentAmbient.play().catch(() => {});
+  }
+}
+
+/**
+ * Switches from normal ambient music to boss ambient music.
+ */
+export function playBossAmbient() {
+  playSFX('boss-sting');
+  switchAmbient(bossAmbientAudio);
+}
+
+/**
+ * Plays a named sound effect.
+ * @param {string} name - 'defeat', 'error', 'boss-sting', or 'life-loss'.
+ */
+export function playSFX(name) {
+  if (isMuted || sfxVolume === 0) {
     return;
   }
 
-  ambientAudio.play().catch(() => {
-    const resumeOnGesture = () => {
-      AUTOPLAY_RESUME_EVENTS.forEach((eventName) => {
-        document.removeEventListener(eventName, resumeOnGesture);
-      });
-      ambientAudio.play().catch(() => {});
-    };
+  if (name === 'defeat') {
+    const sfx = defeatPool[defeatIndex];
+    defeatIndex = (defeatIndex + 1) % DEFEAT_POOL_SIZE;
+    playOneShot(sfx);
+    return;
+  }
 
-    AUTOPLAY_RESUME_EVENTS.forEach((eventName) => {
-      document.addEventListener(eventName, resumeOnGesture, { once: true });
-    });
+  playOneShot(sfxElements[name]);
+}
+
+/**
+ * Sets and saves music volume.
+ * @param {number} volume - Music volume from 0 to 1.
+ */
+export function setMusicVolume(volume) {
+  musicVolume = clampVolume(volume);
+
+  if (ambientAudio) {
+    ambientAudio.volume = isMuted ? 0 : musicVolume;
+  }
+
+  if (bossAmbientAudio) {
+    bossAmbientAudio.volume = isMuted ? 0 : musicVolume;
+  }
+
+  saveAudioPreferences();
+}
+
+/**
+ * Sets and saves SFX volume.
+ * @param {number} volume - SFX volume from 0 to 1.
+ */
+export function setSFXVolume(volume) {
+  sfxVolume = clampVolume(volume);
+
+  Object.values(sfxElements).forEach((audio) => {
+    audio.volume = isMuted ? 0 : sfxVolume;
+  });
+
+  defeatPool.forEach((audio) => {
+    audio.volume = isMuted ? 0 : sfxVolume;
+  });
+
+  saveAudioPreferences();
+}
+
+/**
+ * Mutes all audio.
+ */
+export function mute() {
+  isMuted = true;
+  applyMuteState();
+  saveAudioPreferences();
+}
+
+/**
+ * Unmutes all audio.
+ */
+export function unmute() {
+  isMuted = false;
+  applyMuteState();
+  saveAudioPreferences();
+}
+
+/**
+ * Creates an audio element.
+ * @param {string} filename - Audio file name.
+ * @param {boolean} loop - Whether the audio should loop.
+ * @param {number} volume - Initial volume.
+ * @returns {HTMLAudioElement} Created audio element.
+ */
+function createAudio(filename, loop, volume) {
+  const audio = new Audio(`${AUDIO_PATH}${filename}`);
+  audio.loop = loop;
+  audio.preload = 'auto';
+  audio.volume = isMuted ? 0 : volume;
+  return audio;
+}
+
+/**
+ * Switches the active ambient track.
+ * @param {HTMLAudioElement} nextAmbient - Ambient track to play.
+ */
+function switchAmbient(nextAmbient) {
+  if (!nextAmbient) {
+    return;
+  }
+
+  if (currentAmbient && currentAmbient !== nextAmbient) {
+    currentAmbient.pause();
+    currentAmbient.currentTime = 0;
+  }
+
+  currentAmbient = nextAmbient;
+  currentAmbient.volume = isMuted ? 0 : musicVolume;
+
+  if (!isMuted) {
+    currentAmbient.play().catch(() => {});
+  }
+}
+
+/**
+ * Plays one sound effect from the beginning.
+ * @param {HTMLAudioElement} audio - Audio element to play.
+ */
+function playOneShot(audio) {
+  if (!audio) {
+    return;
+  }
+
+  audio.currentTime = 0;
+  audio.volume = isMuted ? 0 : sfxVolume;
+  audio.play().catch(() => {});
+}
+
+/**
+ * Stops and resets audio.
+ * @param {HTMLAudioElement} audio - Audio element to stop.
+ */
+function stopAudio(audio) {
+  if (!audio) {
+    return;
+  }
+
+  audio.pause();
+  audio.currentTime = 0;
+}
+
+/**
+ * Applies mute state to all audio elements.
+ */
+function applyMuteState() {
+  if (ambientAudio) {
+    ambientAudio.volume = isMuted ? 0 : musicVolume;
+  }
+
+  if (bossAmbientAudio) {
+    bossAmbientAudio.volume = isMuted ? 0 : musicVolume;
+  }
+
+  Object.values(sfxElements).forEach((audio) => {
+    audio.volume = isMuted ? 0 : sfxVolume;
+  });
+
+  defeatPool.forEach((audio) => {
+    audio.volume = isMuted ? 0 : sfxVolume;
   });
 }
 
 /**
- * Pauses and resets the ambient music to the beginning.
+ * Saves current audio preferences.
  */
-export function stopAmbient() {
-  if (!ambientAudio) {
-    return;
-  }
-  ambientAudio.pause();
-  ambientAudio.currentTime = 0;
+function saveAudioPreferences() {
+  const prefs = getPreferences();
+
+  savePreferences({
+    ...prefs,
+    musicVolume,
+    sfxVolume,
+    muted: isMuted,
+  });
 }
 
 /**
- * Plays a named one-shot sound effect.
- * @param {string} _name - Effect name: 'defeat' | 'error' | 'boss-sting'.
+ * Keeps volume values between 0 and 1.
+ * @param {number} volume - Raw volume value.
+ * @returns {number} Clamped volume.
  */
-export function playSfx(_name) {
-  if (muted || sfxVolume === 0) {
-    return;
-  }
-
-  // Issue #15
-}
-
-/**
- * Sets the music channel volume.
- * @param {number} vol - Volume level 0 (silent) to 1 (full).
- */
-export function setMusicVolume(vol) {
-  musicVolume = vol;
-  if (ambientAudio && !muted) {
-    ambientAudio.volume = vol;
-  }
-}
-
-/**
- * Sets the SFX channel volume.
- * @param {number} vol - Volume level 0 (silent) to 1 (full).
- */
-export function setSfxVolume(vol) {
-  sfxVolume = vol;
-}
-
-/**
- * Mutes or unmutes all audio channels.
- * @param {boolean} isMuted - True to silence everything, false to restore.
- */
-export function setMuted(isMuted) {
-  muted = isMuted;
-  if (ambientAudio) {
-    ambientAudio.volume = isMuted ? 0 : musicVolume;
-  }
+function clampVolume(volume) {
+  return Math.min(1, Math.max(0, volume));
 }
