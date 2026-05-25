@@ -9,7 +9,7 @@
  */
 
 import { getPreferences, savePreferences } from './utils/storage.js';
-import { init as initAudio, playAmbient, playSfx } from './audio/audioManager.js';
+import { init as initAudio, playAmbient, playSFX as playSfx } from './audio/audioManager.js';
 import { showScreen } from './ui/screenManager.js';
 import { createRunState } from './state.js';
 import * as enemySystem from './engine/enemySystem.js';
