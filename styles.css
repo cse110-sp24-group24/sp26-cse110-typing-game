@@ -709,8 +709,24 @@ button {
 .enemy-sprite {
   width: 48px;
   height: 48px;
-  filter: drop-shadow(0 0 8px var(--color-primary));
+  opacity: 0.92;
   animation: ghostFloat 1.8s ease-in-out infinite alternate;
+}
+
+.enemy-sprite--0 {
+  filter: drop-shadow(0 0 8px rgba(130, 200, 255, 0.8));
+}
+
+.enemy-sprite--1 {
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.75));
+}
+
+.enemy-sprite--2 {
+  filter: drop-shadow(0 0 8px rgba(80, 220, 120, 0.7));
+}
+
+.enemy-sprite--3 {
+  filter: drop-shadow(0 0 8px rgba(60, 200, 190, 0.75));
 }
 
 @keyframes ghostFloat {

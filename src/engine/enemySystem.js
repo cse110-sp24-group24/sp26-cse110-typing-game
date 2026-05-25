@@ -21,26 +21,64 @@ const DISSOLVE_DURATION_MS = 500;
 const BREACH_REMOVE_DELAY_MS = 350;
 const MIN_FALL_SPEED_MULTIPLIER = 0.1;
 
-const ENEMY_MARKUP = `
-  <svg class="enemy-sprite" viewBox="0 0 64 64" aria-hidden="true">
+/** Four ghost SVG variants — one design per wave (cycles every 4 waves). */
+const ENEMY_MARKUPS = [
+  // Sprite 0 — pale blue classic wisp
+  `<svg class="enemy-sprite enemy-sprite--0" data-sprite-id="0" viewBox="0 0 64 64" aria-hidden="true">
     <path
       d="M12 56V26C12 14 21 6 32 6s20 8 20 20v30l-6-5-6 5-6-5-6 5-6-5-6 5Z"
-      fill="rgba(220, 245, 255, 0.95)"
-      stroke="rgba(130, 200, 255, 0.9)"
-      stroke-width="3"
+      fill="rgba(200, 235, 255, 0.88)"
+      stroke="rgba(130, 200, 255, 0.85)"
+      stroke-width="2.5"
     />
     <circle cx="25" cy="28" r="4" fill="#080810" />
     <circle cx="39" cy="28" r="4" fill="#080810" />
-    <path
-      d="M26 40c4 3 8 3 12 0"
-      stroke="#080810"
-      stroke-width="3"
-      fill="none"
-      stroke-linecap="round"
-    />
+    <path d="M26 40c4 3 8 3 12 0" stroke="#080810" stroke-width="2.5" fill="none" stroke-linecap="round" />
   </svg>
-  <div class="enemy-code"></div>
-`;
+  <div class="enemy-code"></div>`,
+  // Sprite 1 — purple/lavender, wider tail
+  `<svg class="enemy-sprite enemy-sprite--1" data-sprite-id="1" viewBox="0 0 64 64" aria-hidden="true">
+    <path
+      d="M10 56V24C10 12 20 4 32 4s22 8 22 22v30l-5-4-5 4-5-4-5 4-5-4-5 4-5-4-5 4Z"
+      fill="rgba(210, 180, 255, 0.85)"
+      stroke="rgba(168, 85, 247, 0.8)"
+      stroke-width="2.5"
+    />
+    <ellipse cx="24" cy="27" rx="4.5" ry="5" fill="#0a0814" />
+    <ellipse cx="40" cy="27" rx="4.5" ry="5" fill="#0a0814" />
+    <circle cx="25" cy="26" r="1.2" fill="rgba(255,255,255,0.5)" />
+    <circle cx="41" cy="26" r="1.2" fill="rgba(255,255,255,0.5)" />
+    <path d="M27 41c3 2 7 2 10 0" stroke="#0a0814" stroke-width="2" fill="none" stroke-linecap="round" />
+  </svg>
+  <div class="enemy-code"></div>`,
+  // Sprite 2 — sickly green, tall narrow
+  `<svg class="enemy-sprite enemy-sprite--2" data-sprite-id="2" viewBox="0 0 64 64" aria-hidden="true">
+    <path
+      d="M22 56V22C22 10 27 5 32 5s10 5 10 17v34l-4-6-4 4-4-6-4 4-4-6-4 4Z"
+      fill="rgba(160, 255, 190, 0.82)"
+      stroke="rgba(80, 220, 120, 0.75)"
+      stroke-width="2.5"
+    />
+    <circle cx="28" cy="26" r="3.5" fill="#061008" />
+    <circle cx="36" cy="26" r="3.5" fill="#061008" />
+    <path d="M29 38h6" stroke="#061008" stroke-width="2.5" stroke-linecap="round" />
+  </svg>
+  <div class="enemy-code"></div>`,
+  // Sprite 3 — teal, round head + zigzag wisp
+  `<svg class="enemy-sprite enemy-sprite--3" data-sprite-id="3" viewBox="0 0 64 64" aria-hidden="true">
+    <path
+      d="M14 56V28C14 16 22 8 32 8c8 0 14 5 16 14v34l-5-4-4 6-5-4-4 6-5-4-4 6-5-4Z"
+      fill="rgba(150, 230, 220, 0.86)"
+      stroke="rgba(60, 200, 190, 0.8)"
+      stroke-width="2.5"
+    />
+    <circle cx="26" cy="24" r="5" fill="#080810" />
+    <circle cx="38" cy="26" r="4" fill="#080810" />
+    <circle cx="27" cy="23" r="1.5" fill="rgba(200,255,240,0.6)" />
+    <path d="M24 42l4-3 4 3 4-4" stroke="#080810" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
+  <div class="enemy-code"></div>`,
+];
 
 /**
  * Initializes the enemy system with DOM references and runtime dependencies.
@@ -76,7 +114,9 @@ export function spawnEnemy(line, lineIndex = 0) {
   const speedMultiplier = Math.max(stateRef?.fallSpeedMultiplier ?? 1, MIN_FALL_SPEED_MULTIPLIER);
   enemyEl.style.animationDuration = `${BASE_FALL_DURATION_SECONDS / speedMultiplier}s`;
 
-  enemyEl.innerHTML = ENEMY_MARKUP;
+  const markupIndex = ((stateRef?.wave ?? 1) - 1) % ENEMY_MARKUPS.length;
+  enemyEl.dataset.spriteIndex = String(markupIndex);
+  enemyEl.innerHTML = ENEMY_MARKUPS[markupIndex];
 
   const codeEl = enemyEl.querySelector('.enemy-code');
   if (codeEl) {
