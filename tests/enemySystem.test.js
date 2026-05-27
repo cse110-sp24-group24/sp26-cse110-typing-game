@@ -1,236 +1,43 @@
 /**
- * tests/enemySystem.test.js — Custom tests for enemySystem.js.
+ * tests/enemySystem.test.js — Jest tests for enemySystem.js.
  *
- * No test framework required. Run with:
- *   node --experimental-vm-modules tests/enemySystem.test.js
- *
- * A passing test prints:  PASS: <description>
- * A failing test prints:  FAIL: <description> — <reason>
- * Summary is printed at the end.
+ * Uses JSDOM instead of a custom FakeElement because Jest already provides
+ * browser-like DOM nodes. This avoids mixing fake elements with real nodes.
  */
+
+import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 
 import * as EnemySystem from '../src/engine/enemySystem.js';
 
-// ─── Tiny test runner ────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────
 
-let passed = 0;
-let failed = 0;
-
-function assert(condition, description, detail = '') {
-  if (condition) {
-    console.log(`  ✓ PASS: ${description}`);
-    passed++;
-  } else {
-    console.error(`  ✗ FAIL: ${description}${detail ? ` — ${detail}` : ''}`);
-    failed++;
-  }
-}
-
-function section(title) {
-  console.log(`\n── ${title} ─────────────────────────────────`);
-}
-
-// ─── Minimal fake DOM ────────────────────────────────────────────────────────
-
-class FakeClassList {
-  constructor(element) {
-    this.element = element;
-    this.classes = new Set();
-  }
-
-  add(className) {
-    this.classes.add(className);
-    this.element.className = [...this.classes].join(' ');
-  }
-
-  remove(className) {
-    this.classes.delete(className);
-    this.element.className = [...this.classes].join(' ');
-  }
-
-  contains(className) {
-    return this.classes.has(className);
-  }
-
-  setFromString(classNameString) {
-    this.classes = new Set(classNameString.split(/\s+/).filter(Boolean));
-  }
-}
-
-class FakeElement {
-  constructor(tagName) {
-    this.tagName = tagName.toUpperCase();
-    this.children = [];
-    this.parentNode = null;
-    this.style = {};
-    this.dataset = {};
-    this.textContent = '';
-    this.isConnected = false;
-    this.rect = {
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-    };
-
-    this.classList = new FakeClassList(this);
-    this.classNameValue = '';
-  }
-
-  get className() {
-    return this.classNameValue;
-  }
-
-  set className(value) {
-    this.classNameValue = value;
-    this.classList.setFromString(value);
-  }
-
-  set innerHTML(_markup) {
-    this.children = [];
-
-    const spriteEl = new FakeElement('svg');
-    spriteEl.className = 'enemy-sprite';
-
-    const codeEl = new FakeElement('div');
-    codeEl.className = 'enemy-code';
-
-    this.appendChild(spriteEl);
-    this.appendChild(codeEl);
-  }
-
-  appendChild(child) {
-    child.parentNode = this;
-    child.isConnected = this.isConnected;
-    this.children.push(child);
-    child.markConnected(this.isConnected);
-    return child;
-  }
-
-  remove() {
-    if (this.parentNode) {
-      this.parentNode.children = this.parentNode.children.filter((child) => child !== this);
-    }
-
-    this.parentNode = null;
-    this.markConnected(false);
-  }
-
-  markConnected(isConnected) {
-    this.isConnected = isConnected;
-
-    for (const child of this.children) {
-      child.markConnected(isConnected);
-    }
-  }
-
-  querySelector(selector) {
-    return this.querySelectorAll(selector)[0] ?? null;
-  }
-
-  querySelectorAll(selector) {
-    const matches = [];
-
-    function visit(element) {
-      if (matchesSelector(element, selector)) {
-        matches.push(element);
-      }
-
-      for (const child of element.children) {
-        visit(child);
-      }
-    }
-
-    for (const child of this.children) {
-      visit(child);
-    }
-
-    return matches;
-  }
-
-  getBoundingClientRect() {
-    return this.rect;
-  }
-}
-
-function matchesSelector(element, selector) {
-  if (selector === '.enemy') {
-    return element.classList.contains('enemy');
-  }
-
-  if (selector === '.enemy-code') {
-    return element.classList.contains('enemy-code');
-  }
-
-  if (selector === '.enemy-sprite') {
-    return element.classList.contains('enemy-sprite');
-  }
-
-  return false;
-}
-
-const pendingAnimationFrames = new Map();
-const pendingTimeouts = [];
-let nextAnimationFrameId = 1;
-
-globalThis.document = {
-  createElement(tagName) {
-    return new FakeElement(tagName);
-  },
-};
-
-globalThis.window = {
-  requestAnimationFrame(callback) {
-    const frameId = nextAnimationFrameId;
-    nextAnimationFrameId++;
-    pendingAnimationFrames.set(frameId, callback);
-    return frameId;
-  },
-
-  cancelAnimationFrame(frameId) {
-    pendingAnimationFrames.delete(frameId);
-  },
-
-  setTimeout(callback, _delay) {
-    pendingTimeouts.push(callback);
-    return pendingTimeouts.length;
-  },
-};
-
-function flushAnimationFrame() {
-  const frameEntries = [...pendingAnimationFrames.entries()];
-  pendingAnimationFrames.clear();
-
-  for (const [_frameId, callback] of frameEntries) {
-    callback();
-  }
-}
-
-function flushTimeouts() {
-  while (pendingTimeouts.length > 0) {
-    const callback = pendingTimeouts.shift();
-    callback();
-  }
-}
-
+/**
+ * Creates a minimal DOM and initializes enemySystem.
+ * @returns {object} Test environment references.
+ */
 function createTestEnvironment() {
-  pendingAnimationFrames.clear();
-  pendingTimeouts.length = 0;
+  document.body.innerHTML = `
+    <div id="play-area"></div>
+    <div id="deadline-line"></div>
+  `;
 
-  const playAreaEl = new FakeElement('div');
-  playAreaEl.className = 'play-area';
-  playAreaEl.markConnected(true);
+  const playAreaEl = document.getElementById('play-area');
+  const deadlineEl = document.getElementById('deadline-line');
 
-  const deadlineEl = new FakeElement('div');
-  deadlineEl.id = 'deadline-line';
-  deadlineEl.className = 'deadline-line';
-  deadlineEl.rect = {
-    top: 500,
-    bottom: 503,
-    left: 0,
-    right: 800,
-  };
-  deadlineEl.markConnected(true);
+  Object.defineProperty(deadlineEl, 'getBoundingClientRect', {
+    configurable: true,
+    value: () => ({
+      top: 500,
+      bottom: 503,
+      left: 0,
+      right: 800,
+      width: 800,
+      height: 3,
+      x: 0,
+      y: 500,
+      toJSON: () => {},
+    }),
+  });
 
   const state = {
     fallSpeedMultiplier: 1,
@@ -251,158 +58,299 @@ function createTestEnvironment() {
   };
 }
 
-// ─── Tests ───────────────────────────────────────────────────────────────────
-
-section('enemySystem.js — spawnEnemy');
-
-{
-  const { playAreaEl } = createTestEnvironment();
-
-  const enemyEl = EnemySystem.spawnEnemy('const x = 1;', 0);
-
-  assert(enemyEl !== null, 'spawnEnemy returns an enemy element');
-  assert(enemyEl.classList.contains('enemy'), 'spawned element has .enemy class');
-  assert(playAreaEl.querySelectorAll('.enemy').length === 1, 'enemy is appended to play area');
-  assert(enemyEl.querySelector('.enemy-sprite') !== null, 'enemy contains .enemy-sprite');
-  assert(enemyEl.querySelector('.enemy-code') !== null, 'enemy contains .enemy-code');
-  assert(
-    enemyEl.querySelector('.enemy-code').textContent === 'const x = 1;',
-    'enemy code text is set'
-  );
-  assert(enemyEl.style.left === '10%', 'lineIndex 0 sets expected horizontal position');
-  assert(enemyEl.style.animationDuration === '8s', 'default fall duration is 8s');
+/**
+ * Stubs an enemy element's bounding rectangle.
+ * @param {HTMLElement} enemyEl - Enemy element to update.
+ * @param {object} rect - Rectangle values.
+ * @returns {void}
+ */
+function setElementRect(enemyEl, rect) {
+  Object.defineProperty(enemyEl, 'getBoundingClientRect', {
+    configurable: true,
+    value: () => ({
+      top: rect.top,
+      bottom: rect.bottom,
+      left: rect.left,
+      right: rect.right,
+      width: rect.right - rect.left,
+      height: rect.bottom - rect.top,
+      x: rect.left,
+      y: rect.top,
+      toJSON: () => {},
+    }),
+  });
 }
 
-section('enemySystem.js — fall speed multiplier');
-
-{
-  const { state } = createTestEnvironment();
-
-  state.fallSpeedMultiplier = 2;
-  const fastEnemy = EnemySystem.spawnEnemy('fast enemy;', 1);
-
-  assert(
-    fastEnemy.style.animationDuration === '4s',
-    'fallSpeedMultiplier 2 halves animation duration'
-  );
-
-  state.fallSpeedMultiplier = 0.5;
-  const slowEnemy = EnemySystem.spawnEnemy('slow enemy;', 2);
-
-  assert(
-    slowEnemy.style.animationDuration === '16s',
-    'fallSpeedMultiplier 0.5 doubles animation duration'
-  );
+/**
+ * Flushes one requestAnimationFrame cycle.
+ * @returns {void}
+ */
+function flushAnimationFrame() {
+  jest.advanceTimersByTime(16);
 }
 
-section('enemySystem.js — defeatEnemy');
+// ── enemySystem ───────────────────────────────────────────────────────────
 
-{
-  createTestEnvironment();
+describe('enemySystem — spawnEnemy', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
 
-  const enemyEl = EnemySystem.spawnEnemy('return ghost;', 0);
+  afterEach(() => {
+    EnemySystem.clearAll();
+    jest.useRealTimers();
+    document.body.innerHTML = '';
+  });
 
-  EnemySystem.defeatEnemy(enemyEl);
+  it('returns an enemy element and appends it to the play area', () => {
+    const { playAreaEl } = createTestEnvironment();
 
-  assert(enemyEl.classList.contains('dissolving'), 'defeatEnemy adds .dissolving class');
-  assert(enemyEl.isConnected, 'defeated enemy remains connected before timeout finishes');
+    const enemyEl = EnemySystem.spawnEnemy('const x = 1;', 0);
 
-  flushTimeouts();
+    expect(enemyEl).not.toBeNull();
+    expect(enemyEl.classList.contains('enemy')).toBe(true);
+    expect(playAreaEl.querySelectorAll('.enemy')).toHaveLength(1);
+  });
 
-  assert(!enemyEl.isConnected, 'defeated enemy is removed after dissolve timeout');
-}
+  it('creates sprite and code elements', () => {
+    createTestEnvironment();
 
-section('enemySystem.js — pauseAll and resumeAll');
+    const enemyEl = EnemySystem.spawnEnemy('const x = 1;', 0);
 
-{
-  createTestEnvironment();
+    expect(enemyEl.querySelector('.enemy-sprite')).not.toBeNull();
+    expect(enemyEl.querySelector('.enemy-code')).not.toBeNull();
+    expect(enemyEl.querySelector('.enemy-code').textContent).toBe('const x = 1;');
+  });
 
-  const firstEnemy = EnemySystem.spawnEnemy('let a = 1;', 0);
-  const secondEnemy = EnemySystem.spawnEnemy('let b = 2;', 1);
+  it('positions enemies based on line index', () => {
+    createTestEnvironment();
 
-  EnemySystem.pauseAll();
+    const firstEnemy = EnemySystem.spawnEnemy('line 0;', 0);
+    const secondEnemy = EnemySystem.spawnEnemy('line 1;', 1);
 
-  assert(firstEnemy.style.animationPlayState === 'paused', 'pauseAll pauses first enemy');
-  assert(secondEnemy.style.animationPlayState === 'paused', 'pauseAll pauses second enemy');
+    expect(firstEnemy.style.left).toBe('10%');
+    expect(secondEnemy.style.left).toBe('27%');
+  });
 
-  EnemySystem.resumeAll();
+  it('sets default fall duration to 8 seconds', () => {
+    createTestEnvironment();
 
-  assert(firstEnemy.style.animationPlayState === 'running', 'resumeAll resumes first enemy');
-  assert(secondEnemy.style.animationPlayState === 'running', 'resumeAll resumes second enemy');
-}
+    const enemyEl = EnemySystem.spawnEnemy('default speed;', 0);
 
-section('enemySystem.js — rAF deadline breach detection');
+    expect(enemyEl.style.animationDuration).toBe('8s');
+  });
+});
 
-{
-  const { breachedEnemies } = createTestEnvironment();
+describe('enemySystem — fall speed multiplier', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
 
-  const enemyEl = EnemySystem.spawnEnemy('deadline test;', 0);
+  afterEach(() => {
+    EnemySystem.clearAll();
+    jest.useRealTimers();
+    document.body.innerHTML = '';
+  });
 
-  enemyEl.rect = {
-    top: 100,
-    bottom: 200,
-    left: 0,
-    right: 100,
-  };
+  it('fallSpeedMultiplier 2 halves animation duration', () => {
+    const { state } = createTestEnvironment();
 
-  flushAnimationFrame();
+    state.fallSpeedMultiplier = 2;
+    const enemyEl = EnemySystem.spawnEnemy('fast enemy;', 1);
 
-  assert(breachedEnemies.length === 0, 'enemy above deadline does not trigger breach');
+    expect(enemyEl.style.animationDuration).toBe('4s');
+  });
 
-  enemyEl.rect = {
-    top: 450,
-    bottom: 510,
-    left: 0,
-    right: 100,
-  };
+  it('fallSpeedMultiplier 0.5 doubles animation duration', () => {
+    const { state } = createTestEnvironment();
 
-  flushAnimationFrame();
+    state.fallSpeedMultiplier = 0.5;
+    const enemyEl = EnemySystem.spawnEnemy('slow enemy;', 2);
 
-  assert(breachedEnemies.length === 1, 'enemy crossing deadline triggers breach once');
-  assert(breachedEnemies[0] === enemyEl, 'breach callback receives crossed enemy element');
-  assert(enemyEl.classList.contains('breached'), 'crossed enemy gets .breached class');
+    expect(enemyEl.style.animationDuration).toBe('16s');
+  });
 
-  flushAnimationFrame();
+  it('clamps very small fallSpeedMultiplier values', () => {
+    const { state } = createTestEnvironment();
 
-  assert(breachedEnemies.length === 1, 'breached enemy does not trigger callback twice');
-}
+    state.fallSpeedMultiplier = 0;
+    const enemyEl = EnemySystem.spawnEnemy('clamped enemy;', 0);
 
-section('enemySystem.js — clearAll');
+    expect(enemyEl.style.animationDuration).toBe('80s');
+  });
+});
 
-{
-  const { playAreaEl, breachedEnemies } = createTestEnvironment();
+describe('enemySystem — defeatEnemy', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
 
-  const firstEnemy = EnemySystem.spawnEnemy('clear one;', 0);
-  const secondEnemy = EnemySystem.spawnEnemy('clear two;', 1);
+  afterEach(() => {
+    EnemySystem.clearAll();
+    jest.useRealTimers();
+    document.body.innerHTML = '';
+  });
 
-  firstEnemy.rect = {
-    top: 450,
-    bottom: 510,
-    left: 0,
-    right: 100,
-  };
-  secondEnemy.rect = {
-    top: 450,
-    bottom: 510,
-    left: 0,
-    right: 100,
-  };
+  it('adds dissolving class and removes enemy after timeout', () => {
+    createTestEnvironment();
 
-  EnemySystem.clearAll();
-  flushAnimationFrame();
+    const enemyEl = EnemySystem.spawnEnemy('return ghost;', 0);
 
-  assert(playAreaEl.querySelectorAll('.enemy').length === 0, 'clearAll removes all enemies');
-  assert(breachedEnemies.length === 0, 'cleared enemies do not trigger breach callbacks');
-}
+    EnemySystem.defeatEnemy(enemyEl);
 
-// ─── Summary ─────────────────────────────────────────────────────────────────
+    expect(enemyEl.classList.contains('dissolving')).toBe(true);
+    expect(enemyEl.isConnected).toBe(true);
 
-console.log('\n─────────────────────────────────────────────');
-console.log(`Results: ${passed} passed, ${failed} failed out of ${passed + failed} tests`);
+    jest.advanceTimersByTime(500);
 
-if (failed === 0) {
-  console.log('All tests passed ✓');
-} else {
-  console.error(`${failed} test(s) failed ✗`);
-  process.exit(1);
-}
+    expect(enemyEl.isConnected).toBe(false);
+  });
+
+  it('does nothing for null enemy', () => {
+    createTestEnvironment();
+
+    expect(() => {
+      EnemySystem.defeatEnemy(null);
+    }).not.toThrow();
+  });
+});
+
+describe('enemySystem — pauseAll and resumeAll', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    EnemySystem.clearAll();
+    jest.useRealTimers();
+    document.body.innerHTML = '';
+  });
+
+  it('pauses and resumes active enemies', () => {
+    createTestEnvironment();
+
+    const firstEnemy = EnemySystem.spawnEnemy('let a = 1;', 0);
+    const secondEnemy = EnemySystem.spawnEnemy('let b = 2;', 1);
+
+    EnemySystem.pauseAll();
+
+    expect(firstEnemy.style.animationPlayState).toBe('paused');
+    expect(secondEnemy.style.animationPlayState).toBe('paused');
+
+    EnemySystem.resumeAll();
+
+    expect(firstEnemy.style.animationPlayState).toBe('running');
+    expect(secondEnemy.style.animationPlayState).toBe('running');
+  });
+});
+
+describe('enemySystem — deadline breach detection', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    EnemySystem.clearAll();
+    jest.useRealTimers();
+    document.body.innerHTML = '';
+  });
+
+  it('does not trigger breach when enemy is above deadline', () => {
+    const { breachedEnemies } = createTestEnvironment();
+
+    const enemyEl = EnemySystem.spawnEnemy('deadline test;', 0);
+    setElementRect(enemyEl, {
+      top: 100,
+      bottom: 200,
+      left: 0,
+      right: 100,
+    });
+
+    flushAnimationFrame();
+
+    expect(breachedEnemies).toHaveLength(0);
+  });
+
+  it('triggers breach when enemy crosses deadline', () => {
+    const { breachedEnemies } = createTestEnvironment();
+
+    const enemyEl = EnemySystem.spawnEnemy('deadline test;', 0);
+    setElementRect(enemyEl, {
+      top: 450,
+      bottom: 510,
+      left: 0,
+      right: 100,
+    });
+
+    flushAnimationFrame();
+
+    expect(breachedEnemies).toHaveLength(1);
+    expect(breachedEnemies[0]).toBe(enemyEl);
+    expect(enemyEl.classList.contains('breached')).toBe(true);
+  });
+
+  it('does not trigger breach callback twice for same enemy', () => {
+    const { breachedEnemies } = createTestEnvironment();
+
+    const enemyEl = EnemySystem.spawnEnemy('deadline test;', 0);
+    setElementRect(enemyEl, {
+      top: 450,
+      bottom: 510,
+      left: 0,
+      right: 100,
+    });
+
+    flushAnimationFrame();
+    flushAnimationFrame();
+
+    expect(breachedEnemies).toHaveLength(1);
+  });
+});
+
+describe('enemySystem — clearAll', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    EnemySystem.clearAll();
+    jest.useRealTimers();
+    document.body.innerHTML = '';
+  });
+
+  it('removes all active enemies', () => {
+    const { playAreaEl } = createTestEnvironment();
+
+    EnemySystem.spawnEnemy('clear one;', 0);
+    EnemySystem.spawnEnemy('clear two;', 1);
+
+    EnemySystem.clearAll();
+
+    expect(playAreaEl.querySelectorAll('.enemy')).toHaveLength(0);
+  });
+
+  it('cleared enemies do not trigger breach callbacks', () => {
+    const { breachedEnemies } = createTestEnvironment();
+
+    const firstEnemy = EnemySystem.spawnEnemy('clear one;', 0);
+    const secondEnemy = EnemySystem.spawnEnemy('clear two;', 1);
+
+    setElementRect(firstEnemy, {
+      top: 450,
+      bottom: 510,
+      left: 0,
+      right: 100,
+    });
+    setElementRect(secondEnemy, {
+      top: 450,
+      bottom: 510,
+      left: 0,
+      right: 100,
+    });
+
+    EnemySystem.clearAll();
+    flushAnimationFrame();
+
+    expect(breachedEnemies).toHaveLength(0);
+  });
+});
