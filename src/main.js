@@ -402,8 +402,18 @@ function playLanguageTransition(onComplete) {
       };
 
       const scream = new Audio('media/audio/SCREAM.mp3');
+      // Attach to DOM so Puppeteer tests can query and fire its 'ended' event.
+      scream.style.cssText = 'display:none;';
+      document.body.appendChild(scream);
       scream.play().catch(() => {});
-      scream.addEventListener('ended', proceed, { once: true });
+      scream.addEventListener(
+        'ended',
+        () => {
+          document.body.removeChild(scream);
+          proceed();
+        },
+        { once: true }
+      );
       setTimeout(proceed, 8000);
 
       startZombieChromaKey();

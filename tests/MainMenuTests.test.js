@@ -385,8 +385,10 @@ test('scare image appears after static and transitions to wave-intro-screen', as
     { timeout: 3000 }
   );
 
-  const scareImg = await page.$eval('#scare-img', (el) => el.src);
-  expect(scareImg).not.toBe('');
+  // Zombie scare uses a chroma-keyed canvas, not an <img>.
+  // Verify #scare-canvas is present and has been sized (width > 0).
+  const scareCanvas = await page.$eval('#scare-canvas', (el) => el.width);
+  expect(scareCanvas).toBeGreaterThan(0);
 
   // Simulate the scream audio ending to trigger navigation
   await page.evaluate(() => {
