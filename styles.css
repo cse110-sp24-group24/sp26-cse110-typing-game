@@ -1244,3 +1244,240 @@ input[type='range'] {
     transform: translateX(4px);
   }
 }
+
+/* Upgrade Selection Screen (Issue #13*/
+
+/*
+   Layout: three cards side by side on desktop, stacked on narrow
+   screens. The .upgrade-content panel already inherits the haunted
+   bordered look (see the .upgrade-content rule near the top of this
+   file) so we only style the cards + subtitle here.
+*/
+
+.upgrade-subtitle {
+  font-family: var(--font-ui);
+  color: var(--ink-dim);
+  letter-spacing: 0.08em;
+  font-size: clamp(0.95rem, 2.2vw, 1.15rem);
+  margin-bottom: 1.5rem;
+  /* Slow flicker so the subtitle never sits still — adds dread. */
+  animation: upgradeSubtitleFlicker 3.6s ease-in-out infinite;
+}
+
+.upgrade-cards {
+  display: grid;
+  /* auto-fit makes the layout responsive without a media query:
+     on a wide screen we get 3 columns, on a narrow phone they
+     stack into 1 column automatically. */
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+/* The card itself. We render it as a <button> in the JS, so we
+   have to strip the browser's default button styling first. */
+.upgrade-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.4rem 1rem 1.1rem;
+  /* "Weighty dark" background — three stacked layers:
+       1. inner ember glow (gives the card warmth from inside)
+       2. main dark surface
+       3. subtle red wash on top for the haunted tint           */
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 80, 90, 0.18), transparent 55%),
+    linear-gradient(180deg, rgba(28, 10, 14, 0.95), rgba(10, 4, 6, 0.95));
+  color: var(--ink);
+  font-family: var(--font-ui);
+  /* The dark blood-red border the issue asks for. */
+  border: 1px solid rgba(255, 70, 92, 0.45);
+  border-radius: var(--radius);
+  /* Combination of an outer shadow (lifts the card off the panel)
+     and an inner shadow (carves out depth). */
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.55),
+    inset 0 0 22px rgba(120, 8, 18, 0.35);
+  cursor: pointer;
+  text-align: center;
+  /* Smooth transition on every property the hover state changes,
+     so the card "lifts" rather than snapping. */
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+  /* Each card fades + slides in on screen open.
+     The per-card animation-delay is set inline by the JS so they
+     appear in sequence rather than all at once. */
+  opacity: 0;
+  animation: upgradeCardEnter 360ms ease-out forwards;
+}
+
+/* Hover + keyboard focus get the same treatment so keyboard users
+   see exactly what mouse users see. */
+.upgrade-card:hover,
+.upgrade-card:focus-visible {
+  transform: translateY(-4px) scale(1.02);
+  border-color: rgba(255, 110, 130, 0.85);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 110, 130, 0.32), transparent 60%),
+    linear-gradient(180deg, rgba(50, 12, 18, 0.95), rgba(14, 5, 8, 0.95));
+  /* Glow strengthens on hover — the "haunted ember" feedback. */
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.6),
+    0 0 22px rgba(255, 60, 80, 0.55),
+    inset 0 0 28px rgba(160, 14, 24, 0.5);
+  outline: none;
+}
+
+.upgrade-card__icon {
+  font-size: clamp(2.4rem, 6vw, 3rem);
+  line-height: 1;
+  filter: drop-shadow(0 0 12px rgba(255, 80, 92, 0.65));
+  /* Slow float so the icon never looks static. */
+  animation: upgradeIconHover 3.2s ease-in-out infinite;
+}
+
+.upgrade-card__name {
+  /* Display font (Creepster) for the upgrade name — matches the
+     screen title and the boss-vibe of the moment. */
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 3vw, 1.55rem);
+  letter-spacing: 0.08em;
+  color: #ffd7db;
+  text-shadow: 0 0 10px rgba(255, 50, 70, 0.55);
+}
+
+.upgrade-card__desc {
+  font-size: clamp(0.92rem, 2vw, 1.05rem);
+  color: var(--ink-dim);
+  line-height: 1.4;
+  /* Keep the description block from collapsing the card height
+     when one card has a longer description than the others. */
+  min-height: 3.2em;
+}
+
+.upgrade-card__cue {
+  margin-top: 0.3rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 130, 145, 0.75);
+  /* Pulse so the "Choose" hint asks for attention. */
+  animation: upgradeCueBlink 1.8s ease-in-out infinite;
+}
+
+/* ── Pick-confirmation states (the 400ms after a card is clicked) ── */
+
+/* The card the player chose: scales up, glows brightest, locks
+   pointer events so a second click can't fire. */
+.upgrade-card--picked {
+  animation: upgradeCardPicked 400ms ease-out forwards;
+  pointer-events: none;
+  border-color: rgba(255, 150, 165, 1);
+  box-shadow:
+    0 0 28px rgba(255, 70, 90, 0.85),
+    0 0 60px rgba(255, 50, 70, 0.55),
+    inset 0 0 30px rgba(180, 18, 30, 0.75);
+}
+
+/* The cards the player didn't choose: fade back so the chosen
+   card visually dominates during the confirmation moment. */
+.upgrade-card--unpicked {
+  pointer-events: none;
+  animation: upgradeCardUnpicked 400ms ease-out forwards;
+}
+
+/* ── Keyframes for everything above ──────────────────────────── */
+
+@keyframes upgradeCardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes upgradeCardPicked {
+  0% {
+    transform: translateY(-4px) scale(1.02);
+  }
+  60% {
+    transform: translateY(-8px) scale(1.08);
+    filter: brightness(1.2);
+  }
+  100% {
+    transform: translateY(-6px) scale(1.06);
+    filter: brightness(1.1);
+  }
+}
+
+@keyframes upgradeCardUnpicked {
+  from {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  to {
+    opacity: 0.3;
+    filter: brightness(0.55) blur(1px);
+    transform: scale(0.97);
+  }
+}
+
+@keyframes upgradeIconHover {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes upgradeCueBlink {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+@keyframes upgradeSubtitleFlicker {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  47% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 0.45;
+  }
+  53% {
+    opacity: 0.85;
+  }
+}
+
+/* Respect users who've asked the OS to reduce motion. We keep the
+   layout and colors but disable the floating/flicker animations. */
+@media (prefers-reduced-motion: reduce) {
+  .upgrade-card,
+  .upgrade-card__icon,
+  .upgrade-card__cue,
+  .upgrade-subtitle {
+    animation: none !important;
+  }
+  .upgrade-card--picked,
+  .upgrade-card--unpicked {
+    animation: none !important;
+    transition: opacity 200ms ease;
+  }
+}
