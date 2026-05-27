@@ -588,6 +588,18 @@ button {
   border-right: 1px solid rgba(255, 84, 103, 0.24);
 }
 
+.play-area::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    linear-gradient(to top, rgba(6, 4, 7, 0.9) 0%, rgba(6, 4, 7, 0.25) 55%, transparent 100%),
+    url('./assets/images/cemetery.png') bottom center / cover no-repeat;
+  opacity: 0.55;
+}
+
 .deadline-line {
   position: absolute;
   left: 0;
@@ -622,8 +634,34 @@ button {
 .enemy-sprite {
   width: 48px;
   height: 48px;
-  filter: drop-shadow(0 0 10px rgba(255, 65, 85, 0.7));
-  animation: spritePulse 1.8s ease-in-out infinite;
+  opacity: 0.92;
+  animation: ghostFloat 1.8s ease-in-out infinite alternate;
+}
+
+.enemy-sprite--0 {
+  filter: drop-shadow(0 0 8px rgba(130, 200, 255, 0.8));
+}
+
+.enemy-sprite--1 {
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.75));
+}
+
+.enemy-sprite--2 {
+  filter: drop-shadow(0 0 8px rgba(80, 220, 120, 0.7));
+}
+
+.enemy-sprite--3 {
+  filter: drop-shadow(0 0 8px rgba(60, 200, 190, 0.75));
+}
+
+@keyframes ghostFloat {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(4px);
+  }
 }
 
 .enemy .enemy-code {
@@ -824,17 +862,6 @@ input[type='range'] {
 
   50% {
     filter: brightness(1.35);
-  }
-}
-
-@keyframes spritePulse {
-  0%,
-  100% {
-    transform: translateY(0) scale(1);
-  }
-
-  50% {
-    transform: translateY(3px) scale(1.08);
   }
 }
 
