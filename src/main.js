@@ -651,38 +651,3 @@ document.querySelectorAll('.btn-language').forEach((btn) => {
 });
 
 console.log('Phantom Type — main.js loaded');
-
-// Temporarily added this to test the boss engine.
-window.testBoss = function testBoss() {
-  if (!runState) {
-    runState = createRunState('javascript');
-    initCodePanel(document.getElementById('code-panel'));
-  }
-
-  showScreen('game-screen');
-
-  const testSnippet = {
-    name: 'Console Test Boss',
-    language: 'javascript',
-    lines: ['function add(a, b) {', '  return a + b;', '}'],
-  };
-
-  bossSystem.startBoss(
-    testSnippet,
-    runState,
-    (bonusScore) => {
-      // Temporary test output. Remove before PR if lint disallows console.
-      console.log('Boss defeated. Bonus score:', bonusScore);
-    },
-    () => {
-      // Temporary test output. Remove before PR if lint disallows console.
-      console.log('Boss life lost');
-    }
-  );
-};
-
-window.testBossLine = function testBossLine() {
-  bossSystem.onLineDefeated();
-};
-
-console.log('Phantom Type — main.js loaded');

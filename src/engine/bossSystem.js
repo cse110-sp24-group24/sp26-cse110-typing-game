@@ -7,7 +7,7 @@
  * Implemented by Issue #26.
  */
 
-import { activate, deactivate, setTarget } from './typingEngine.js';
+import { activate, clearTarget, deactivate, setTarget } from './typingEngine.js';
 
 // ── Module-level constants ──────────────────────────────────────────────────
 
@@ -146,6 +146,7 @@ function _finishBoss() {
   const bonusScore = _calcBonusScore(_lines, _state);
 
   deactivate();
+  clearTarget();
   _onProgressUpdate?.({
     currentLine: _lines.length,
     completedLines: _lines.length,
