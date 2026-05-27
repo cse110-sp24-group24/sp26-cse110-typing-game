@@ -8,26 +8,27 @@
  * Implemented across Issues #4, #7, #8, #11, #13, #19, #20, #21.
  */
 
-import { getPreferences, savePreferences } from './utils/storage.js';
-import { init as initAudio, playAmbient, playSFX as playSfx } from './audio/audioManager.js';
-import { showScreen } from './ui/screenManager.js';
 import { createRunState } from './state.js';
+import { init as initAudio, playAmbient, playSFX as playSfx } from './audio/audioManager.js';
+import * as bossSystem from './engine/bossSystem.js';
 import * as enemySystem from './engine/enemySystem.js';
-import * as waveManager from './engine/waveManager.js';
 import {
-  init as initTyping,
   activate as activateTyping,
-  deactivate as deactivateTyping,
   clearTarget as clearTypingTarget,
+  deactivate as deactivateTyping,
+  init as initTyping,
 } from './engine/typingEngine.js';
-import { show as showWaveIntro } from './ui/waveIntroCard.js';
-// Issue #9 — code panel reveals snippet lines as enemies are defeated.
+import * as waveManager from './engine/waveManager.js';
+import * as bossView from './ui/bossView.js';
 import {
   init as initCodePanel,
   reset as resetCodePanel,
   revealLine,
   showFull,
 } from './ui/codePanel.js';
+import { showScreen } from './ui/screenManager.js';
+import { show as showWaveIntro } from './ui/waveIntroCard.js';
+import { getPreferences, savePreferences } from './utils/storage.js';
 
 // Imports are added as each Issue is completed. Example structure:
 //
@@ -63,6 +64,26 @@ const playAreaEl = document.getElementById('play-area');
 const deadlineEl = document.getElementById('deadline-line');
 const typingInputEl = document.getElementById('typing-input');
 
+// ── Boss System (Issue #26) ───────────────────────────────────
+// main.js wires boss engine callbacks to UI and audio modules so
+// bossSystem can stay ADR-003 compliant and avoid importing across layers.
+bossSystem.init({
+  onIntroStart: (snippet) => {
+    showFull(snippet.lines, snippet.language ?? runState?.language);
+  },
+  onEntranceStart: () => {
+    bossView.showBoss();
+    bossView.playEntrance();
+    playSfx('boss-sting');
+  },
+  onProgressUpdate: (progress) => {
+    bossView.updateProgress(progress);
+  },
+  onBossCleanup: () => {
+    bossView.playDefeat();
+  },
+});
+
 /**
  * Begins a new run: creates the shared RunState, wires the enemy system,
  * typing engine, and wave manager to our callbacks, and paints the initial HUD.
@@ -78,8 +99,14 @@ function startRun(language) {
   initTyping(
     typingInputEl,
     document.getElementById('target-line-display'),
-    // onDefeated: reveal the completed line in the code panel, then advance the wave.
+    // Route completed lines to the boss system during boss mode.
+    // Otherwise, keep the normal wave enemy behavior.
     () => {
+      if (bossSystem.isActive()) {
+        bossSystem.onLineDefeated();
+        return;
+      }
+
       const snippet = waveManager.getCurrentSnippet();
       // Read index before onEnemyDefeated() — it increments lineIndex immediately.
       const idx = waveManager.getCurrentLineIndex();
