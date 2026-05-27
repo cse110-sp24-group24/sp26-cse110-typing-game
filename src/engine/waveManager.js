@@ -29,6 +29,7 @@ let currentEnemyEl = null;
 
 // Tracks snippet IDs used this run so getRandomSnippet can exclude them.
 const usedSnippetIds = [];
+const NEXT_LINE_SPAWN_DELAY_MS = 300;
 
 // ── Public API ─────────────────────────────────────────────────────────────
 
@@ -98,7 +99,9 @@ export function onEnemyDefeated() {
     return;
   }
 
-  spawnCurrentLine();
+  window.setTimeout(() => {
+    spawnCurrentLine();
+  }, NEXT_LINE_SPAWN_DELAY_MS);
 }
 
 /**

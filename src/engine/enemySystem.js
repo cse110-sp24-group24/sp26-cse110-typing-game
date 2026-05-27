@@ -1,3 +1,5 @@
+import * as audioManager from '../audio/audioManager.js';
+
 /**
  * engine/enemySystem.js — Enemy spawning, movement, and deadline detection.
  *
@@ -102,7 +104,30 @@ export function defeatEnemy(enemyEl) {
   }
 
   activeEnemies.delete(enemyEl);
+  // Freeze the enemy at its current screen position so removing the fall
+  // animation does not snap it back to `top: -12%` before dissolve starts.
+  if (playAreaElRef) {
+    const enemyRect = enemyEl.getBoundingClientRect();
+    const playAreaRect = playAreaElRef.getBoundingClientRect();
+
+    enemyEl.style.top = `${enemyRect.top - playAreaRect.top}px`;
+    enemyEl.style.left = `${enemyRect.left - playAreaRect.left}px`;
+    enemyEl.style.width = `${enemyRect.width}px`;
+  }
+
+  // Inline fall timing can override class-based dissolve timing, so reset and force dissolve.
+  enemyEl.style.animation = 'none';
+  if (typeof enemyEl.style.removeProperty === 'function') {
+    enemyEl.style.removeProperty('animation-duration');
+  } else {
+    delete enemyEl.style.animationDuration;
+  }
+  void enemyEl.offsetWidth;
   enemyEl.classList.add('dissolving');
+  enemyEl.style.animation = `dissolve ${DISSOLVE_DURATION_MS}ms ease-out forwards`;
+  if (audioManager && typeof audioManager.playSFX === 'function') {
+    audioManager.playSFX('defeat');
+  }
 
   window.setTimeout(() => {
     enemyEl.remove();

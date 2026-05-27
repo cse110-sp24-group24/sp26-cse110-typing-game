@@ -13,7 +13,7 @@
  *   5. The same snippet is never used twice in the same run
  */
 
-import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 
 // Set up mocks BEFORE any dynamic imports of modules that depend on them.
 // jest.unstable_mockModule is the correct ESM API — jest.mock() hoisting
@@ -161,6 +161,11 @@ describe('waveManager — startWave', () => {
 describe('waveManager — onEnemyDefeated', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('calls defeatEnemy on the element returned by spawnEnemy', () => {
@@ -184,6 +189,7 @@ describe('waveManager — onEnemyDefeated', () => {
     jest.clearAllMocks();
 
     onEnemyDefeated();
+    jest.advanceTimersByTime(300);
 
     expect(enemySystem.spawnEnemy).toHaveBeenCalledWith(snippet.lines[1], 1);
     expect(typingEngine.setTarget).toHaveBeenCalledWith(snippet.lines[1]);
@@ -200,6 +206,7 @@ describe('waveManager — onEnemyDefeated', () => {
     // Defeat all but the last line, checking each target in order.
     for (let i = 1; i < snippet.lines.length - 1; i++) {
       onEnemyDefeated();
+      jest.advanceTimersByTime(300);
       expect(typingEngine.setTarget).toHaveBeenLastCalledWith(snippet.lines[i]);
     }
   });
@@ -214,6 +221,7 @@ describe('waveManager — onEnemyDefeated', () => {
     const lineCount = getCurrentSnippet().lines.length;
     for (let i = 0; i < lineCount; i++) {
       onEnemyDefeated();
+      jest.advanceTimersByTime(300);
     }
 
     expect(onWaveClear).toHaveBeenCalledTimes(1);
@@ -232,6 +240,7 @@ describe('waveManager — onEnemyDefeated', () => {
 
     for (let i = 0; i < lineCount; i++) {
       onEnemyDefeated();
+      jest.advanceTimersByTime(300);
     }
 
     // The intermediate defeats each spawn the next line (lineCount - 1 total),
@@ -245,6 +254,7 @@ describe('waveManager — onEnemyDefeated', () => {
     beginWave();
     expect(getCurrentLineIndex()).toBe(0);
     onEnemyDefeated();
+    jest.advanceTimersByTime(300);
     expect(getCurrentLineIndex()).toBe(1);
   });
 });
