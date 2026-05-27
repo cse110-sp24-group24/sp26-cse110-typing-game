@@ -29,6 +29,7 @@ import {
 import { showScreen } from './ui/screenManager.js';
 import { show as showWaveIntro } from './ui/waveIntroCard.js';
 import { getPreferences, savePreferences } from './utils/storage.js';
+import { show as showUpgradeScreen } from './ui/upgradeScreen.js';
 
 // Imports are added as each Issue is completed. Example structure:
 //
@@ -616,22 +617,50 @@ function onWaveStart(snippet) {
 
 /**
  * Called by waveManager when all enemies in a wave are defeated.
- * Reveals the full snippet, then shows the wave intro for the next wave.
+ * Reveals the full snippet, runs the boss fight, and on boss defeat
+ * routes through the upgrade screen → next wave intro card.
  * @param {object} snippet - The snippet that was just completed.
  * @returns {void}
  */
 function onWaveClear(snippet) {
   showFull(snippet.lines, runState.language);
-  // bossSystem.startBoss(runState, snippet); // boss issue — wired when boss lands
-  // Brief pause so the last enemy dissolve animation can finish before the next wave.
+
+  // Brief pause so the last enemy's dissolve animation can finish
+  // before we transition into the boss sequence.
   setTimeout(() => {
-    // prepareWave picks the snippet before the intro card needs waveData.snippet.
+    // Boss flow (Issue #26): startBoss(snippet, state, onBossDefeated)
+    // runs the intro, entrance, and line-by-line typing loop. It calls
+    // our onBossDefeated callback with the bonus score once the player
+    // finishes the last boss line; we then award the bonus and hand off
+    // to onBossDefeated() which fires the upgrade screen.
+    bossSystem.startBoss(snippet, runState, (bonusScore) => {
+      runState.score += bonusScore;
+      onBossDefeated();
+    });
+  }, 800);
+}
+
+/**
+ * Called once the boss for the current wave is defeated.
+ * Shows the Upgrade Selection screen (Issue #13). When the player
+ * picks an upgrade, that promise resolves and we route to the next
+ * wave's intro card.
+ * @returns {void}
+ */
+function onBossDefeated() {
+  // showUpgradeScreen handles its own screen transition, renders the
+  // 3 cards, applies the chosen upgrade to runState, and resolves
+  // after the 400ms pick-confirmation animation finishes.
+  showUpgradeScreen(runState).then(() => {
+    // prepareWave picks the snippet for the upcoming wave before the
+    // intro card needs waveData.snippet (same pattern used elsewhere
+    // in this file).
     waveManager.prepareWave();
     beginWaveIntro().then(() => {
       showScreen('game-screen');
       waveManager.startWave();
     });
-  }, 800);
+  });
 }
 
 document.querySelectorAll('.btn-language').forEach((btn) => {
