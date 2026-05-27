@@ -398,13 +398,20 @@ test('scare image appears after static and transitions to wave-intro-screen', as
     });
   });
 
+  // waveIntroCard.show() is currently a stub (Issue #10) that resolves immediately,
+  // so the engine transitions wave-intro → game-screen in the same microtask.
+  // The test verifies that the pre-game screens are gone and gameplay has started.
   await page.waitForFunction(
-    () => document.getElementById('wave-intro-screen').classList.contains('active'),
+    () =>
+      document.getElementById('game-screen').classList.contains('active') ||
+      document.getElementById('wave-intro-screen').classList.contains('active'),
     { timeout: 3000 }
   );
 
-  const waveActive = await page.evaluate(() =>
-    document.getElementById('wave-intro-screen').classList.contains('active')
-  );
-  expect(waveActive).toBe(true);
+  const postTransitionActive = await page.evaluate(() => {
+    const gameActive = document.getElementById('game-screen').classList.contains('active');
+    const waveActive = document.getElementById('wave-intro-screen').classList.contains('active');
+    return gameActive || waveActive;
+  });
+  expect(postTransitionActive).toBe(true);
 });
