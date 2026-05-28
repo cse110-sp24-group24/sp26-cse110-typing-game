@@ -9,7 +9,13 @@
  */
 
 import { createRunState } from './state.js';
-import { init as initAudio, playAmbient, playSFX as playSfx } from './audio/audioManager.js';
+import {
+  init as initAudio,
+  playAmbient,
+  playMenuMusic,
+  stopMenuMusic,
+  playSFX as playSfx,
+} from './audio/audioManager.js';
 import * as bossSystem from './engine/bossSystem.js';
 import * as enemySystem from './engine/enemySystem.js';
 import {
@@ -49,7 +55,7 @@ import { show as showUpgradeScreen } from './ui/upgradeScreen.js';
 // ── Audio ──────────────────────────────────────────────────────
 const prefs = getPreferences();
 initAudio(prefs);
-playAmbient();
+playMenuMusic();
 
 // ── Lives System (Issue #12) ───────────────────────────────────
 // One RunState per run; created when the player picks a language.
@@ -59,6 +65,14 @@ playAmbient();
 
 /** @type {ReturnType<typeof createRunState> | null} */
 let runState = null;
+
+/**
+ * True when Foresight already pre-revealed the line the player is
+ * currently typing. Prevents a double-reveal when onDefeated fires.
+ * Reset at the start of every wave so it never leaks across waves.
+ * @type {boolean}
+ */
+let nextLinePreRevealed = false;
 
 const livesDisplayEl = document.getElementById('lives-display');
 const playAreaEl = document.getElementById('play-area');
@@ -101,7 +115,8 @@ function startRun(language) {
     typingInputEl,
     document.getElementById('target-line-display'),
     // Route completed lines to the boss system during boss mode.
-    // Otherwise, keep the normal wave enemy behavior.
+    // Otherwise, keep the normal wave enemy behavior and apply
+    // Two Ghosts One Stone if the player owns it.
     () => {
       if (bossSystem.isActive()) {
         bossSystem.onLineDefeated();
@@ -111,8 +126,28 @@ function startRun(language) {
       const snippet = waveManager.getCurrentSnippet();
       // Read index before onEnemyDefeated() — it increments lineIndex immediately.
       const idx = waveManager.getCurrentLineIndex();
-      revealLine(snippet.lines[idx], runState.language);
+
+      // Foresight: if this line was already pre-revealed on the previous defeat,
+      // skip the reveal call so the code panel index stays in sync.
+      if (!nextLinePreRevealed) {
+        revealLine(snippet.lines[idx], runState.language);
+      }
+      nextLinePreRevealed = false;
+
       waveManager.onEnemyDefeated();
+
+      // Two Ghosts One Stone: automatically defeat the next line too.
+      if (runState?.twoGhostsOneStone && waveManager.getRemainingLinesCount() > 0) {
+        window.setTimeout(() => waveManager.onEnemyDefeated(), 200);
+      }
+
+      // Foresight: pre-reveal the next upcoming line in the code panel so
+      // the player can see what's coming while they type the current ghost.
+      if (runState?.revealNext && waveManager.getRemainingLinesCount() > 0) {
+        const nextIdx = waveManager.getCurrentLineIndex();
+        revealLine(snippet.lines[nextIdx], runState.language);
+        nextLinePreRevealed = true;
+      }
     },
     // onKeystroke: statTracker wires this in Issue #17.
     () => {}
@@ -139,12 +174,35 @@ function onDeadlineBreach(_enemyEl) {
     return;
   }
 
+  // ── Spectral Shield absorption ─────────────────────────────────
+  // If the player has an active shield, absorb this hit for free,
+  // consume the shield, and bail out before any life is deducted.
+  if (runState.hasShield) {
+    runState.hasShield = false;
+    updateShieldDisplay();
+    showShieldAbsorbEffect();
+    return;
+  }
+
   runState.lives -= 1;
   updateLivesDisplay();
   playLifeLossEffect();
 
   if (runState.lives <= 0) {
     endRun();
+    return;
+  }
+
+  // ── Back from the Dead ─────────────────────────────────────────
+  // The ghost that breached is already gone. Skip the next 2 lines
+  // automatically so the player can still pass if only 3 remain.
+  // We also skip the breached line itself (total advance = 3) and
+  // flash a "vengeance" message on the play area.
+  if (runState.backFromTheDead) {
+    showRevengeFlash();
+    // skipLines(3) advances past the breached line + 2 more, then
+    // spawns the new current line or fires onWaveClear.
+    waveManager.skipLines(3);
   }
 }
 
@@ -183,6 +241,139 @@ function playLifeLossEffect() {
   void document.body.offsetWidth;
   document.body.classList.add('life-lost');
   playSfx('life-loss');
+}
+
+/**
+ * Flashes a "💀 BACK FROM THE DEAD — +2 ELIMINATED" banner over the
+ * play area to signal that Back from the Dead just triggered.
+ * The element removes itself after the CSS animation completes.
+ * @returns {void}
+ */
+function showRevengeFlash() {
+  if (!playAreaEl) {return;}
+  const banner = document.createElement('div');
+  banner.className = 'revenge-flash';
+  banner.textContent = '💀 BACK FROM THE DEAD — +2 ELIMINATED';
+  playAreaEl.appendChild(banner);
+  // Remove after the animation finishes (1 s defined in styles.css).
+  banner.addEventListener('animationend', () => banner.remove(), { once: true });
+}
+
+/**
+ * Renders a 🛡 shield icon in the HUD when the player's shield is active,
+ * or clears it when the shield has been consumed.
+ * @returns {void}
+ */
+function updateShieldDisplay() {
+  const el = document.getElementById('shield-display');
+  if (!el) {
+    return;
+  }
+  el.textContent = runState?.hasShield ? '🛡' : '';
+  el.setAttribute('aria-label', runState?.hasShield ? 'Shield active' : '');
+}
+
+/**
+ * Flashes a blue "SHIELD ABSORBED!" banner over the play area.
+ * @returns {void}
+ */
+function showShieldAbsorbEffect() {
+  document.body.classList.remove('shield-absorbed');
+  void document.body.offsetWidth; // force reflow to restart animation
+  document.body.classList.add('shield-absorbed');
+
+  if (!playAreaEl) {
+    return;
+  }
+  const banner = document.createElement('div');
+  banner.className = 'shield-absorb-flash';
+  banner.textContent = '🛡 SHIELD ABSORBED THE HIT!';
+  playAreaEl.appendChild(banner);
+  banner.addEventListener('animationend', () => banner.remove(), { once: true });
+}
+
+// ── Vibe Vanish angel ──────────────────────────────────────────────
+
+/** Reference to the active angel element so the input listener can find it. */
+let vibeVanishAngelEl = null;
+
+/**
+ * Spawns the Vibe Vanish angel on the play area. The angel is a glowing
+ * element that falls alongside normal ghosts, displaying the chant the
+ * player must type to activate the power. It is NOT tracked by the enemy
+ * system — it never triggers a deadline breach.
+ * @returns {void}
+ */
+function spawnVibeVanishAngel() {
+  if (!playAreaEl || !runState?.vibeVanishChant) {
+    return;
+  }
+
+  // Remove any leftover angel from a previous wave.
+  if (vibeVanishAngelEl) {
+    vibeVanishAngelEl.remove();
+  }
+
+  const angel = document.createElement('div');
+  angel.className = 'vibe-vanish-angel';
+  // Pin to the right edge so it never overlaps the ghost.
+  angel.style.left = '75%';
+
+  const spriteEl = document.createElement('div');
+  spriteEl.className = 'vibe-vanish-angel__sprite';
+  spriteEl.textContent = '👼';
+
+  const chantEl = document.createElement('div');
+  chantEl.className = 'vibe-vanish-angel__chant';
+  chantEl.textContent = runState.vibeVanishChant;
+
+  angel.appendChild(spriteEl);
+  angel.appendChild(chantEl);
+  playAreaEl.appendChild(angel);
+  vibeVanishAngelEl = angel;
+
+  // Clean up automatically when the fall animation ends (angel reached bottom).
+  angel.addEventListener('animationend', () => {
+    if (vibeVanishAngelEl === angel) {
+      vibeVanishAngelEl = null;
+    }
+    angel.remove();
+  }, { once: true });
+}
+
+/**
+ * Activates Vibe Vanish: plays the angel's burst animation, then
+ * defeats every remaining ghost with a short stagger so it looks like
+ * the angel is sweeping through them, then ends the wave.
+ * @returns {void}
+ */
+function activateVibeVanish() {
+  const angel = vibeVanishAngelEl;
+  vibeVanishAngelEl = null;
+
+  if (angel) {
+    angel.classList.add('vibe-vanish-angel--activated');
+  }
+
+  // Stagger ghost defeats so each one dissolves 120ms after the last,
+  // creating a sweeping "angel clears the field" visual.
+  const enemies = [...(playAreaEl?.querySelectorAll('.enemy') ?? [])];
+  enemies.forEach((el, i) => {
+    window.setTimeout(() => {
+      el.classList.remove('dissolving');
+      el.classList.add('dissolving');
+      window.setTimeout(() => el.remove(), 500);
+    }, i * 120);
+  });
+
+  const totalDelay = enemies.length * 120 + 600;
+  window.setTimeout(() => {
+    if (angel) {
+      angel.remove();
+    }
+    enemySystem.defeatAllEnemies(); // clean up the enemy system's tracking
+    waveManager.forceWaveClear();
+  }, totalDelay);
 }
 
 /**
@@ -342,7 +533,7 @@ initGhostCanvas();
 // ── Navigation ─────────────────────────────────────────────────
 
 document.getElementById('play-btn').addEventListener('click', () => {
-  playAmbient();
+  playMenuMusic();
   showScreen('language-screen');
 });
 
@@ -608,11 +799,33 @@ function beginWaveIntro() {
  * @returns {void}
  */
 function onWaveStart(snippet) {
+  // Reset Foresight pre-reveal tracker for the fresh set of placeholders.
+  nextLinePreRevealed = false;
+
   const waveDisplayEl = document.getElementById('wave-display');
   if (waveDisplayEl) {
     waveDisplayEl.textContent = `Wave ${runState.wave}`;
   }
   resetCodePanel(snippet.name, snippet.lines);
+
+  // ── Per-wave upgrade effects ───────────────────────────────────
+  // Apply once at the top of every wave so bonuses refresh each round.
+  if (runState.shieldPerWave) {
+    runState.hasShield = true;
+    updateShieldDisplay();
+  }
+  if (runState.lifePerWave) {
+    runState.lives += 1;
+    updateLivesDisplay();
+  }
+
+  // ── Vibe Vanish angel ──────────────────────────────────────────
+  // If the player owns Vibe Vanish, send down a glowing angel at the
+  // start of every wave. It shows the chant and can be activated at
+  // any time to dissolve all remaining ghosts.
+  if (runState.vibeVanishActive) {
+    spawnVibeVanishAngel();
+  }
 }
 
 /**
@@ -634,7 +847,9 @@ function onWaveClear(snippet) {
     // finishes the last boss line; we then award the bonus and hand off
     // to onBossDefeated() which fires the upgrade screen.
     bossSystem.startBoss(snippet, runState, (bonusScore) => {
-      runState.score += bonusScore;
+      // Soul Harvest: scoreMultiplier starts at 1.0 and increases by 0.5
+      // each time the upgrade is picked, so bonus points scale up per run.
+      runState.score += Math.round(bonusScore * (runState.scoreMultiplier ?? 1));
       onBossDefeated();
     });
   }, 800);
@@ -666,10 +881,15 @@ function onBossDefeated() {
 document.querySelectorAll('.btn-language').forEach((btn) => {
   btn.addEventListener('click', () => {
     const language = btn.dataset.language;
+    // Blur immediately so keyboard focus doesn't re-fire this handler
+    // when the player presses any key during or after the scare transition.
+    btn.blur();
     savePreferences({ ...prefs, language });
+    stopMenuMusic();
     startRun(language);
     // After the scare: prepare snippet, show wave intro, then start combat.
     playLanguageTransition(() => {
+      playAmbient();
       waveManager.prepareWave();
       beginWaveIntro().then(() => {
         showScreen('game-screen');
@@ -677,6 +897,20 @@ document.querySelectorAll('.btn-language').forEach((btn) => {
       });
     });
   });
+});
+
+// ── Vibe Vanish chant detector ─────────────────────────────────
+// Runs on every keystroke alongside the normal typing engine.
+// When the player fully types the chant, activate the angel.
+document.getElementById('typing-input')?.addEventListener('input', (e) => {
+  if (!runState?.vibeVanishActive || !vibeVanishAngelEl) {
+    return;
+  }
+  if (e.target.value !== runState.vibeVanishChant) {
+    return;
+  }
+  e.target.value = '';
+  activateVibeVanish();
 });
 
 console.log('Phantom Type — main.js loaded');

@@ -201,7 +201,11 @@ test('ambient music is configured on main menu and persists on language select s
 
   const mainMenuAudio = await page.evaluate(() => {
     const domAudio = document.querySelector('audio');
-    const mockedAudio = window.__createdAudio?.find((audio) => audio.src.includes('ambient-wave'));
+    // Menu plays spookymusic.mp3; in-game ambient plays ambient-wave.mp3.
+    // Both are created via new Audio() and tracked in window.__createdAudio.
+    const mockedAudio =
+      window.__createdAudio?.find((audio) => audio.src.includes('spookymusic')) ??
+      window.__createdAudio?.find((audio) => audio.src.includes('ambient-wave'));
 
     const audio = domAudio ?? mockedAudio;
 
@@ -218,7 +222,7 @@ test('ambient music is configured on main menu and persists on language select s
   });
 
   expect(mainMenuAudio.exists).toBe(true);
-  expect(mainMenuAudio.src).toContain('ambient-wave');
+  expect(mainMenuAudio.src).toMatch(/spookymusic|ambient-wave/);
 
   const decorativeVideo = await page.evaluate(() => {
     const video = document.querySelector('body > video');
@@ -244,7 +248,9 @@ test('ambient music is configured on main menu and persists on language select s
 
   const langSelectAudio = await page.evaluate(() => {
     const domAudio = document.querySelector('audio');
-    const mockedAudio = window.__createdAudio?.find((audio) => audio.src.includes('ambient-wave'));
+    const mockedAudio =
+      window.__createdAudio?.find((audio) => audio.src.includes('spookymusic')) ??
+      window.__createdAudio?.find((audio) => audio.src.includes('ambient-wave'));
 
     const audio = domAudio ?? mockedAudio;
 
@@ -259,7 +265,7 @@ test('ambient music is configured on main menu and persists on language select s
   });
 
   expect(langSelectAudio.exists).toBe(true);
-  expect(langSelectAudio.src).toContain('ambient-wave');
+  expect(langSelectAudio.src).toMatch(/spookymusic|ambient-wave/);
 });
 
 // ══════════════════════════════════════════════════════════════════
