@@ -294,86 +294,92 @@ function showShieldAbsorbEffect() {
 
 // ── Vibe Vanish angel ──────────────────────────────────────────────
 
-/** Reference to the active angel element so the input listener can find it. */
+/** Reference to the active angel element (null when no angel is on screen). */
 let vibeVanishAngelEl = null;
 
 /**
- * Spawns the Vibe Vanish angel on the play area. The angel is a glowing
- * element that falls alongside normal ghosts, displaying the chant the
- * player must type to activate the power. It is NOT tracked by the enemy
- * system — it never triggers a deadline breach.
- * @returns {void}
+ * Callback set by spawnVibeVanishAngel() so the keydown chant detector can
+ * trigger activation without needing a direct reference to the Promise resolve.
+ * Cleared to null once the angel phase settles (either path).
+ * @type {Function|null}
  */
-function spawnVibeVanishAngel() {
-  if (!playAreaEl || !runState?.vibeVanishChant) {
-    return;
-  }
-
-  // Remove any leftover angel from a previous wave.
-  if (vibeVanishAngelEl) {
-    vibeVanishAngelEl.remove();
-  }
-
-  const angel = document.createElement('div');
-  angel.className = 'vibe-vanish-angel';
-  // Pin to the right edge so it never overlaps the ghost.
-  angel.style.left = '75%';
-
-  const spriteEl = document.createElement('div');
-  spriteEl.className = 'vibe-vanish-angel__sprite';
-  spriteEl.textContent = '👼';
-
-  const chantEl = document.createElement('div');
-  chantEl.className = 'vibe-vanish-angel__chant';
-  chantEl.textContent = runState.vibeVanishChant;
-
-  angel.appendChild(spriteEl);
-  angel.appendChild(chantEl);
-  playAreaEl.appendChild(angel);
-  vibeVanishAngelEl = angel;
-
-  // Clean up automatically when the fall animation ends (angel reached bottom).
-  angel.addEventListener('animationend', () => {
-    if (vibeVanishAngelEl === angel) {
-      vibeVanishAngelEl = null;
-    }
-    angel.remove();
-  }, { once: true });
-}
+let _vibeVanishActivate = null;
 
 /**
- * Activates Vibe Vanish: plays the angel's burst animation, then
- * defeats every remaining ghost with a short stagger so it looks like
- * the angel is sweeping through them, then ends the wave.
- * @returns {void}
+ * Rolling buffer of recent keystrokes used to detect the Vibe Vanish chant.
+ * Tracked via keydown (not input.value) so it is never wiped by setTarget()
+ * clearing the typing input between ghost spawns.
+ * @type {string}
  */
-function activateVibeVanish() {
-  const angel = vibeVanishAngelEl;
-  vibeVanishAngelEl = null;
+let _chantBuffer = '';
 
-  if (angel) {
-    angel.classList.add('vibe-vanish-angel--activated');
-  }
-
-  // Stagger ghost defeats so each one dissolves 120ms after the last,
-  // creating a sweeping "angel clears the field" visual.
-  const enemies = [...(playAreaEl?.querySelectorAll('.enemy') ?? [])];
-  enemies.forEach((el, i) => {
-    window.setTimeout(() => {
-      el.classList.remove('dissolving');
-      el.classList.add('dissolving');
-      window.setTimeout(() => el.remove(), 500);
-    }, i * 120);
-  });
-
-  const totalDelay = enemies.length * 120 + 600;
-  window.setTimeout(() => {
-    if (angel) {
-      angel.remove();
+/**
+ * Spawns the Vibe Vanish angel on the play area as a pre-wave phase.
+ * The angel falls alone — no ghosts spawn until the Promise settles.
+ *
+ * Resolves with `true`  — player typed the chant in time; wave is skipped.
+ * Resolves with `false` — angel reached the deadline; wave starts normally
+ *                         (no life is deducted — the angel is never tracked
+ *                          by enemySystem).
+ *
+ * @returns {Promise<boolean>}
+ */
+function spawnVibeVanishAngel() {
+  return new Promise((resolve) => {
+    if (!playAreaEl || !runState?.vibeVanishChant) {
+      resolve(false);
+      return;
     }
-    enemySystem.defeatAllEnemies(); // clean up the enemy system's tracking
-    waveManager.forceWaveClear();
-  }, totalDelay);
+
+    if (vibeVanishAngelEl) {
+      vibeVanishAngelEl.remove();
+      vibeVanishAngelEl = null;
+    }
+
+    const angel = document.createElement('div');
+    angel.className = 'vibe-vanish-angel';
+    angel.style.left = '50%';
+    angel.style.transform = 'translateX(-50%)';
+
+    const spriteEl = document.createElement('div');
+    spriteEl.className = 'vibe-vanish-angel__sprite';
+    spriteEl.textContent = '👼';
+
+    const chantEl = document.createElement('div');
+    chantEl.className = 'vibe-vanish-angel__chant';
+    chantEl.textContent = runState.vibeVanishChant;
+
+    angel.appendChild(spriteEl);
+    angel.appendChild(chantEl);
+    playAreaEl.appendChild(angel);
+    vibeVanishAngelEl = angel;
+
+    let settled = false;
+
+    function finish(activated) {
+      if (settled) { return; }
+      settled = true;
+      _vibeVanishActivate = null;
+      vibeVanishAngelEl = null;
+      angel.remove();
+      resolve(activated);
+    }
+
+    // Angel reached the deadline without activation — wave proceeds normally.
+    // Filter to angelFall so the child's angelFloat (infinite) never triggers this.
+    angel.addEventListener('animationend', (e) => {
+      if (e.animationName === 'angelFall') {
+        finish(false);
+      }
+    });
+
+    // Called by the keydown chant detector when the full chant is typed.
+    // Plays the burst animation, then resolves true.
+    _vibeVanishActivate = () => {
+      angel.classList.add('vibe-vanish-angel--activated');
+      window.setTimeout(() => finish(true), 600); // matches angelActivate duration
+    };
+  });
 }
 
 /**
@@ -529,6 +535,46 @@ function silenceDecorativeVideo(video) {
 }
 
 initGhostCanvas();
+
+// ── Arched title ───────────────────────────────────────────────
+
+/**
+ * Bends the "PHANTOM TYPE" title into an upward arch by wrapping
+ * each character in a <span> and applying a per-character rotation
+ * and vertical lift based on a parabolic curve.
+ */
+function archifyTitle() {
+  const el = document.querySelector('#menu-screen .game-title');
+  if (!el) { return; }
+
+  const text = el.textContent.trim();
+  const chars = [...text];
+  const n = chars.length;
+
+  // Clear existing content and data-text (glitch pseudo-elements won't
+  // work on child spans, so we disable them by removing the attribute).
+  el.innerHTML = '';
+  el.removeAttribute('data-text');
+
+  const TOTAL_ARC_DEG = 32;   // full spread of rotation across all chars
+  const MAX_LIFT_PX   = 22;   // how many px the centre chars lift above the edges
+
+  chars.forEach((char, i) => {
+    const span = document.createElement('span');
+    span.className = 'arch-char';
+    span.textContent = char === ' ' ? ' ' : char;
+
+    // t goes from -1 (left edge) to +1 (right edge)
+    const t = n > 1 ? (i / (n - 1)) * 2 - 1 : 0;
+    const angle   = t * (TOTAL_ARC_DEG / 2);           // rotate outward
+    const liftPx  = (1 - t * t) * MAX_LIFT_PX;         // highest at centre
+
+    span.style.transform = `rotate(${angle}deg) translateY(${-liftPx}px)`;
+    el.appendChild(span);
+  });
+}
+
+archifyTitle();
 
 // ── Navigation ─────────────────────────────────────────────────
 
@@ -801,6 +847,8 @@ function beginWaveIntro() {
 function onWaveStart(snippet) {
   // Reset Foresight pre-reveal tracker for the fresh set of placeholders.
   nextLinePreRevealed = false;
+  // Reset Vibe Vanish chant buffer so stale keystrokes never carry over.
+  _chantBuffer = '';
 
   const waveDisplayEl = document.getElementById('wave-display');
   if (waveDisplayEl) {
@@ -819,13 +867,6 @@ function onWaveStart(snippet) {
     updateLivesDisplay();
   }
 
-  // ── Vibe Vanish angel ──────────────────────────────────────────
-  // If the player owns Vibe Vanish, send down a glowing angel at the
-  // start of every wave. It shows the chant and can be activated at
-  // any time to dissolve all remaining ghosts.
-  if (runState.vibeVanishActive) {
-    spawnVibeVanishAngel();
-  }
 }
 
 /**
@@ -856,6 +897,78 @@ function onWaveClear(snippet) {
 }
 
 /**
+ * After Vibe Vanish activates, spawns every ghost in the wave in quick
+ * succession and immediately dissolves each one so they visually die on
+ * entry. Returns a Promise that resolves once the last dissolve finishes.
+ * @returns {Promise<void>}
+ */
+function playGhostVanishEntry() {
+  const snippet = waveManager.getCurrentSnippet();
+  if (!snippet?.lines?.length) {
+    return Promise.resolve();
+  }
+
+  const SPAWN_STAGGER_MS       = 180;  // delay between each ghost appearing
+  const FALL_BEFORE_DISSOLVE_MS = 380; // how long each ghost falls before fading
+  const DISSOLVE_MS            = 500;  // must match enemySystem's DISSOLVE_DURATION_MS
+
+  const promises = snippet.lines.map((line, i) =>
+    new Promise((resolve) => {
+      window.setTimeout(() => {
+        const enemyEl = enemySystem.spawnEnemy(line, i);
+        if (!enemyEl) {
+          resolve();
+          return;
+        }
+        // Let the ghost drift down briefly, then dissolve in place.
+        window.setTimeout(() => {
+          enemySystem.defeatEnemy(enemyEl);
+          window.setTimeout(resolve, DISSOLVE_MS);
+        }, FALL_BEFORE_DISSOLVE_MS);
+      }, i * SPAWN_STAGGER_MS);
+    })
+  );
+
+  return Promise.all(promises).then(() => {});
+}
+
+/**
+ * Starts combat for the current wave, running the Vibe Vanish angel phase
+ * first when the upgrade is active.
+ *
+ * Vibe Vanish flow:
+ *   setupWave() (HUD + code panel) → angel falls alone → player types chant?
+ *     yes → ghosts spawn and dissolve on entry → forceWaveClear
+ *     no  → ghost spawning begins normally (beginSpawning)
+ *
+ * Normal flow: waveManager.startWave() (unchanged behaviour).
+ * @returns {void}
+ */
+function launchWave() {
+  if (!runState?.vibeVanishActive) {
+    waveManager.startWave();
+    return;
+  }
+
+  // Set up HUD and code panel without spawning any enemy yet.
+  waveManager.setupWave();
+
+  // Angel descends before any ghost. Promise resolves once it activates or
+  // reaches the deadline.
+  spawnVibeVanishAngel().then((activated) => {
+    if (activated) {
+      // Chant typed in time — play the ghost-entry-dissolve show, then clear.
+      playGhostVanishEntry().then(() => {
+        waveManager.forceWaveClear();
+      });
+    } else {
+      // Angel reached deadline — normal ghost spawning begins.
+      waveManager.beginSpawning();
+    }
+  });
+}
+
+/**
  * Called once the boss for the current wave is defeated.
  * Shows the Upgrade Selection screen (Issue #13). When the player
  * picks an upgrade, that promise resolves and we route to the next
@@ -873,7 +986,7 @@ function onBossDefeated() {
     waveManager.prepareWave();
     beginWaveIntro().then(() => {
       showScreen('game-screen');
-      waveManager.startWave();
+      launchWave();
     });
   });
 }
@@ -893,24 +1006,36 @@ document.querySelectorAll('.btn-language').forEach((btn) => {
       waveManager.prepareWave();
       beginWaveIntro().then(() => {
         showScreen('game-screen');
-        waveManager.startWave();
+        launchWave();
       });
     });
   });
 });
 
 // ── Vibe Vanish chant detector ─────────────────────────────────
-// Runs on every keystroke alongside the normal typing engine.
-// When the player fully types the chant, activate the angel.
-document.getElementById('typing-input')?.addEventListener('input', (e) => {
+// Uses keydown (not input.value) so the chant buffer is never wiped
+// when setTarget() clears the typing input between ghost spawns.
+// The buffer keeps only the last N characters (chant length) so partial
+// matches from earlier keystrokes don't prevent future activation.
+document.addEventListener('keydown', (e) => {
   if (!runState?.vibeVanishActive || !vibeVanishAngelEl) {
     return;
   }
-  if (e.target.value !== runState.vibeVanishChant) {
+  // Ignore modifier-only presses, Enter, Tab, etc.
+  if (e.key.length !== 1) {
     return;
   }
-  e.target.value = '';
-  activateVibeVanish();
+  const chant = runState.vibeVanishChant.toUpperCase();
+  _chantBuffer += e.key.toUpperCase();
+  // Trim to a sliding window so old keystrokes don't block future matches.
+  if (_chantBuffer.length > chant.length) {
+    _chantBuffer = _chantBuffer.slice(-chant.length);
+  }
+  if (_chantBuffer === chant && _vibeVanishActivate) {
+    _chantBuffer = '';
+    _vibeVanishActivate();
+    _vibeVanishActivate = null;
+  }
 });
 
 console.log('Phantom Type — main.js loaded');

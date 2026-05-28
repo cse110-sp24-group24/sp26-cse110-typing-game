@@ -121,7 +121,9 @@ export function isActive() {
  * @returns {void}
  */
 function _setCurrentLine() {
-  setTarget(_lines[_lineIndex]);
+  // Strip leading whitespace for the same reason as waveManager —
+  // the player should never have to type invisible indentation.
+  setTarget(_lines[_lineIndex].trimStart());
 }
 
 /**

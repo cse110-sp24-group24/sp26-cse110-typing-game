@@ -26,6 +26,12 @@ export function createRunState(language) {
     shieldPerWave: false,
     lifePerWave: false,
     revealNext: false,
+    hasShield: false, // true when an active shield is ready to absorb one hit this wave
+    vibeVanishActive: false, // Vibe Vanish — true once the upgrade is owned
+    vibeVanishChant: null, // The exact phrase the player must type to trigger it
+    twoGhostsOneStone: false, // Two Ghosts One Stone — defeating an enemy also kills the next
+    backFromTheDead: false, // Back from the Dead — life loss destroys the killer + next 2 enemies
+    mysteryBoxReveal: null, // Mystery Box — id of the upgrade the box randomly granted
 
     stats: {
       // Typing and run statistics

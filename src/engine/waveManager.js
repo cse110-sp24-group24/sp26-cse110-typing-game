@@ -81,6 +81,25 @@ export function startWave() {
 }
 
 /**
+ * Fires onWaveStart (HUD + code-panel setup) without spawning any enemy.
+ * Use before a pre-wave phase (e.g. Vibe Vanish angel). Follow with
+ * beginSpawning() to start ghost spawning, or forceWaveClear() to skip.
+ * @returns {void}
+ */
+export function setupWave() {
+  onWaveStartRef(currentSnippet);
+}
+
+/**
+ * Spawns the first enemy for the current wave without re-firing onWaveStart.
+ * Call after setupWave() once any pre-wave phase has resolved without skipping.
+ * @returns {void}
+ */
+export function beginSpawning() {
+  spawnCurrentLine();
+}
+
+/**
  * Called by main.js when typingEngine fires its onDefeated callback.
  * Defeats the current enemy element, then either spawns the next line
  * or fires onWaveClear if all lines have been typed.
@@ -122,6 +141,54 @@ export function getCurrentLineIndex() {
   return lineIndex;
 }
 
+/**
+ * Returns how many lines remain in the current wave (including the one
+ * currently being typed). Returns 0 before the first startWave() call.
+ * Used by main.js to guard the Two Ghosts One Stone double-defeat.
+ * @returns {number}
+ */
+export function getRemainingLinesCount() {
+  if (!currentSnippet) {
+    return 0;
+  }
+  return Math.max(0, currentSnippet.lines.length - lineIndex);
+}
+
+/**
+ * Immediately fires onWaveClear without spawning more enemies.
+ * Called by Vibe Vanish after enemySystem.defeatAllEnemies() has
+ * already played the dissolve animation for the current enemy.
+ * @returns {void}
+ */
+export function forceWaveClear() {
+  currentEnemyEl = null;
+  if (currentSnippet) {
+    onWaveClearRef(currentSnippet);
+  }
+}
+
+/**
+ * Skips `n` lines starting from the current lineIndex (inclusive) and
+ * spawns the enemy at the new position, or fires onWaveClear if the
+ * wave is exhausted. Used by Back from the Dead.
+ *
+ * @param {number} n - Number of lines to skip (≥ 1).
+ * @returns {void}
+ */
+export function skipLines(n) {
+  // The current enemy element is already gone (breached/removed by
+  // enemySystem), so just null the reference and advance the counter.
+  currentEnemyEl = null;
+  lineIndex += n;
+
+  if (lineIndex >= currentSnippet.lines.length) {
+    onWaveClearRef(currentSnippet);
+    return;
+  }
+
+  spawnCurrentLine();
+}
+
 // ── Private helpers ─────────────────────────────────────────────────────────
 
 /**
@@ -130,7 +197,13 @@ export function getCurrentLineIndex() {
  * @returns {void}
  */
 function spawnCurrentLine() {
-  const line = currentSnippet.lines[lineIndex];
+  // Strip leading whitespace so the player never has to type invisible
+  // indentation. The code panel keeps the raw indented line for context;
+  // the enemy ghost and the typing target both use the trimmed version.
+  // Strip leading whitespace so the player never has to type invisible
+  // indentation. The code panel keeps the raw indented line for context.
+  const line = currentSnippet.lines[lineIndex].trimStart();
+
   currentEnemyEl = enemySystem.spawnEnemy(line, lineIndex);
   setTarget(line);
 }

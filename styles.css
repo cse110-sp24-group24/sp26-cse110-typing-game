@@ -16,6 +16,16 @@
   --font-display: 'Creepster', Georgia, serif;
   --font-ui: 'VT323', 'Courier New', monospace;
   --font-code: 'Courier New', Courier, monospace;
+
+  /* Ghost green — main menu palette (Issue #8) */
+  --color-ghost: #00ff41;
+  --color-ghost-dim: rgba(0, 255, 65, 0.45);
+  --color-ghost-glow: rgba(0, 255, 65, 0.12);
+  --color-bg: #080810;
+  --color-muted: rgba(255, 255, 255, 0.25);
+  --font-mono: 'Courier New', Courier, monospace;
+  --font-horror: 'Creepster', Georgia, serif;
+  --font-terminal: 'VT323', 'Courier New', monospace;
 }
 
 *,
@@ -65,6 +75,7 @@ button {
   overflow: hidden;
 }
 
+
 .blood-haze,
 .graveyard-silhouette,
 .fog,
@@ -81,55 +92,7 @@ button {
 }
 
 .graveyard-silhouette {
-  top: auto;
-  height: 42vh;
-  background:
-    linear-gradient(to top, rgba(4, 3, 4, 0.95), rgba(4, 3, 4, 0.2)),
-    repeating-linear-gradient(
-      to right,
-      transparent 0 4%,
-      rgba(9, 6, 7, 0.95) 4% 5%,
-      transparent 5% 11%,
-      rgba(10, 7, 7, 0.92) 11% 12%
-    );
-  clip-path: polygon(
-    0 100%,
-    0 66%,
-    7% 64%,
-    9% 52%,
-    12% 52%,
-    12% 64%,
-    22% 64%,
-    24% 58%,
-    27% 58%,
-    27% 66%,
-    33% 66%,
-    35% 55%,
-    38% 55%,
-    38% 66%,
-    44% 66%,
-    46% 50%,
-    49% 50%,
-    49% 66%,
-    56% 66%,
-    58% 60%,
-    62% 60%,
-    62% 66%,
-    68% 66%,
-    70% 54%,
-    73% 54%,
-    73% 66%,
-    79% 66%,
-    81% 57%,
-    84% 57%,
-    84% 66%,
-    90% 66%,
-    92% 52%,
-    95% 52%,
-    95% 66%,
-    100% 66%,
-    100% 100%
-  );
+  display: none;
 }
 
 .fog {
@@ -170,28 +133,6 @@ button {
   opacity: 1;
 }
 
-#menu-screen::before,
-#menu-screen::after {
-  content: '';
-  position: absolute;
-  pointer-events: none;
-}
-
-#menu-screen::before {
-  inset: 0;
-  background:
-    radial-gradient(circle at 50% 24%, rgba(255, 42, 65, 0.2), transparent 38%),
-    repeating-linear-gradient(0deg, rgba(255, 90, 110, 0.05) 0 2px, transparent 2px 6px);
-  mix-blend-mode: screen;
-  animation: menuVeilPulse 4.2s ease-in-out infinite;
-}
-
-#menu-screen::after {
-  inset: 2.2rem;
-  border: 1px solid rgba(255, 74, 100, 0.18);
-  box-shadow: inset 0 0 40px rgba(150, 10, 28, 0.25);
-  animation: frameThrob 3.4s ease-in-out infinite;
-}
 
 #menu-screen,
 #language-screen,
@@ -202,8 +143,25 @@ button {
   padding: 2rem;
 }
 
-.menu-content,
-.language-content,
+#menu-screen,
+#language-screen {
+  background: transparent;
+}
+
+/* Menu/language content floats over the ghost canvas — no card background */
+#menu-screen .menu-content,
+#language-screen .language-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  padding: 2rem;
+  width: min(92vw, 760px);
+}
+
 .wave-intro-card,
 .wave-stats-content,
 .upgrade-content,
@@ -222,8 +180,6 @@ button {
   backdrop-filter: blur(3px);
 }
 
-.menu-content,
-.language-content,
 .wave-stats-content,
 .upgrade-content,
 .stats-content {
@@ -258,9 +214,79 @@ button {
     titleGlitch 220ms steps(2) infinite;
 }
 
+/* Arch letter spans — each char is rotated + lifted by main.js */
+.arch-char {
+  display: inline-block;
+  transform-origin: bottom center;
+}
+
+/* ── Menu title override — ghost green ────────────────────────── */
+#menu-screen .game-title {
+  margin-top: -4rem;
+  font-family: var(--font-horror);
+  font-size: clamp(3rem, 10vw, 6rem);
+  color: var(--color-ghost);
+  text-shadow:
+    0 0 8px var(--color-ghost),
+    0 0 24px var(--color-ghost-dim),
+    0 0 60px var(--color-ghost-glow);
+  animation:
+    titleFloat 4s ease-in-out infinite,
+    titleFlicker 6s steps(1) infinite;
+}
+
+/* RGB-split cyan/magenta ghost duplicates */
 #menu-screen .game-title::before,
 #menu-screen .game-title::after {
-  content: none;
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+#menu-screen .game-title::before {
+  color: rgba(0, 255, 255, 0.8);
+  animation: glitchCyan 7s steps(1) infinite;
+}
+
+#menu-screen .game-title::after {
+  color: rgba(255, 0, 200, 0.8);
+  animation: glitchMagenta 7s steps(1) infinite;
+}
+
+@keyframes titleFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+
+@keyframes titleFlicker {
+  0%, 18%, 22%, 26%, 55%, 59%, 100% {
+    opacity: 1;
+    text-shadow:
+      0 0 8px var(--color-ghost),
+      0 0 24px var(--color-ghost-dim),
+      0 0 60px var(--color-ghost-glow);
+  }
+  20%, 24% { opacity: 0.25; text-shadow: none; }
+  57%      { opacity: 0.5;  text-shadow: 0 0 4px var(--color-ghost-dim); }
+}
+
+@keyframes glitchCyan {
+  0%, 84%, 100% { opacity: 0; transform: translateX(0); clip-path: none; }
+  85% { opacity: 0.85; transform: translateX(-4px); clip-path: inset(15% 0 62% 0); }
+  86% { opacity: 0.85; transform: translateX(3px);  clip-path: inset(58% 0 8%  0); }
+  87% { opacity: 0; }
+  91% { opacity: 0.6;  transform: translateX(-2px); clip-path: inset(38% 0 42% 0); }
+  92% { opacity: 0; }
+}
+
+@keyframes glitchMagenta {
+  0%, 87%, 100% { opacity: 0; transform: translateX(0); clip-path: none; }
+  88% { opacity: 0.75; transform: translateX(4px);  clip-path: inset(5%  0 78% 0); }
+  89% { opacity: 0.75; transform: translateX(-3px); clip-path: inset(72% 0 2%  0); }
+  90% { opacity: 0; }
+  93% { opacity: 0.5;  transform: translateX(2px);  clip-path: inset(44% 0 28% 0); }
+  94% { opacity: 0; }
 }
 
 .screen-title,
@@ -283,6 +309,7 @@ button {
   font-size: clamp(1.15rem, 3vw, 1.5rem);
   letter-spacing: 0.1em;
   text-shadow: 0 0 10px rgba(255, 36, 58, 0.32);
+  margin-top: 2rem;
 }
 
 .btn {
@@ -501,6 +528,9 @@ button {
 #game-screen {
   display: none;
   opacity: 0;
+  background:
+    linear-gradient(to bottom, rgba(4, 2, 3, 0.25), rgba(4, 2, 3, 0.2)),
+    url('media/visuals/graveyard.jpg') center/cover no-repeat;
 }
 
 #game-screen.active {

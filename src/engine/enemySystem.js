@@ -18,7 +18,7 @@ let isPaused = false;
 
 const activeEnemies = new Set();
 
-const BASE_FALL_DURATION_SECONDS = 8;
+const BASE_FALL_DURATION_SECONDS = 16; // doubled from 8 → enemies fall at 0.5× original speed
 const DISSOLVE_DURATION_MS = 500;
 const BREACH_REMOVE_DELAY_MS = 350;
 const MIN_FALL_SPEED_MULTIPLIER = 0.1;
@@ -203,6 +203,18 @@ export function resumeAll() {
   if (activeEnemies.size > 0) {
     startDeadlineLoop();
   }
+}
+
+/**
+ * Triggers the dissolve animation on every active enemy simultaneously.
+ * Used by Vibe Vanish so all ghosts die with the visual effect rather
+ * than vanishing instantly.
+ * @returns {void}
+ */
+export function defeatAllEnemies() {
+  // Snapshot the set so mutation during iteration is safe.
+  const enemies = [...activeEnemies];
+  enemies.forEach((el) => defeatEnemy(el));
 }
 
 /**
