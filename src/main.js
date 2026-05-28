@@ -9,7 +9,13 @@
  */
 
 import { createRunState } from './state.js';
-import { init as initAudio, playAmbient, playSFX as playSfx } from './audio/audioManager.js';
+import {
+  init as initAudio,
+  playAmbient,
+  playMenuMusic,
+  stopMenuMusic,
+  playSFX as playSfx,
+} from './audio/audioManager.js';
 import * as bossSystem from './engine/bossSystem.js';
 import * as enemySystem from './engine/enemySystem.js';
 import {
@@ -49,7 +55,7 @@ import { show as showUpgradeScreen } from './ui/upgradeScreen.js';
 // ── Audio ──────────────────────────────────────────────────────
 const prefs = getPreferences();
 initAudio(prefs);
-playAmbient();
+playMenuMusic();
 
 // ── Lives System (Issue #12) ───────────────────────────────────
 // One RunState per run; created when the player picks a language.
@@ -59,6 +65,14 @@ playAmbient();
 
 /** @type {ReturnType<typeof createRunState> | null} */
 let runState = null;
+
+/**
+ * True when Foresight already pre-revealed the line the player is
+ * currently typing. Prevents a double-reveal when onDefeated fires.
+ * Reset at the start of every wave so it never leaks across waves.
+ * @type {boolean}
+ */
+let nextLinePreRevealed = false;
 
 const livesDisplayEl = document.getElementById('lives-display');
 const playAreaEl = document.getElementById('play-area');
@@ -101,7 +115,8 @@ function startRun(language) {
     typingInputEl,
     document.getElementById('target-line-display'),
     // Route completed lines to the boss system during boss mode.
-    // Otherwise, keep the normal wave enemy behavior.
+    // Otherwise, keep the normal wave enemy behavior and apply
+    // Two Ghosts One Stone if the player owns it.
     () => {
       if (bossSystem.isActive()) {
         bossSystem.onLineDefeated();
@@ -111,8 +126,28 @@ function startRun(language) {
       const snippet = waveManager.getCurrentSnippet();
       // Read index before onEnemyDefeated() — it increments lineIndex immediately.
       const idx = waveManager.getCurrentLineIndex();
-      revealLine(snippet.lines[idx], runState.language);
+
+      // Foresight: if this line was already pre-revealed on the previous defeat,
+      // skip the reveal call so the code panel index stays in sync.
+      if (!nextLinePreRevealed) {
+        revealLine(snippet.lines[idx], runState.language);
+      }
+      nextLinePreRevealed = false;
+
       waveManager.onEnemyDefeated();
+
+      // Two Ghosts One Stone: automatically defeat the next line too.
+      if (runState?.twoGhostsOneStone && waveManager.getRemainingLinesCount() > 0) {
+        window.setTimeout(() => waveManager.onEnemyDefeated(), 200);
+      }
+
+      // Foresight: pre-reveal the next upcoming line in the code panel so
+      // the player can see what's coming while they type the current ghost.
+      if (runState?.revealNext && waveManager.getRemainingLinesCount() > 0) {
+        const nextIdx = waveManager.getCurrentLineIndex();
+        revealLine(snippet.lines[nextIdx], runState.language);
+        nextLinePreRevealed = true;
+      }
     },
     // onKeystroke: statTracker wires this in Issue #17.
     () => {}
@@ -139,12 +174,35 @@ function onDeadlineBreach(_enemyEl) {
     return;
   }
 
+  // ── Spectral Shield absorption ─────────────────────────────────
+  // If the player has an active shield, absorb this hit for free,
+  // consume the shield, and bail out before any life is deducted.
+  if (runState.hasShield) {
+    runState.hasShield = false;
+    updateShieldDisplay();
+    showShieldAbsorbEffect();
+    return;
+  }
+
   runState.lives -= 1;
   updateLivesDisplay();
   playLifeLossEffect();
 
   if (runState.lives <= 0) {
     endRun();
+    return;
+  }
+
+  // ── Back from the Dead ─────────────────────────────────────────
+  // The ghost that breached is already gone. Skip the next 2 lines
+  // automatically so the player can still pass if only 3 remain.
+  // We also skip the breached line itself (total advance = 3) and
+  // flash a "vengeance" message on the play area.
+  if (runState.backFromTheDead) {
+    showRevengeFlash();
+    // skipLines(3) advances past the breached line + 2 more, then
+    // spawns the new current line or fires onWaveClear.
+    waveManager.skipLines(3);
   }
 }
 
@@ -183,6 +241,149 @@ function playLifeLossEffect() {
   void document.body.offsetWidth;
   document.body.classList.add('life-lost');
   playSfx('life-loss');
+}
+
+/**
+ * Flashes a "💀 BACK FROM THE DEAD — +2 ELIMINATED" banner over the
+ * play area to signal that Back from the Dead just triggered.
+ * The element removes itself after the CSS animation completes.
+ * @returns {void}
+ */
+function showRevengeFlash() {
+  if (!playAreaEl) {
+    return;
+  }
+  const banner = document.createElement('div');
+  banner.className = 'revenge-flash';
+  banner.textContent = '💀 BACK FROM THE DEAD — +2 ELIMINATED';
+  playAreaEl.appendChild(banner);
+  // Remove after the animation finishes (1 s defined in styles.css).
+  banner.addEventListener('animationend', () => banner.remove(), { once: true });
+}
+
+/**
+ * Renders a 🛡 shield icon in the HUD when the player's shield is active,
+ * or clears it when the shield has been consumed.
+ * @returns {void}
+ */
+function updateShieldDisplay() {
+  const el = document.getElementById('shield-display');
+  if (!el) {
+    return;
+  }
+  el.textContent = runState?.hasShield ? '🛡' : '';
+  el.setAttribute('aria-label', runState?.hasShield ? 'Shield active' : '');
+}
+
+/**
+ * Flashes a blue "SHIELD ABSORBED!" banner over the play area.
+ * @returns {void}
+ */
+function showShieldAbsorbEffect() {
+  document.body.classList.remove('shield-absorbed');
+  void document.body.offsetWidth; // force reflow to restart animation
+  document.body.classList.add('shield-absorbed');
+
+  if (!playAreaEl) {
+    return;
+  }
+  const banner = document.createElement('div');
+  banner.className = 'shield-absorb-flash';
+  banner.textContent = '🛡 SHIELD ABSORBED THE HIT!';
+  playAreaEl.appendChild(banner);
+  banner.addEventListener('animationend', () => banner.remove(), { once: true });
+}
+
+// ── Vibe Vanish angel ──────────────────────────────────────────────
+
+/** Reference to the active angel element (null when no angel is on screen). */
+let vibeVanishAngelEl = null;
+
+/**
+ * Callback set by spawnVibeVanishAngel() so the keydown chant detector can
+ * trigger activation without needing a direct reference to the Promise resolve.
+ * Cleared to null once the angel phase settles (either path).
+ * @type {Function|null}
+ */
+let _vibeVanishActivate = null;
+
+/**
+ * Rolling buffer of recent keystrokes used to detect the Vibe Vanish chant.
+ * Tracked via keydown (not input.value) so it is never wiped by setTarget()
+ * clearing the typing input between ghost spawns.
+ * @type {string}
+ */
+let _chantBuffer = '';
+
+/**
+ * Spawns the Vibe Vanish angel on the play area as a pre-wave phase.
+ * The angel falls alone — no ghosts spawn until the Promise settles.
+ *
+ * Resolves with `true`  — player typed the chant in time; wave is skipped.
+ * Resolves with `false` — angel reached the deadline; wave starts normally
+ *                         (no life is deducted — the angel is never tracked
+ *                          by enemySystem).
+ *
+ * @returns {Promise<boolean>}
+ */
+function spawnVibeVanishAngel() {
+  return new Promise((resolve) => {
+    if (!playAreaEl || !runState?.vibeVanishChant) {
+      resolve(false);
+      return;
+    }
+
+    if (vibeVanishAngelEl) {
+      vibeVanishAngelEl.remove();
+      vibeVanishAngelEl = null;
+    }
+
+    const angel = document.createElement('div');
+    angel.className = 'vibe-vanish-angel';
+    angel.style.left = '50%';
+    angel.style.transform = 'translateX(-50%)';
+
+    const spriteEl = document.createElement('div');
+    spriteEl.className = 'vibe-vanish-angel__sprite';
+    spriteEl.textContent = '👼';
+
+    const chantEl = document.createElement('div');
+    chantEl.className = 'vibe-vanish-angel__chant';
+    chantEl.textContent = runState.vibeVanishChant;
+
+    angel.appendChild(spriteEl);
+    angel.appendChild(chantEl);
+    playAreaEl.appendChild(angel);
+    vibeVanishAngelEl = angel;
+
+    let settled = false;
+
+    function finish(activated) {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      _vibeVanishActivate = null;
+      vibeVanishAngelEl = null;
+      angel.remove();
+      resolve(activated);
+    }
+
+    // Angel reached the deadline without activation — wave proceeds normally.
+    // Filter to angelFall so the child's angelFloat (infinite) never triggers this.
+    angel.addEventListener('animationend', (e) => {
+      if (e.animationName === 'angelFall') {
+        finish(false);
+      }
+    });
+
+    // Called by the keydown chant detector when the full chant is typed.
+    // Plays the burst animation, then resolves true.
+    _vibeVanishActivate = () => {
+      angel.classList.add('vibe-vanish-angel--activated');
+      window.setTimeout(() => finish(true), 600); // matches angelActivate duration
+    };
+  });
 }
 
 /**
@@ -339,10 +540,52 @@ function silenceDecorativeVideo(video) {
 
 initGhostCanvas();
 
+// ── Arched title ───────────────────────────────────────────────
+
+/**
+ * Bends the "PHANTOM TYPE" title into an upward arch by wrapping
+ * each character in a <span> and applying a per-character rotation
+ * and vertical lift based on a parabolic curve.
+ */
+function archifyTitle() {
+  const el = document.querySelector('#menu-screen .game-title');
+  if (!el) {
+    return;
+  }
+
+  const text = el.textContent.trim();
+  const chars = [...text];
+  const n = chars.length;
+
+  // Clear existing content and data-text (glitch pseudo-elements won't
+  // work on child spans, so we disable them by removing the attribute).
+  el.innerHTML = '';
+  el.removeAttribute('data-text');
+
+  const TOTAL_ARC_DEG = 32; // full spread of rotation across all chars
+  const MAX_LIFT_PX = 22; // how many px the centre chars lift above the edges
+
+  chars.forEach((char, i) => {
+    const span = document.createElement('span');
+    span.className = 'arch-char';
+    span.textContent = char === ' ' ? ' ' : char;
+
+    // t goes from -1 (left edge) to +1 (right edge)
+    const t = n > 1 ? (i / (n - 1)) * 2 - 1 : 0;
+    const angle = t * (TOTAL_ARC_DEG / 2); // rotate outward
+    const liftPx = (1 - t * t) * MAX_LIFT_PX; // highest at centre
+
+    span.style.transform = `rotate(${angle}deg) translateY(${-liftPx}px)`;
+    el.appendChild(span);
+  });
+}
+
+archifyTitle();
+
 // ── Navigation ─────────────────────────────────────────────────
 
 document.getElementById('play-btn').addEventListener('click', () => {
-  playAmbient();
+  playMenuMusic();
   showScreen('language-screen');
 });
 
@@ -608,11 +851,27 @@ function beginWaveIntro() {
  * @returns {void}
  */
 function onWaveStart(snippet) {
+  // Reset Foresight pre-reveal tracker for the fresh set of placeholders.
+  nextLinePreRevealed = false;
+  // Reset Vibe Vanish chant buffer so stale keystrokes never carry over.
+  _chantBuffer = '';
+
   const waveDisplayEl = document.getElementById('wave-display');
   if (waveDisplayEl) {
     waveDisplayEl.textContent = `Wave ${runState.wave}`;
   }
   resetCodePanel(snippet.name, snippet.lines);
+
+  // ── Per-wave upgrade effects ───────────────────────────────────
+  // Apply once at the top of every wave so bonuses refresh each round.
+  if (runState.shieldPerWave) {
+    runState.hasShield = true;
+    updateShieldDisplay();
+  }
+  if (runState.lifePerWave) {
+    runState.lives += 1;
+    updateLivesDisplay();
+  }
 }
 
 /**
@@ -634,10 +893,85 @@ function onWaveClear(snippet) {
     // finishes the last boss line; we then award the bonus and hand off
     // to onBossDefeated() which fires the upgrade screen.
     bossSystem.startBoss(snippet, runState, (bonusScore) => {
-      runState.score += bonusScore;
+      // Soul Harvest: scoreMultiplier starts at 1.0 and increases by 0.5
+      // each time the upgrade is picked, so bonus points scale up per run.
+      runState.score += Math.round(bonusScore * (runState.scoreMultiplier ?? 1));
       onBossDefeated();
     });
   }, 800);
+}
+
+/**
+ * After Vibe Vanish activates, spawns every ghost in the wave in quick
+ * succession and immediately dissolves each one so they visually die on
+ * entry. Returns a Promise that resolves once the last dissolve finishes.
+ * @returns {Promise<void>}
+ */
+function playGhostVanishEntry() {
+  const snippet = waveManager.getCurrentSnippet();
+  if (!snippet?.lines?.length) {
+    return Promise.resolve();
+  }
+
+  const SPAWN_STAGGER_MS = 180; // delay between each ghost appearing
+  const FALL_BEFORE_DISSOLVE_MS = 380; // how long each ghost falls before fading
+  const DISSOLVE_MS = 500; // must match enemySystem's DISSOLVE_DURATION_MS
+
+  const promises = snippet.lines.map(
+    (line, i) =>
+      new Promise((resolve) => {
+        window.setTimeout(() => {
+          const enemyEl = enemySystem.spawnEnemy(line, i);
+          if (!enemyEl) {
+            resolve();
+            return;
+          }
+          // Let the ghost drift down briefly, then dissolve in place.
+          window.setTimeout(() => {
+            enemySystem.defeatEnemy(enemyEl);
+            window.setTimeout(resolve, DISSOLVE_MS);
+          }, FALL_BEFORE_DISSOLVE_MS);
+        }, i * SPAWN_STAGGER_MS);
+      })
+  );
+
+  return Promise.all(promises).then(() => {});
+}
+
+/**
+ * Starts combat for the current wave, running the Vibe Vanish angel phase
+ * first when the upgrade is active.
+ *
+ * Vibe Vanish flow:
+ *   setupWave() (HUD + code panel) → angel falls alone → player types chant?
+ *     yes → ghosts spawn and dissolve on entry → forceWaveClear
+ *     no  → ghost spawning begins normally (beginSpawning)
+ *
+ * Normal flow: waveManager.startWave() (unchanged behaviour).
+ * @returns {void}
+ */
+function launchWave() {
+  if (!runState?.vibeVanishActive) {
+    waveManager.startWave();
+    return;
+  }
+
+  // Set up HUD and code panel without spawning any enemy yet.
+  waveManager.setupWave();
+
+  // Angel descends before any ghost. Promise resolves once it activates or
+  // reaches the deadline.
+  spawnVibeVanishAngel().then((activated) => {
+    if (activated) {
+      // Chant typed in time — play the ghost-entry-dissolve show, then clear.
+      playGhostVanishEntry().then(() => {
+        waveManager.forceWaveClear();
+      });
+    } else {
+      // Angel reached deadline — normal ghost spawning begins.
+      waveManager.beginSpawning();
+    }
+  });
 }
 
 /**
@@ -658,7 +992,7 @@ function onBossDefeated() {
     waveManager.prepareWave();
     beginWaveIntro().then(() => {
       showScreen('game-screen');
-      waveManager.startWave();
+      launchWave();
     });
   });
 }
@@ -666,17 +1000,48 @@ function onBossDefeated() {
 document.querySelectorAll('.btn-language').forEach((btn) => {
   btn.addEventListener('click', () => {
     const language = btn.dataset.language;
+    // Blur immediately so keyboard focus doesn't re-fire this handler
+    // when the player presses any key during or after the scare transition.
+    btn.blur();
     savePreferences({ ...prefs, language });
+    stopMenuMusic();
     startRun(language);
     // After the scare: prepare snippet, show wave intro, then start combat.
     playLanguageTransition(() => {
+      playAmbient();
       waveManager.prepareWave();
       beginWaveIntro().then(() => {
         showScreen('game-screen');
-        waveManager.startWave();
+        launchWave();
       });
     });
   });
+});
+
+// ── Vibe Vanish chant detector ─────────────────────────────────
+// Uses keydown (not input.value) so the chant buffer is never wiped
+// when setTarget() clears the typing input between ghost spawns.
+// The buffer keeps only the last N characters (chant length) so partial
+// matches from earlier keystrokes don't prevent future activation.
+document.addEventListener('keydown', (e) => {
+  if (!runState?.vibeVanishActive || !vibeVanishAngelEl) {
+    return;
+  }
+  // Ignore modifier-only presses, Enter, Tab, etc.
+  if (e.key.length !== 1) {
+    return;
+  }
+  const chant = runState.vibeVanishChant.toUpperCase();
+  _chantBuffer += e.key.toUpperCase();
+  // Trim to a sliding window so old keystrokes don't block future matches.
+  if (_chantBuffer.length > chant.length) {
+    _chantBuffer = _chantBuffer.slice(-chant.length);
+  }
+  if (_chantBuffer === chant && _vibeVanishActivate) {
+    _chantBuffer = '';
+    _vibeVanishActivate();
+    _vibeVanishActivate = null;
+  }
 });
 
 console.log('Phantom Type — main.js loaded');

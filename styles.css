@@ -16,6 +16,16 @@
   --font-display: 'Creepster', Georgia, serif;
   --font-ui: 'VT323', 'Courier New', monospace;
   --font-code: 'Courier New', Courier, monospace;
+
+  /* Ghost green — main menu palette (Issue #8) */
+  --color-ghost: #00ff41;
+  --color-ghost-dim: rgba(0, 255, 65, 0.45);
+  --color-ghost-glow: rgba(0, 255, 65, 0.12);
+  --color-bg: #080810;
+  --color-muted: rgba(255, 255, 255, 0.25);
+  --font-mono: 'Courier New', Courier, monospace;
+  --font-horror: 'Creepster', Georgia, serif;
+  --font-terminal: 'VT323', 'Courier New', monospace;
 }
 
 *,
@@ -55,8 +65,6 @@ button {
   height: 100%;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.28;
-  mix-blend-mode: screen;
 }
 
 .haunted-backdrop {
@@ -83,55 +91,7 @@ button {
 }
 
 .graveyard-silhouette {
-  top: auto;
-  height: 42vh;
-  background:
-    linear-gradient(to top, rgba(4, 3, 4, 0.95), rgba(4, 3, 4, 0.2)),
-    repeating-linear-gradient(
-      to right,
-      transparent 0 4%,
-      rgba(9, 6, 7, 0.95) 4% 5%,
-      transparent 5% 11%,
-      rgba(10, 7, 7, 0.92) 11% 12%
-    );
-  clip-path: polygon(
-    0 100%,
-    0 66%,
-    7% 64%,
-    9% 52%,
-    12% 52%,
-    12% 64%,
-    22% 64%,
-    24% 58%,
-    27% 58%,
-    27% 66%,
-    33% 66%,
-    35% 55%,
-    38% 55%,
-    38% 66%,
-    44% 66%,
-    46% 50%,
-    49% 50%,
-    49% 66%,
-    56% 66%,
-    58% 60%,
-    62% 60%,
-    62% 66%,
-    68% 66%,
-    70% 54%,
-    73% 54%,
-    73% 66%,
-    79% 66%,
-    81% 57%,
-    84% 57%,
-    84% 66%,
-    90% 66%,
-    92% 52%,
-    95% 52%,
-    95% 66%,
-    100% 66%,
-    100% 100%
-  );
+  display: none;
 }
 
 .fog {
@@ -172,29 +132,6 @@ button {
   opacity: 1;
 }
 
-#menu-screen::before,
-#menu-screen::after {
-  content: '';
-  position: absolute;
-  pointer-events: none;
-}
-
-#menu-screen::before {
-  inset: 0;
-  background:
-    radial-gradient(circle at 50% 24%, rgba(255, 42, 65, 0.2), transparent 38%),
-    repeating-linear-gradient(0deg, rgba(255, 90, 110, 0.05) 0 2px, transparent 2px 6px);
-  mix-blend-mode: screen;
-  animation: menuVeilPulse 4.2s ease-in-out infinite;
-}
-
-#menu-screen::after {
-  inset: 2.2rem;
-  border: 1px solid rgba(255, 74, 100, 0.18);
-  box-shadow: inset 0 0 40px rgba(150, 10, 28, 0.25);
-  animation: frameThrob 3.4s ease-in-out infinite;
-}
-
 #menu-screen,
 #language-screen,
 #wave-intro-screen,
@@ -204,8 +141,25 @@ button {
   padding: 2rem;
 }
 
-.menu-content,
-.language-content,
+#menu-screen,
+#language-screen {
+  background: transparent;
+}
+
+/* Menu/language content floats over the ghost canvas — no card background */
+#menu-screen .menu-content,
+#language-screen .language-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  padding: 2rem;
+  width: min(92vw, 760px);
+}
+
 .wave-intro-card,
 .wave-stats-content,
 .upgrade-content,
@@ -224,8 +178,6 @@ button {
   backdrop-filter: blur(3px);
 }
 
-.menu-content,
-.language-content,
 .wave-stats-content,
 .upgrade-content,
 .stats-content {
@@ -260,9 +212,141 @@ button {
     titleGlitch 220ms steps(2) infinite;
 }
 
+/* Arch letter spans — each char is rotated + lifted by main.js */
+.arch-char {
+  display: inline-block;
+  transform-origin: bottom center;
+}
+
+/* ── Menu title override — ghost green ────────────────────────── */
+#menu-screen .game-title {
+  margin-top: -4rem;
+  font-family: var(--font-horror);
+  font-size: clamp(3rem, 10vw, 6rem);
+  color: var(--color-ghost);
+  text-shadow:
+    0 0 8px var(--color-ghost),
+    0 0 24px var(--color-ghost-dim),
+    0 0 60px var(--color-ghost-glow);
+  animation:
+    titleFloat 4s ease-in-out infinite,
+    titleFlicker 6s steps(1) infinite;
+}
+
+/* RGB-split cyan/magenta ghost duplicates */
 #menu-screen .game-title::before,
 #menu-screen .game-title::after {
-  content: none;
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+#menu-screen .game-title::before {
+  color: rgba(0, 255, 255, 0.8);
+  animation: glitchCyan 7s steps(1) infinite;
+}
+
+#menu-screen .game-title::after {
+  color: rgba(255, 0, 200, 0.8);
+  animation: glitchMagenta 7s steps(1) infinite;
+}
+
+@keyframes titleFloat {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes titleFlicker {
+  0%,
+  18%,
+  22%,
+  26%,
+  55%,
+  59%,
+  100% {
+    opacity: 1;
+    text-shadow:
+      0 0 8px var(--color-ghost),
+      0 0 24px var(--color-ghost-dim),
+      0 0 60px var(--color-ghost-glow);
+  }
+  20%,
+  24% {
+    opacity: 0.25;
+    text-shadow: none;
+  }
+  57% {
+    opacity: 0.5;
+    text-shadow: 0 0 4px var(--color-ghost-dim);
+  }
+}
+
+@keyframes glitchCyan {
+  0%,
+  84%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+    clip-path: none;
+  }
+  85% {
+    opacity: 0.85;
+    transform: translateX(-4px);
+    clip-path: inset(15% 0 62% 0);
+  }
+  86% {
+    opacity: 0.85;
+    transform: translateX(3px);
+    clip-path: inset(58% 0 8% 0);
+  }
+  87% {
+    opacity: 0;
+  }
+  91% {
+    opacity: 0.6;
+    transform: translateX(-2px);
+    clip-path: inset(38% 0 42% 0);
+  }
+  92% {
+    opacity: 0;
+  }
+}
+
+@keyframes glitchMagenta {
+  0%,
+  87%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+    clip-path: none;
+  }
+  88% {
+    opacity: 0.75;
+    transform: translateX(4px);
+    clip-path: inset(5% 0 78% 0);
+  }
+  89% {
+    opacity: 0.75;
+    transform: translateX(-3px);
+    clip-path: inset(72% 0 2% 0);
+  }
+  90% {
+    opacity: 0;
+  }
+  93% {
+    opacity: 0.5;
+    transform: translateX(2px);
+    clip-path: inset(44% 0 28% 0);
+  }
+  94% {
+    opacity: 0;
+  }
 }
 
 .screen-title,
@@ -285,6 +369,7 @@ button {
   font-size: clamp(1.15rem, 3vw, 1.5rem);
   letter-spacing: 0.1em;
   text-shadow: 0 0 10px rgba(255, 36, 58, 0.32);
+  margin-top: 2rem;
 }
 
 .btn {
@@ -503,6 +588,9 @@ button {
 #game-screen {
   display: none;
   opacity: 0;
+  background:
+    linear-gradient(to bottom, rgba(4, 2, 3, 0.25), rgba(4, 2, 3, 0.2)),
+    url('media/visuals/graveyard.jpg') center/cover no-repeat;
 }
 
 #game-screen.active {
@@ -825,6 +913,268 @@ body.life-lost {
 
 input[type='range'] {
   accent-color: var(--blood-bright);
+}
+
+/* ── Vibe Vanish angel ────────────────────────────────────────── */
+/* Falls slowly alongside normal ghosts, shows the vanish chant.
+   NOT tracked by enemySystem — purely a UI/main.js element.     */
+
+.vibe-vanish-angel {
+  position: absolute;
+  top: -120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  pointer-events: none;
+  animation: angelFall 28s linear forwards;
+  filter: drop-shadow(0 0 10px rgba(255, 240, 160, 0.9))
+    drop-shadow(0 0 30px rgba(255, 220, 80, 0.5));
+}
+
+.vibe-vanish-angel__sprite {
+  font-size: 2.4rem;
+  line-height: 1;
+  animation: angelFloat 2s ease-in-out infinite alternate;
+}
+
+.vibe-vanish-angel__chant {
+  background: rgba(255, 248, 200, 0.12);
+  border: 1px solid rgba(255, 230, 100, 0.5);
+  border-radius: 0.4rem;
+  color: rgba(255, 245, 180, 0.95);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  line-height: 1.35;
+  max-width: 14rem;
+  padding: 0.3rem 0.5rem;
+  text-align: center;
+  text-shadow: 0 0 8px rgba(255, 220, 80, 0.7);
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* Activation burst: angel flares bright then fades out */
+.vibe-vanish-angel--activated {
+  animation: angelActivate 0.6s ease-out forwards !important;
+}
+
+@keyframes angelFall {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(110vh);
+  }
+}
+
+@keyframes angelFloat {
+  from {
+    transform: translateY(0) rotate(-3deg);
+  }
+  to {
+    transform: translateY(-8px) rotate(3deg);
+  }
+}
+
+@keyframes angelActivate {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 10px gold);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.6) rotate(5deg);
+    filter: drop-shadow(0 0 60px gold) brightness(2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2) rotate(-5deg);
+    filter: drop-shadow(0 0 20px gold);
+  }
+}
+
+/* ── Upgrade ACTIVATED bolt overlay (Issue #27) ───────────────── */
+/* Full-screen overlay that flashes "[NAME] ACTIVATED!" after a
+   card is picked. Appended to <body> by upgradeScreen.js. */
+
+.upgrade-activated-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: rgba(5, 5, 18, 0.92);
+  animation: activatedFadeIn 0.25s ease-out forwards;
+  pointer-events: none;
+}
+
+.upgrade-activated-overlay--fading {
+  animation: activatedFadeOut 0.6s ease-in forwards;
+}
+
+.upgrade-activated__bolt {
+  font-size: 3rem;
+  animation: boltFlicker 0.15s steps(1) infinite;
+  line-height: 1;
+}
+
+.upgrade-activated__icon {
+  font-size: 4rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 18px rgba(130, 200, 255, 0.9));
+  animation: iconPulse 0.6s ease-in-out infinite alternate;
+}
+
+.upgrade-activated__name {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  font-weight: 700;
+  color: rgba(200, 235, 255, 1);
+  letter-spacing: 0.08em;
+  text-shadow:
+    0 0 12px rgba(130, 200, 255, 0.9),
+    0 0 40px rgba(130, 200, 255, 0.5);
+  text-align: center;
+}
+
+.upgrade-activated__label {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(1rem, 3vw, 1.6rem);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(255, 220, 80, 0.95);
+  text-shadow:
+    0 0 10px rgba(255, 220, 80, 0.8),
+    0 0 30px rgba(255, 220, 80, 0.4);
+}
+
+@keyframes activatedFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes activatedFadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes boltFlicker {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  61%,
+  80% {
+    opacity: 0;
+  }
+  81% {
+    opacity: 1;
+  }
+}
+
+@keyframes iconPulse {
+  from {
+    transform: scale(1);
+    filter: drop-shadow(0 0 10px rgba(130, 200, 255, 0.6));
+  }
+  to {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 28px rgba(130, 200, 255, 1));
+  }
+}
+
+/* ── Shield HUD indicator ─────────────────────────────────────── */
+.hud-shield {
+  font-size: 1.2rem;
+  line-height: 1;
+  min-width: 1.5rem;
+  text-align: center;
+  filter: drop-shadow(0 0 6px rgba(100, 180, 255, 0.8));
+  transition: opacity 0.2s ease;
+}
+
+/* ── Shield absorb flash ──────────────────────────────────────── */
+/* Blue edge-flash when the shield blocks a hit — mirrors life-lost. */
+@keyframes shieldFlash {
+  0% {
+    box-shadow: inset 0 0 60px 20px rgba(80, 160, 255, 0.7);
+  }
+  100% {
+    box-shadow: inset 0 0 0px 0px rgba(80, 160, 255, 0);
+  }
+}
+
+body.shield-absorbed {
+  animation: shieldFlash 0.6s ease-out;
+}
+
+/* Banner that appears over the play area on shield absorb. */
+.shield-absorb-flash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(5, 10, 30, 0.88);
+  border: 2px solid rgba(80, 160, 255, 0.8);
+  border-radius: 0.5rem;
+  color: rgba(140, 200, 255, 0.95);
+  font-family: var(--font-display, inherit);
+  font-size: 1.1rem;
+  letter-spacing: 0.06em;
+  padding: 0.6rem 1.4rem;
+  pointer-events: none;
+  text-align: center;
+  text-shadow: 0 0 12px rgba(80, 160, 255, 0.9);
+  white-space: nowrap;
+  z-index: 50;
+  animation: revengeFlash 0.9s ease-out forwards;
+}
+
+/* ── Mystery Box spin (upgrade card state) ────────────────────── */
+.upgrade-card--mystery-spinning {
+  animation: mysterySpinPulse 0.2s ease-in-out infinite alternate;
+  border-color: rgba(255, 210, 80, 0.6);
+  box-shadow: 0 0 24px rgba(255, 210, 80, 0.4);
+  pointer-events: none;
+}
+
+.upgrade-card--mystery-spinning .upgrade-card__icon {
+  animation: mysteryIconSpin 0.15s linear infinite;
+}
+
+@keyframes mysterySpinPulse {
+  from {
+    box-shadow: 0 0 18px rgba(255, 210, 80, 0.35);
+  }
+  to {
+    box-shadow: 0 0 36px rgba(255, 210, 80, 0.7);
+  }
+}
+
+@keyframes mysteryIconSpin {
+  from {
+    transform: rotateY(0deg) scale(1);
+  }
+  to {
+    transform: rotateY(180deg) scale(1.2);
+  }
 }
 
 @keyframes dreadPulse {
@@ -1479,5 +1829,216 @@ input[type='range'] {
   .upgrade-card--unpicked {
     animation: none !important;
     transition: opacity 200ms ease;
+  }
+}
+
+/* ── Upgrade Screen (Issue #27 / #28) ─────────────────────────── */
+
+.upgrade-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+/* Three-card row, centred, wraps on narrow screens. */
+.upgrade-cards {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ── Individual upgrade card ────────────────────────────────── */
+.upgrade-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  width: 14rem;
+  padding: 1.5rem 1.25rem 1rem;
+  background: var(--color-bg-card, #13131f);
+  border: 2px solid rgba(130, 200, 255, 0.25);
+  border-radius: 0.75rem;
+  color: var(--color-text, #e8e8f0);
+  cursor: pointer;
+  font-family: var(--font-ui, inherit);
+  text-align: center;
+  /* Entrance: each card fades and rises in from below */
+  animation: cardEntrance 0.35s ease-out both;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+.upgrade-card:hover {
+  border-color: rgba(130, 200, 255, 0.7);
+  box-shadow:
+    0 0 18px rgba(130, 200, 255, 0.35),
+    inset 0 0 8px rgba(130, 200, 255, 0.08);
+  transform: translateY(-4px) scale(1.02);
+}
+
+.upgrade-card:focus-visible {
+  outline: 2px solid rgba(130, 200, 255, 0.8);
+  outline-offset: 3px;
+}
+
+/* ── Card inner elements ─────────────────────────────────────── */
+.upgrade-card__icon {
+  font-size: 2.5rem;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.upgrade-card:hover .upgrade-card__icon {
+  transform: scale(1.15);
+}
+
+.upgrade-card__name {
+  font-family: var(--font-display, inherit);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: rgba(200, 230, 255, 0.95);
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 8px rgba(130, 200, 255, 0.5);
+}
+
+.upgrade-card__desc {
+  font-size: 0.8rem;
+  color: rgba(200, 220, 255, 0.7);
+  line-height: 1.4;
+}
+
+.upgrade-card__cue {
+  margin-top: auto;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(130, 200, 255, 0.45);
+}
+
+/* ── Pick states ─────────────────────────────────────────────── */
+
+/* The card the player chose: scales up with a strong glow. */
+.upgrade-card--picked {
+  animation: cardPicked 0.4s ease-out forwards;
+  pointer-events: none;
+}
+
+/* Cards the player didn't choose: fade and shrink. */
+.upgrade-card--unpicked {
+  opacity: 0.25;
+  transform: scale(0.92);
+  filter: grayscale(60%);
+  pointer-events: none;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease,
+    filter 0.3s ease;
+}
+
+/* ── Mystery Box spin state ───────────────────────────────────── */
+.upgrade-card--mystery-spinning {
+  animation: mysterySpinPulse 0.2s ease-in-out infinite alternate;
+  border-color: rgba(255, 210, 80, 0.6);
+  box-shadow: 0 0 24px rgba(255, 210, 80, 0.4);
+  pointer-events: none;
+}
+
+.upgrade-card--mystery-spinning .upgrade-card__icon {
+  animation: mysteryIconSpin 0.15s linear infinite;
+}
+
+/* ── Keyframes ───────────────────────────────────────────────── */
+
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cardPicked {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 8px rgba(130, 200, 255, 0.3);
+  }
+  50% {
+    transform: scale(1.07);
+    box-shadow: 0 0 40px rgba(130, 200, 255, 0.8);
+    border-color: rgba(130, 200, 255, 0.9);
+  }
+  100% {
+    transform: scale(1.04);
+    box-shadow: 0 0 24px rgba(130, 200, 255, 0.5);
+  }
+}
+
+@keyframes mysterySpinPulse {
+  from {
+    box-shadow: 0 0 18px rgba(255, 210, 80, 0.35);
+  }
+  to {
+    box-shadow: 0 0 36px rgba(255, 210, 80, 0.7);
+  }
+}
+
+@keyframes mysteryIconSpin {
+  from {
+    transform: rotateY(0deg) scale(1);
+  }
+  to {
+    transform: rotateY(180deg) scale(1.2);
+  }
+}
+
+/* ── Back from the Dead revenge flash ────────────────────────── */
+/* Absolutely-positioned banner that fades in/out over the play area. */
+.revenge-flash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(10, 5, 20, 0.85);
+  border: 2px solid rgba(180, 80, 255, 0.7);
+  border-radius: 0.5rem;
+  color: rgba(220, 160, 255, 0.95);
+  font-family: var(--font-display, inherit);
+  font-size: 1.1rem;
+  letter-spacing: 0.06em;
+  padding: 0.6rem 1.4rem;
+  pointer-events: none;
+  text-align: center;
+  text-shadow: 0 0 12px rgba(180, 80, 255, 0.8);
+  white-space: nowrap;
+  z-index: 50;
+  animation: revengeFlash 1s ease-out forwards;
+}
+
+@keyframes revengeFlash {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
   }
 }

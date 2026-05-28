@@ -2,97 +2,112 @@
  * ui/upgradeScreen.js — Upgrade Selection screen rendering and pick flow.
  *
  * Owns: building the 3 upgrade cards inside #upgrade-cards, running the
- * pick animation when the player clicks one, and resolving once the
- * upgrade has been applied so main.js can route to the next wave.
+ * pick animation when the player clicks one, showing the ACTIVATED bolt
+ * overlay with the upgrade name, and resolving once the animation finishes
+ * so main.js can route to the next wave.
  *
  * This module follows ADR-003: ui/ may import from engine/, but engine/
  * never imports ui/. main.js is the only thing that calls show().
  *
- * Implemented by Issue #13.
+ * Implemented by Issue #13 / #27.
  */
 
 import { showScreen } from './screenManager.js';
-// NOTE on the alias: the issue (#13) specifies the engine API as
-// `getUpgradeChoices(state)`, but the current Issue #12 stub still
-// exports `drawUpgrades`. We alias here so the file loads cleanly
-// today and keeps reading naturally below. Once #12 lands and renames
-// `drawUpgrades` → `getUpgradeChoices` in the engine, drop the alias.
 import { drawUpgrades as getUpgradeChoices, applyUpgrade } from '../engine/upgradeSystem.js';
+import { UPGRADES } from '../data/upgrades.js';
 
-// How long the "you picked this one" animation plays before we route
-// the player to the next wave. The card scales up and glows for this
-// long. 400ms feels weighty without slowing the run down.
+// How long the picked card glows before the ACTIVATED overlay appears.
 const PICK_CONFIRM_MS = 400;
+
+// How long the mystery-box spin plays before revealing the chosen upgrade.
+const MYSTERY_SPIN_MS = 1200;
+
+// How long the ACTIVATED bolt overlay is visible before fading out.
+const ACTIVATED_VISIBLE_MS = 1000;
+
+// Total overlay duration including the fade-out (defined in CSS).
+const ACTIVATED_TOTAL_MS = 1600;
 
 /**
  * Shows the upgrade selection screen and resolves once the player has
- * picked an upgrade and the pick-confirmation animation has finished.
+ * picked an upgrade and the ACTIVATED animation has finished.
  *
  * Typical flow inside main.js:
  *   showUpgradeScreen(runState).then(() => goToNextWave());
  *
- * @param {object} state - The shared RunState. Passed to upgradeSystem so
- *   it can both pick from upgrades the player doesn't already own AND
- *   mutate the state when applyUpgrade() runs.
+ * @param {object} state - The shared RunState.
  * @returns {Promise<object>} Resolves with the chosen upgrade definition.
  */
 export function show(state) {
-  // Step 1: make this screen the visible one. screenManager handles
-  // hiding the other screens for us.
   showScreen('upgrade-screen');
 
-  // Step 2: ask the engine for exactly 3 random, non-duplicate choices.
-  // upgradeSystem owns the "what's already owned" logic so we don't
-  // have to filter here — it just hands us a ready-to-render list.
   const choices = getUpgradeChoices(state);
-
-  // Step 3: render those 3 choices as cards inside #upgrade-cards.
-  // We rebuild the cards from scratch every time the screen opens so
-  // stale listeners from a previous boss can never fire.
   const cardsContainer = document.getElementById('upgrade-cards');
   cardsContainer.innerHTML = '';
 
-  // Wrap the whole thing in a Promise so main.js can `await` the pick.
   return new Promise((resolve) => {
-    // Tracks whether someone has already clicked a card. We use this to
-    // ignore double-clicks and to ignore clicks on the "losing" cards
-    // once a pick is locked in.
     let picked = false;
 
     choices.forEach((upgrade, index) => {
-      const card = buildCard(upgrade, index);
+      const { card, iconEl, nameEl, descEl } = buildCard(upgrade, index);
 
-      // Clicking a card is the only way to leave this screen. There is
-      // no "skip" button — picking IS the contract.
       card.addEventListener('click', () => {
         if (picked) {
-          return; // Already picked — ignore further clicks.
+          return;
         }
         picked = true;
 
-        // Visually fade out the cards the player didn't choose so the
-        // chosen one feels emphasized. Done by toggling a CSS class.
+        // Fade out unchosen cards.
         cardsContainer.querySelectorAll('.upgrade-card').forEach((other) => {
           if (other !== card) {
             other.classList.add('upgrade-card--unpicked');
           }
         });
 
-        // Highlight + scale the chosen card. The CSS animation runs
-        // for PICK_CONFIRM_MS — see styles.css `upgradeCardPicked`.
-        card.classList.add('upgrade-card--picked');
+        if (upgrade.id === 'mystery-box') {
+          // ── Mystery Box flow ─────────────────────────────────────
+          // Apply first so state.mysteryBoxReveal is populated.
+          applyUpgrade(upgrade.id, state);
+          card.classList.add('upgrade-card--mystery-spinning');
 
-        // Step 4: apply the upgrade to RunState. After this call the
-        // HUD upgrades panel (Issue #18) will see the new entry on
-        // its next render. Argument order matches the issue #13 spec
-        // — `(upgradeId, state)`. The current Issue #12 stub uses the
-        // opposite order, but the stub is a no-op, so this call is
-        // harmless until #12 lands and adopts the issue's signature.
-        applyUpgrade(upgrade.id, state);
+          // Cycle through upgrade icons rapidly to build suspense.
+          const spinIcons = UPGRADES.filter((u) => u.id !== 'mystery-box').map((u) => u.icon);
+          let spinFrame = 0;
+          const spinInterval = window.setInterval(() => {
+            iconEl.textContent = spinIcons[spinFrame % spinIcons.length];
+            spinFrame += 1;
+          }, 100);
 
-        // Step 5: wait for the confirmation animation to finish, then
-        // resolve so main.js can move to the next wave intro card.
-        setTimeout(() => resolve(upgrade), PICK_CONFIRM_MS);
+          window.setTimeout(() => {
+            window.clearInterval(spinInterval);
+
+            // Update the card to show what was actually granted.
+            const revealed = UPGRADES.find((u) => u.id === state.mysteryBoxReveal);
+            if (revealed) {
+              iconEl.textContent = revealed.icon;
+              nameEl.textContent = revealed.name;
+              descEl.textContent = revealed.description;
+            }
+
+            card.classList.remove('upgrade-card--mystery-spinning');
+            card.classList.add('upgrade-card--picked');
+
+            // Show ACTIVATED overlay using the revealed upgrade's details.
+            const activatedName = revealed ? revealed.name : 'Mystery Power';
+            const activatedIcon = revealed ? revealed.icon : '📦';
+            window.setTimeout(() => {
+              showActivatedOverlay(activatedIcon, activatedName).then(() => resolve(upgrade));
+            }, PICK_CONFIRM_MS);
+          }, MYSTERY_SPIN_MS);
+        } else {
+          // ── Standard pick flow ────────────────────────────────────
+          applyUpgrade(upgrade.id, state);
+          card.classList.add('upgrade-card--picked');
+
+          window.setTimeout(() => {
+            showActivatedOverlay(upgrade.icon, upgrade.name).then(() => resolve(upgrade));
+          }, PICK_CONFIRM_MS);
+        }
       });
 
       cardsContainer.appendChild(card);
@@ -101,37 +116,77 @@ export function show(state) {
 }
 
 /**
- * Builds one upgrade card element.
+ * Shows a full-screen bolt overlay: "⚡ [icon] [NAME] ACTIVATED!"
+ * Returns a Promise that resolves after the overlay has faded out.
  *
- * Each card is a <button> so keyboard users get focus + Enter/Space
- * activation for free, and screen readers announce it as clickable.
+ * @param {string} icon - Upgrade emoji icon.
+ * @param {string} name - Upgrade display name.
+ * @returns {Promise<void>}
+ */
+function showActivatedOverlay(icon, name) {
+  const overlay = document.createElement('div');
+  overlay.className = 'upgrade-activated-overlay';
+  overlay.setAttribute('aria-live', 'assertive');
+
+  const boltTop = document.createElement('div');
+  boltTop.className = 'upgrade-activated__bolt';
+  boltTop.textContent = '⚡';
+
+  const iconEl = document.createElement('div');
+  iconEl.className = 'upgrade-activated__icon';
+  iconEl.textContent = icon;
+
+  const nameEl = document.createElement('div');
+  nameEl.className = 'upgrade-activated__name';
+  nameEl.textContent = name;
+
+  const labelEl = document.createElement('div');
+  labelEl.className = 'upgrade-activated__label';
+  labelEl.textContent = 'ACTIVATED!';
+
+  const boltBottom = document.createElement('div');
+  boltBottom.className = 'upgrade-activated__bolt';
+  boltBottom.textContent = '⚡';
+
+  overlay.appendChild(boltTop);
+  overlay.appendChild(iconEl);
+  overlay.appendChild(nameEl);
+  overlay.appendChild(labelEl);
+  overlay.appendChild(boltBottom);
+  document.body.appendChild(overlay);
+
+  return new Promise((resolve) => {
+    // After the visible window, trigger the fade-out class then resolve.
+    window.setTimeout(() => {
+      overlay.classList.add('upgrade-activated-overlay--fading');
+      window.setTimeout(() => {
+        overlay.remove();
+        resolve();
+      }, ACTIVATED_TOTAL_MS - ACTIVATED_VISIBLE_MS);
+    }, ACTIVATED_VISIBLE_MS);
+  });
+}
+
+/**
+ * Builds one upgrade card `<button>` element.
+ * Returns the card and its inner content elements so mystery-box can
+ * mutate them mid-animation during the spin reveal.
  *
  * @param {object} upgrade - { id, name, icon, description }
- * @param {number} index - 0..2, used to stagger the entrance animation.
- * @returns {HTMLButtonElement}
+ * @param {number} index   - 0..2, used to stagger the entrance animation.
+ * @returns {{ card: HTMLButtonElement, iconEl: HTMLElement, nameEl: HTMLElement, descEl: HTMLElement }}
  */
 function buildCard(upgrade, index) {
   const card = document.createElement('button');
   card.type = 'button';
   card.className = 'upgrade-card';
   card.dataset.upgradeId = upgrade.id;
-
-  // Stagger the entrance: card 0 appears immediately, card 1 ~80ms
-  // later, card 2 ~160ms later. Subtle but adds a sense of ceremony.
   card.style.animationDelay = `${index * 80}ms`;
-
-  // Accessible label so screen readers announce the full upgrade
-  // ("Phantom Speed. Enemies fall 20% slower for the rest of the run.")
-  // instead of just the visible icon emoji.
   card.setAttribute('aria-label', `${upgrade.name}. ${upgrade.description}`);
 
-  // Inner structure. We use textContent (never innerHTML) for the
-  // upgrade fields because upgrade definitions live in src/data and
-  // are static, but textContent keeps us safe if a future contributor
-  // adds a snippet that contains characters HTML would interpret.
   const iconEl = document.createElement('div');
   iconEl.className = 'upgrade-card__icon';
-  iconEl.setAttribute('aria-hidden', 'true'); // icon is decorative
+  iconEl.setAttribute('aria-hidden', 'true');
   iconEl.textContent = upgrade.icon;
 
   const nameEl = document.createElement('div');
@@ -142,17 +197,14 @@ function buildCard(upgrade, index) {
   descEl.className = 'upgrade-card__desc';
   descEl.textContent = upgrade.description;
 
-  // A subtle "Choose" hint at the bottom of every card to make the
-  // affordance obvious — three styled boxes don't always read as
-  // clickable on first sight.
   const cueEl = document.createElement('div');
   cueEl.className = 'upgrade-card__cue';
-  cueEl.textContent = 'Choose';
+  cueEl.textContent = upgrade.id === 'mystery-box' ? 'Spin' : 'Choose';
 
   card.appendChild(iconEl);
   card.appendChild(nameEl);
   card.appendChild(descEl);
   card.appendChild(cueEl);
 
-  return card;
+  return { card, iconEl, nameEl, descEl };
 }

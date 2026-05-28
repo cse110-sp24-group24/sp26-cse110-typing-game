@@ -1,10 +1,12 @@
 import { getPreferences, savePreferences } from '../utils/storage.js';
 
 const AUDIO_PATH = 'assets/audio/';
+const MENU_MUSIC_SRC = 'media/audio/spookymusic.mp3';
 const DEFEAT_POOL_SIZE = 4;
 
 let ambientAudio = null;
 let bossAmbientAudio = null;
+let menuAudio = null;
 let currentAmbient = null;
 
 let sfxElements = {};
@@ -28,6 +30,12 @@ export function init() {
   ambientAudio = createAudio('ambient-wave.mp3', true, musicVolume);
   bossAmbientAudio = createAudio('ambient-boss.mp3', true, musicVolume);
 
+  // Menu music uses a different path from the in-game assets folder.
+  menuAudio = new Audio(MENU_MUSIC_SRC);
+  menuAudio.loop = true;
+  menuAudio.preload = 'auto';
+  menuAudio.volume = isMuted ? 0 : musicVolume;
+
   sfxElements = {
     error: createAudio('sfx-error.mp3', false, sfxVolume),
     'boss-sting': createAudio('sfx-boss-sting.mp3', false, sfxVolume),
@@ -37,6 +45,36 @@ export function init() {
   defeatPool = Array.from({ length: DEFEAT_POOL_SIZE }, () =>
     createAudio('sfx-defeat.mp3', false, sfxVolume)
   );
+}
+
+/**
+ * Plays the main-menu spooky background music (spookymusic.mp3).
+ * Separate from the in-game ambient track so the menu has its own atmosphere.
+ * If autoplay is blocked, retries on the first user interaction.
+ */
+export function playMenuMusic() {
+  if (!menuAudio || isMuted) {
+    return;
+  }
+  menuAudio.volume = musicVolume;
+  menuAudio.play().catch(() => {
+    const resume = () => {
+      ['pointerdown', 'keydown', 'touchstart'].forEach((ev) =>
+        document.removeEventListener(ev, resume)
+      );
+      menuAudio.play().catch(() => {});
+    };
+    ['pointerdown', 'keydown', 'touchstart'].forEach((ev) =>
+      document.addEventListener(ev, resume, { once: true })
+    );
+  });
+}
+
+/**
+ * Stops and resets the menu music. Call this when gameplay begins.
+ */
+export function stopMenuMusic() {
+  stopAudio(menuAudio);
 }
 
 /**
@@ -106,6 +144,10 @@ export function playSFX(name) {
  */
 export function setMusicVolume(volume) {
   musicVolume = clampVolume(volume);
+
+  if (menuAudio) {
+    menuAudio.volume = isMuted ? 0 : musicVolume;
+  }
 
   if (ambientAudio) {
     ambientAudio.volume = isMuted ? 0 : musicVolume;
@@ -222,6 +264,10 @@ function stopAudio(audio) {
  * Applies mute state to all audio elements.
  */
 function applyMuteState() {
+  if (menuAudio) {
+    menuAudio.volume = isMuted ? 0 : musicVolume;
+  }
+
   if (ambientAudio) {
     ambientAudio.volume = isMuted ? 0 : musicVolume;
   }
