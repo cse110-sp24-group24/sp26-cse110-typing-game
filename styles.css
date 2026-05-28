@@ -75,7 +75,6 @@ button {
   overflow: hidden;
 }
 
-
 .blood-haze,
 .graveyard-silhouette,
 .fog,
@@ -132,7 +131,6 @@ button {
   display: flex;
   opacity: 1;
 }
-
 
 #menu-screen,
 #language-screen,
@@ -255,38 +253,100 @@ button {
 }
 
 @keyframes titleFloat {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes titleFlicker {
-  0%, 18%, 22%, 26%, 55%, 59%, 100% {
+  0%,
+  18%,
+  22%,
+  26%,
+  55%,
+  59%,
+  100% {
     opacity: 1;
     text-shadow:
       0 0 8px var(--color-ghost),
       0 0 24px var(--color-ghost-dim),
       0 0 60px var(--color-ghost-glow);
   }
-  20%, 24% { opacity: 0.25; text-shadow: none; }
-  57%      { opacity: 0.5;  text-shadow: 0 0 4px var(--color-ghost-dim); }
+  20%,
+  24% {
+    opacity: 0.25;
+    text-shadow: none;
+  }
+  57% {
+    opacity: 0.5;
+    text-shadow: 0 0 4px var(--color-ghost-dim);
+  }
 }
 
 @keyframes glitchCyan {
-  0%, 84%, 100% { opacity: 0; transform: translateX(0); clip-path: none; }
-  85% { opacity: 0.85; transform: translateX(-4px); clip-path: inset(15% 0 62% 0); }
-  86% { opacity: 0.85; transform: translateX(3px);  clip-path: inset(58% 0 8%  0); }
-  87% { opacity: 0; }
-  91% { opacity: 0.6;  transform: translateX(-2px); clip-path: inset(38% 0 42% 0); }
-  92% { opacity: 0; }
+  0%,
+  84%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+    clip-path: none;
+  }
+  85% {
+    opacity: 0.85;
+    transform: translateX(-4px);
+    clip-path: inset(15% 0 62% 0);
+  }
+  86% {
+    opacity: 0.85;
+    transform: translateX(3px);
+    clip-path: inset(58% 0 8% 0);
+  }
+  87% {
+    opacity: 0;
+  }
+  91% {
+    opacity: 0.6;
+    transform: translateX(-2px);
+    clip-path: inset(38% 0 42% 0);
+  }
+  92% {
+    opacity: 0;
+  }
 }
 
 @keyframes glitchMagenta {
-  0%, 87%, 100% { opacity: 0; transform: translateX(0); clip-path: none; }
-  88% { opacity: 0.75; transform: translateX(4px);  clip-path: inset(5%  0 78% 0); }
-  89% { opacity: 0.75; transform: translateX(-3px); clip-path: inset(72% 0 2%  0); }
-  90% { opacity: 0; }
-  93% { opacity: 0.5;  transform: translateX(2px);  clip-path: inset(44% 0 28% 0); }
-  94% { opacity: 0; }
+  0%,
+  87%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+    clip-path: none;
+  }
+  88% {
+    opacity: 0.75;
+    transform: translateX(4px);
+    clip-path: inset(5% 0 78% 0);
+  }
+  89% {
+    opacity: 0.75;
+    transform: translateX(-3px);
+    clip-path: inset(72% 0 2% 0);
+  }
+  90% {
+    opacity: 0;
+  }
+  93% {
+    opacity: 0.5;
+    transform: translateX(2px);
+    clip-path: inset(44% 0 28% 0);
+  }
+  94% {
+    opacity: 0;
+  }
 }
 
 .screen-title,
@@ -868,8 +928,7 @@ input[type='range'] {
   gap: 0.4rem;
   pointer-events: none;
   animation: angelFall 28s linear forwards;
-  filter:
-    drop-shadow(0 0 10px rgba(255, 240, 160, 0.9))
+  filter: drop-shadow(0 0 10px rgba(255, 240, 160, 0.9))
     drop-shadow(0 0 30px rgba(255, 220, 80, 0.5));
 }
 
@@ -901,19 +960,39 @@ input[type='range'] {
 }
 
 @keyframes angelFall {
-  from { transform: translateY(0); }
-  to   { transform: translateY(110vh); }
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(110vh);
+  }
 }
 
 @keyframes angelFloat {
-  from { transform: translateY(0)   rotate(-3deg); }
-  to   { transform: translateY(-8px) rotate(3deg); }
+  from {
+    transform: translateY(0) rotate(-3deg);
+  }
+  to {
+    transform: translateY(-8px) rotate(3deg);
+  }
 }
 
 @keyframes angelActivate {
-  0%   { opacity: 1; transform: scale(1)   rotate(0deg); filter: drop-shadow(0 0 10px gold); }
-  40%  { opacity: 1; transform: scale(1.6) rotate(5deg);  filter: drop-shadow(0 0 60px gold) brightness(2); }
-  100% { opacity: 0; transform: scale(2)   rotate(-5deg); filter: drop-shadow(0 0 20px gold); }
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 10px gold);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.6) rotate(5deg);
+    filter: drop-shadow(0 0 60px gold) brightness(2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2) rotate(-5deg);
+    filter: drop-shadow(0 0 20px gold);
+  }
 }
 
 /* ── Upgrade ACTIVATED bolt overlay (Issue #27) ───────────────── */
@@ -975,24 +1054,50 @@ input[type='range'] {
 }
 
 @keyframes activatedFadeIn {
-  from { opacity: 0; transform: scale(1.04); }
-  to   { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes activatedFadeOut {
-  from { opacity: 1; transform: scale(1); }
-  to   { opacity: 0; transform: scale(0.97); }
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
 }
 
 @keyframes boltFlicker {
-  0%, 60%  { opacity: 1; }
-  61%, 80% { opacity: 0; }
-  81%      { opacity: 1; }
+  0%,
+  60% {
+    opacity: 1;
+  }
+  61%,
+  80% {
+    opacity: 0;
+  }
+  81% {
+    opacity: 1;
+  }
 }
 
 @keyframes iconPulse {
-  from { transform: scale(1);    filter: drop-shadow(0 0 10px rgba(130, 200, 255, 0.6)); }
-  to   { transform: scale(1.08); filter: drop-shadow(0 0 28px rgba(130, 200, 255, 1)); }
+  from {
+    transform: scale(1);
+    filter: drop-shadow(0 0 10px rgba(130, 200, 255, 0.6));
+  }
+  to {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 28px rgba(130, 200, 255, 1));
+  }
 }
 
 /* ── Shield HUD indicator ─────────────────────────────────────── */
@@ -1008,8 +1113,12 @@ input[type='range'] {
 /* ── Shield absorb flash ──────────────────────────────────────── */
 /* Blue edge-flash when the shield blocks a hit — mirrors life-lost. */
 @keyframes shieldFlash {
-  0%   { box-shadow: inset 0 0 60px 20px rgba(80, 160, 255, 0.7); }
-  100% { box-shadow: inset 0 0 0px 0px rgba(80, 160, 255, 0); }
+  0% {
+    box-shadow: inset 0 0 60px 20px rgba(80, 160, 255, 0.7);
+  }
+  100% {
+    box-shadow: inset 0 0 0px 0px rgba(80, 160, 255, 0);
+  }
 }
 
 body.shield-absorbed {
@@ -1051,13 +1160,21 @@ body.shield-absorbed {
 }
 
 @keyframes mysterySpinPulse {
-  from { box-shadow: 0 0 18px rgba(255, 210, 80, 0.35); }
-  to   { box-shadow: 0 0 36px rgba(255, 210, 80, 0.7); }
+  from {
+    box-shadow: 0 0 18px rgba(255, 210, 80, 0.35);
+  }
+  to {
+    box-shadow: 0 0 36px rgba(255, 210, 80, 0.7);
+  }
 }
 
 @keyframes mysteryIconSpin {
-  from { transform: rotateY(0deg)   scale(1); }
-  to   { transform: rotateY(180deg) scale(1.2); }
+  from {
+    transform: rotateY(0deg) scale(1);
+  }
+  to {
+    transform: rotateY(180deg) scale(1.2);
+  }
 }
 
 @keyframes dreadPulse {

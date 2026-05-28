@@ -250,7 +250,9 @@ function playLifeLossEffect() {
  * @returns {void}
  */
 function showRevengeFlash() {
-  if (!playAreaEl) {return;}
+  if (!playAreaEl) {
+    return;
+  }
   const banner = document.createElement('div');
   banner.className = 'revenge-flash';
   banner.textContent = '💀 BACK FROM THE DEAD — +2 ELIMINATED';
@@ -357,7 +359,9 @@ function spawnVibeVanishAngel() {
     let settled = false;
 
     function finish(activated) {
-      if (settled) { return; }
+      if (settled) {
+        return;
+      }
       settled = true;
       _vibeVanishActivate = null;
       vibeVanishAngelEl = null;
@@ -545,7 +549,9 @@ initGhostCanvas();
  */
 function archifyTitle() {
   const el = document.querySelector('#menu-screen .game-title');
-  if (!el) { return; }
+  if (!el) {
+    return;
+  }
 
   const text = el.textContent.trim();
   const chars = [...text];
@@ -556,8 +562,8 @@ function archifyTitle() {
   el.innerHTML = '';
   el.removeAttribute('data-text');
 
-  const TOTAL_ARC_DEG = 32;   // full spread of rotation across all chars
-  const MAX_LIFT_PX   = 22;   // how many px the centre chars lift above the edges
+  const TOTAL_ARC_DEG = 32; // full spread of rotation across all chars
+  const MAX_LIFT_PX = 22; // how many px the centre chars lift above the edges
 
   chars.forEach((char, i) => {
     const span = document.createElement('span');
@@ -566,8 +572,8 @@ function archifyTitle() {
 
     // t goes from -1 (left edge) to +1 (right edge)
     const t = n > 1 ? (i / (n - 1)) * 2 - 1 : 0;
-    const angle   = t * (TOTAL_ARC_DEG / 2);           // rotate outward
-    const liftPx  = (1 - t * t) * MAX_LIFT_PX;         // highest at centre
+    const angle = t * (TOTAL_ARC_DEG / 2); // rotate outward
+    const liftPx = (1 - t * t) * MAX_LIFT_PX; // highest at centre
 
     span.style.transform = `rotate(${angle}deg) translateY(${-liftPx}px)`;
     el.appendChild(span);
@@ -866,7 +872,6 @@ function onWaveStart(snippet) {
     runState.lives += 1;
     updateLivesDisplay();
   }
-
 }
 
 /**
@@ -908,25 +913,26 @@ function playGhostVanishEntry() {
     return Promise.resolve();
   }
 
-  const SPAWN_STAGGER_MS       = 180;  // delay between each ghost appearing
+  const SPAWN_STAGGER_MS = 180; // delay between each ghost appearing
   const FALL_BEFORE_DISSOLVE_MS = 380; // how long each ghost falls before fading
-  const DISSOLVE_MS            = 500;  // must match enemySystem's DISSOLVE_DURATION_MS
+  const DISSOLVE_MS = 500; // must match enemySystem's DISSOLVE_DURATION_MS
 
-  const promises = snippet.lines.map((line, i) =>
-    new Promise((resolve) => {
-      window.setTimeout(() => {
-        const enemyEl = enemySystem.spawnEnemy(line, i);
-        if (!enemyEl) {
-          resolve();
-          return;
-        }
-        // Let the ghost drift down briefly, then dissolve in place.
+  const promises = snippet.lines.map(
+    (line, i) =>
+      new Promise((resolve) => {
         window.setTimeout(() => {
-          enemySystem.defeatEnemy(enemyEl);
-          window.setTimeout(resolve, DISSOLVE_MS);
-        }, FALL_BEFORE_DISSOLVE_MS);
-      }, i * SPAWN_STAGGER_MS);
-    })
+          const enemyEl = enemySystem.spawnEnemy(line, i);
+          if (!enemyEl) {
+            resolve();
+            return;
+          }
+          // Let the ghost drift down briefly, then dissolve in place.
+          window.setTimeout(() => {
+            enemySystem.defeatEnemy(enemyEl);
+            window.setTimeout(resolve, DISSOLVE_MS);
+          }, FALL_BEFORE_DISSOLVE_MS);
+        }, i * SPAWN_STAGGER_MS);
+      })
   );
 
   return Promise.all(promises).then(() => {});

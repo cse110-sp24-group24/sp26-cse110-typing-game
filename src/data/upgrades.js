@@ -93,7 +93,7 @@ export const UPGRADES = [
       // Filter to upgrades the player hasn't collected yet, excluding
       // mystery-box itself so it can't chain into another mystery-box.
       const eligible = UPGRADES.filter(
-        (u) => u.id !== 'mystery-box' && !state.upgrades.includes(u.id),
+        (u) => u.id !== 'mystery-box' && !state.upgrades.includes(u.id)
       );
 
       if (eligible.length === 0) {
