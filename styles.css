@@ -240,6 +240,11 @@ button {
   width: min(92vw, 620px);
 }
 
+/* Issue #50 — Pause title spacing. */
+.pause-content h2 {
+  margin-bottom: 1.35rem;
+}
+
 .game-title,
 .screen-title,
 .stats-title {

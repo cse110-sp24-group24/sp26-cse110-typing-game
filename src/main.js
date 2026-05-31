@@ -5,11 +5,17 @@
  * wires them together. It owns screen transitions and top-level
  * event listeners (play button, language buttons, Escape key).
  *
- * Implemented across Issues #4, #7, #8, #11, #13, #19, #20, #21.
+ * Implemented across Issues #4, #7, #8, #11, #13, #19, #20, #21, #50.
  */
 
 import { getPreferences, savePreferences } from './utils/storage.js';
-import { init as initAudio, playAmbient, playSfx } from './audio/audioManager.js';
+import {
+  init as initAudio,
+  pause as pauseAudio,
+  playAmbient,
+  playSfx,
+  resume as resumeAudio,
+} from './audio/audioManager.js';
 import { showScreen } from './ui/screenManager.js';
 import { createRunState } from './state.js';
 import * as enemySystem from './engine/enemySystem.js';
@@ -63,6 +69,13 @@ const playAreaEl = document.getElementById('play-area');
 const deadlineEl = document.getElementById('deadline-line');
 const typingInputEl = document.getElementById('typing-input');
 
+// Issue #50 — Pause overlay controls and state.
+const pauseOverlayEl = document.getElementById('pause-overlay');
+const resumeBtnEl = document.getElementById('resume-btn');
+const quitBtnEl = document.getElementById('quit-btn');
+
+let isPaused = false;
+
 /**
  * Begins a new run: creates the shared RunState, wires the enemy system,
  * typing engine, and wave manager to our callbacks, and paints the initial HUD.
@@ -72,6 +85,13 @@ const typingInputEl = document.getElementById('typing-input');
  */
 function startRun(language) {
   runState = createRunState(language);
+
+  // Issue #50 — New runs must never inherit a previous paused UI state.
+  isPaused = false;
+
+  if (pauseOverlayEl) {
+    pauseOverlayEl.classList.add('hidden');
+  }
 
   enemySystem.init(playAreaEl, deadlineEl, runState, onDeadlineBreach);
 
@@ -164,8 +184,90 @@ function playLifeLossEffect() {
  * @returns {void}
  */
 function endRun() {
+  // Issue #50 — Quitting from pause should route cleanly to stats.
+  if (isPaused) {
+    resume();
+  }
+
+  deactivateTyping();
   enemySystem.clearAll();
   showScreen('stats-screen');
+}
+
+// ── Pause System (Issue #50) ───────────────────────────────────
+
+/**
+ * Returns true only while an active run is on the game screen.
+ * @returns {boolean} Whether Escape should control the pause menu.
+ */
+function isGameActive() {
+  return (
+    Boolean(runState) &&
+    runState.lives > 0 &&
+    document.getElementById('game-screen')?.classList.contains('active')
+  );
+}
+
+/**
+ * Opens the pause menu and freezes gameplay systems.
+ * @returns {void}
+ */
+function pause() {
+  if (isPaused || !isGameActive()) {
+    return;
+  }
+
+  isPaused = true;
+  enemySystem.pauseAll();
+  pauseAudio();
+
+  if (typingInputEl) {
+    typingInputEl.disabled = true;
+    typingInputEl.blur();
+  }
+
+  if (pauseOverlayEl) {
+    pauseOverlayEl.classList.remove('hidden');
+  }
+
+  resumeBtnEl?.focus();
+}
+
+/**
+ * Closes the pause menu and resumes gameplay systems.
+ * @returns {void}
+ */
+function resume() {
+  if (!isPaused) {
+    return;
+  }
+
+  isPaused = false;
+
+  if (pauseOverlayEl) {
+    pauseOverlayEl.classList.add('hidden');
+  }
+
+  enemySystem.resumeAll();
+  resumeAudio();
+
+  if (typingInputEl && isGameActive()) {
+    typingInputEl.disabled = false;
+    typingInputEl.focus();
+  }
+}
+
+/**
+ * Toggles pause state for the active game screen.
+ * @returns {void}
+ */
+function togglePause() {
+  if (isPaused) {
+    resume();
+    return;
+  }
+
+  pause();
 }
 
 // ── Ghost canvas — chroma-key compositing ──────────────────────
@@ -317,6 +419,21 @@ document.getElementById('play-btn').addEventListener('click', () => {
   playAmbient();
   showScreen('language-screen');
 });
+
+// Issue #50 — Escape only toggles pause during active gameplay.
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape' || (!isGameActive() && !isPaused)) {
+    return;
+  }
+
+  event.preventDefault();
+  togglePause();
+});
+
+// Issue #50 — Pause overlay button actions.
+resumeBtnEl?.addEventListener('click', resume);
+
+quitBtnEl?.addEventListener('click', endRun);
 
 const LAUGH_SRCS = [
   'media/audio/EvilLaughs/EvilLaugh1.mp3',

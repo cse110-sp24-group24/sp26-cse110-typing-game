@@ -5,6 +5,7 @@
  * per-channel volume, and mute-all. API shaped for post-MVP Howler.js swap.
  *
  * Ambient music: implemented (Issue #8).
+ * Pause/resume hooks: Issue #50.
  * Full SFX pool: Issue #15.
  */
 
@@ -62,6 +63,28 @@ export function playAmbient() {
       document.addEventListener(eventName, resumeOnGesture, { once: true });
     });
   });
+}
+
+/**
+ * Issue #50.
+ *
+ * Pauses the ambient music without resetting its playback position.
+ */
+export function pause() {
+  if (!ambientAudio) {
+    return;
+  }
+
+  ambientAudio.pause();
+}
+
+/**
+ * Issue #50.
+ *
+ * Resumes the ambient music from its paused playback position.
+ */
+export function resume() {
+  playAmbient();
 }
 
 /**
