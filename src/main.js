@@ -34,7 +34,7 @@ import {
 } from './ui/codePanel.js';
 import { showScreen } from './ui/screenManager.js';
 import { show as showWaveIntro } from './ui/waveIntroCard.js';
-import { getPreferences, savePreferences } from './utils/storage.js';
+import { getPreferences, saveLanguage } from './utils/storage.js';
 import { show as showUpgradeScreen } from './ui/upgradeScreen.js';
 
 // Imports are added as each Issue is completed. Example structure:
@@ -587,7 +587,26 @@ archifyTitle();
 document.getElementById('play-btn').addEventListener('click', () => {
   playMenuMusic();
   showScreen('language-screen');
+  preselectSavedLanguage();
 });
+
+/**
+ * Highlights the saved language choice for assistive tech and moves focus to
+ * it when that language is available on the current selection screen.
+ * @returns {void}
+ */
+function preselectSavedLanguage() {
+  const savedLanguage = getPreferences().language;
+
+  document.querySelectorAll('.btn-language').forEach((btn) => {
+    const isSavedLanguage = btn.dataset.language === savedLanguage;
+    btn.setAttribute('aria-pressed', String(isSavedLanguage));
+
+    if (isSavedLanguage) {
+      btn.focus();
+    }
+  });
+}
 
 const LAUGH_SRCS = [
   'media/audio/EvilLaughs/EvilLaugh1.mp3',
@@ -1003,7 +1022,7 @@ document.querySelectorAll('.btn-language').forEach((btn) => {
     // Blur immediately so keyboard focus doesn't re-fire this handler
     // when the player presses any key during or after the scare transition.
     btn.blur();
-    savePreferences({ ...prefs, language });
+    saveLanguage(language);
     stopMenuMusic();
     startRun(language);
     // After the scare: prepare snippet, show wave intro, then start combat.

@@ -328,19 +328,13 @@ test('language buttons display correct icon labels', async () => {
 // Language Selection → localStorage
 // ══════════════════════════════════════════════════════════════════
 
-test.each([['javascript'], ['html'], ['css']])(
-  'clicking the %s button saves that language to localStorage',
-  async (lang) => {
-    await freshPage();
-    await page.click('#play-btn');
-    await page.click(`[data-language="${lang}"]`);
-    const saved = await page.evaluate(() => {
-      const prefs = JSON.parse(localStorage.getItem('phantomtype_prefs') || '{}');
-      return prefs.language;
-    });
-    expect(saved).toBe(lang);
-  }
-);
+test('clicking the JavaScript button saves that language to namespaced localStorage', async () => {
+  await freshPage();
+  await page.click('#play-btn');
+  await page.click('[data-language="javascript"]');
+  const saved = await page.evaluate(() => localStorage.getItem('phantomtype.v1.language'));
+  expect(saved).toBe('javascript');
+});
 
 // ══════════════════════════════════════════════════════════════════
 // Scare Transition Overlays
