@@ -1016,21 +1016,23 @@ function launchWave() {
  * @returns {void}
  */
 function onBossDefeated() {
-  showLatestWaveStats().then(() => {
-    // showUpgradeScreen handles its own screen transition, renders the
-    // 3 cards, applies the chosen upgrade to runState, and resolves
-    // after the 400ms pick-confirmation animation finishes.
-    return showUpgradeScreen(runState);
-  }).then(() => {
-    // prepareWave picks the snippet for the upcoming wave before the
-    // intro card needs waveData.snippet (same pattern used elsewhere
-    // in this file).
-    waveManager.prepareWave();
-    beginWaveIntro().then(() => {
-      showScreen('game-screen');
-      launchWave();
+  showLatestWaveStats()
+    .then(() => {
+      // showUpgradeScreen handles its own screen transition, renders the
+      // 3 cards, applies the chosen upgrade to runState, and resolves
+      // after the 400ms pick-confirmation animation finishes.
+      return showUpgradeScreen(runState);
+    })
+    .then(() => {
+      // prepareWave picks the snippet for the upcoming wave before the
+      // intro card needs waveData.snippet (same pattern used elsewhere
+      // in this file).
+      waveManager.prepareWave();
+      beginWaveIntro().then(() => {
+        showScreen('game-screen');
+        launchWave();
+      });
     });
-  });
 }
 
 document.querySelectorAll('.btn-language').forEach((btn) => {

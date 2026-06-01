@@ -16,7 +16,15 @@ let activeKeystrokes = 0;
 let activeErrors = 0;
 let activeNow = null;
 
-/** @param {object} newState - RunState */
+const CHARS_PER_WORD = 5;
+const MS_PER_MINUTE = 60000;
+const DECIMAL_PLACES = 10;
+
+/**
+ * Initializes stat tracking for a new run.
+ * @param {object} newState - RunState object for the active run.
+ * @returns {void}
+ */
 export function init(newState) {
   state = newState;
   const now = Date.now();
@@ -29,7 +37,9 @@ export function init(newState) {
  * @returns {void}
  */
 export function startWave() {
-  if (!state) return;
+  if (!state) {
+    return;
+  }
 
   resetWaveBaseline(Date.now());
 }
@@ -45,10 +55,14 @@ function resetWaveBaseline(now) {
 }
 
 /**
- * @param {boolean} isCorrect
+ * Records whether one typed keystroke was correct.
+ * @param {boolean} isCorrect - Whether the typed keystroke matched the expected character.
+ * @returns {void}
  */
 export function recordKeystroke(isCorrect) {
-  if (!state) return;
+  if (!state) {
+    return;
+  }
 
   state.stats.totalKeystrokes += 1;
   if (!isCorrect) {
@@ -61,7 +75,9 @@ export function recordKeystroke(isCorrect) {
  * @param {string} snippetId
  */
 export function endWave(snippetId) {
-  if (!state) return;
+  if (!state) {
+    return;
+  }
 
   const now = Date.now();
   const keystrokes = state.stats.totalKeystrokes - waveStartKeystrokes;
@@ -83,29 +99,45 @@ export function endWave(snippetId) {
 }
 
 /**
- * @returns {number}
+ * Calculates WPM for the active stats window.
+ * Uses the standard typing definition of one word as five correct characters.
+ * @returns {number} The active window's WPM, rounded to one decimal place.
  */
 export function getWpm() {
-  // Use activeStartTime, activeKeystrokes, activeErrors, and activeNow.
-  void activeStartTime;
-  void activeKeystrokes;
-  void activeErrors;
-  void activeNow;
+  if (
+    !Number.isFinite(activeStartTime) ||
+    !Number.isFinite(activeNow) ||
+    activeNow <= activeStartTime ||
+    activeKeystrokes <= 0
+  ) {
+    return 0;
+  }
 
-  // Issue #17
-  return 0;
+  const elapsedMinutes = (activeNow - activeStartTime) / MS_PER_MINUTE;
+
+  if (elapsedMinutes <= 0) {
+    return 0;
+  }
+
+  const correctKeystrokes = Math.max(activeKeystrokes - activeErrors, 0);
+  const wpm = correctKeystrokes / CHARS_PER_WORD / elapsedMinutes;
+
+  return Math.round(wpm * DECIMAL_PLACES) / DECIMAL_PLACES;
 }
 
 /**
- * @returns {number}
+ * Calculates accuracy for the active stats window.
+ * @returns {number} The active window's accuracy percentage, rounded to one decimal place.
  */
 export function getAccuracy() {
-  // Use activeKeystrokes and activeErrors.
-  void activeKeystrokes;
-  void activeErrors;
+  if (activeKeystrokes <= 0) {
+    return 0;
+  }
 
-  // Issue #17
-  return 0;
+  const correctKeystrokes = Math.max(activeKeystrokes - activeErrors, 0);
+  const accuracy = (correctKeystrokes / activeKeystrokes) * 100;
+
+  return Math.round(accuracy * DECIMAL_PLACES) / DECIMAL_PLACES;
 }
 
 /**
@@ -156,10 +188,16 @@ function clearStatsWindow() {
 }
 
 /**
- * Saves current wave stats into state.stats.waveData and resets counters.
- * @param _state
- * @param _mistakes
+ * Saves current wave stats into state.stats.waveData and resets the wave baseline.
+ * @param {object} waveState - RunState object to commit stats into.
+ * @param {object} mistakes - Optional mistake data from the typing engine.
+ * @returns {void}
  */
-export function commitWave(_state, _mistakes) {
-  // Issue #17
+export function commitWave(waveState = state, mistakes = {}) {
+  if (!waveState) {
+    return;
+  }
+
+  state = waveState;
+  endWave(mistakes.snippetId ?? 'unknown');
 }
