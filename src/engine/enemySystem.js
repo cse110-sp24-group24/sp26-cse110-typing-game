@@ -128,6 +128,11 @@ export function spawnEnemy(line, lineIndex = 0) {
   playAreaElRef.appendChild(enemyEl);
   activeEnemies.add(enemyEl);
 
+  // Issue #50 pause-menu: New spawns inherit the current pause state.
+  if (isPaused) {
+    setEnemyAnimationState(enemyEl, 'paused');
+  }
+
   startDeadlineLoop();
 
   return enemyEl;
@@ -176,6 +181,8 @@ export function defeatEnemy(enemyEl) {
 }
 
 /**
+ * Issue #50 pause-menu: Freezes enemy CSS movement and breach checks.
+ *
  * Pauses all active enemy fall animations and deadline checks.
  * @returns {void}
  */
@@ -183,13 +190,15 @@ export function pauseAll() {
   isPaused = true;
 
   for (const enemyEl of activeEnemies) {
-    enemyEl.style.animationPlayState = 'paused';
+    setEnemyAnimationState(enemyEl, 'paused');
   }
 
   stopDeadlineLoop();
 }
 
 /**
+ * Issue #50 pause-menu: Restarts movement and deadline checks after resume.
+ *
  * Resumes all active enemy fall animations and deadline checks.
  * @returns {void}
  */
@@ -197,7 +206,7 @@ export function resumeAll() {
   isPaused = false;
 
   for (const enemyEl of activeEnemies) {
-    enemyEl.style.animationPlayState = 'running';
+    setEnemyAnimationState(enemyEl, 'running');
   }
 
   if (activeEnemies.size > 0) {
@@ -270,6 +279,21 @@ function stopLoopIfNoActiveEnemies() {
   if (activeEnemies.size === 0) {
     stopDeadlineLoop();
   }
+}
+
+/**
+ * Issue #50 pause-menu: Covers child sprite float animations too.
+ *
+ * Applies animation play state to the enemy and animated children.
+ * @param {HTMLElement} enemyEl - Enemy root element.
+ * @param {'paused' | 'running'} playState - Desired CSS animation state.
+ * @returns {void}
+ */
+function setEnemyAnimationState(enemyEl, playState) {
+  enemyEl.style.animationPlayState = playState;
+  enemyEl.querySelectorAll('*').forEach((childEl) => {
+    childEl.style.animationPlayState = playState;
+  });
 }
 
 /**

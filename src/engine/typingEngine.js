@@ -107,6 +107,16 @@ export function deactivate() {
 // ─── Helper Functions ──────────────────────────────────────────────────────────
 
 /**
+ * Issue #50 pause-menu: Exposes whether resume should restore typing.
+ *
+ * Returns whether typing input events are currently processed.
+ * @returns {boolean}
+ */
+export function isActive() {
+  return _active;
+}
+
+/**
  * Escapes the five characters that are meaningful inside HTML text nodes so
  * that raw target characters never break the feedback markup.
  *
