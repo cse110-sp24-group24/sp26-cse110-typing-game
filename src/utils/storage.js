@@ -26,7 +26,7 @@ const DEFAULTS = {
   tutorialSeen: false,
 };
 
-const VALID_LANGUAGES = new Set(['javascript', 'python']);
+const VALID_LANGUAGES = new Set(['javascript', 'html', 'css']);
 
 let memoryPreferences = { ...DEFAULTS };
 
