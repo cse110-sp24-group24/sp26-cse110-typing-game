@@ -33,8 +33,10 @@ import {
   showFull,
 } from './ui/codePanel.js';
 import { showScreen } from './ui/screenManager.js';
+import { show as showStatsScreen } from './ui/statsScreen.js';
 import { show as showWaveIntro } from './ui/waveIntroCard.js';
 import { getPreferences, savePreferences } from './utils/storage.js';
+import * as statTracker from './utils/statTracker.js';
 import { show as showUpgradeScreen } from './ui/upgradeScreen.js';
 
 // Imports are added as each Issue is completed. Example structure:
@@ -108,6 +110,7 @@ bossSystem.init({
  */
 function startRun(language) {
   runState = createRunState(language);
+  statTracker.init(runState);
 
   enemySystem.init(playAreaEl, deadlineEl, runState, onDeadlineBreach);
 
@@ -149,8 +152,7 @@ function startRun(language) {
         nextLinePreRevealed = true;
       }
     },
-    // onKeystroke: statTracker wires this in Issue #17.
-    () => {}
+    statTracker.recordKeystroke
   );
 
   waveManager.init(runState, onWaveClear, onWaveStart);
@@ -394,7 +396,36 @@ function spawnVibeVanishAngel() {
  */
 function endRun() {
   enemySystem.clearAll();
+  showStatsScreen(runState);
   showScreen('stats-screen');
+}
+
+/**
+ * Renders the most recent per-wave stats entry and waits for a keypress.
+ * @returns {Promise<void>}
+ */
+function showLatestWaveStats() {
+  const waveData = runState?.stats?.waveData ?? [];
+  const waveStats = waveData[waveData.length - 1];
+  const wpmEl = document.getElementById('wave-stat-wpm');
+  const accuracyEl = document.getElementById('wave-stat-accuracy');
+  const mistakesEl = document.getElementById('wave-stat-mistakes');
+
+  if (wpmEl) {
+    wpmEl.textContent = `WPM: ${Math.round(waveStats?.wpm ?? 0)}`;
+  }
+  if (accuracyEl) {
+    accuracyEl.textContent = `Accuracy: ${waveStats?.accuracy ?? 100}%`;
+  }
+  if (mistakesEl) {
+    mistakesEl.textContent = `Errors: ${waveStats?.errorCount ?? 0}`;
+  }
+
+  showScreen('wave-stats-screen');
+
+  return new Promise((resolve) => {
+    window.addEventListener('keydown', () => resolve(), { once: true });
+  });
 }
 
 // ── Ghost canvas — chroma-key compositing ──────────────────────
@@ -851,6 +882,8 @@ function beginWaveIntro() {
  * @returns {void}
  */
 function onWaveStart(snippet) {
+  statTracker.startWave();
+
   // Reset Foresight pre-reveal tracker for the fresh set of placeholders.
   nextLinePreRevealed = false;
   // Reset Vibe Vanish chant buffer so stale keystrokes never carry over.
@@ -882,6 +915,7 @@ function onWaveStart(snippet) {
  * @returns {void}
  */
 function onWaveClear(snippet) {
+  statTracker.endWave(snippet.id);
   showFull(snippet.lines, runState.language);
 
   // Brief pause so the last enemy's dissolve animation can finish
@@ -982,10 +1016,12 @@ function launchWave() {
  * @returns {void}
  */
 function onBossDefeated() {
-  // showUpgradeScreen handles its own screen transition, renders the
-  // 3 cards, applies the chosen upgrade to runState, and resolves
-  // after the 400ms pick-confirmation animation finishes.
-  showUpgradeScreen(runState).then(() => {
+  showLatestWaveStats().then(() => {
+    // showUpgradeScreen handles its own screen transition, renders the
+    // 3 cards, applies the chosen upgrade to runState, and resolves
+    // after the 400ms pick-confirmation animation finishes.
+    return showUpgradeScreen(runState);
+  }).then(() => {
     // prepareWave picks the snippet for the upcoming wave before the
     // intro card needs waveData.snippet (same pattern used elsewhere
     // in this file).
