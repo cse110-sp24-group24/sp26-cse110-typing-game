@@ -34,7 +34,7 @@ import {
 } from './ui/codePanel.js';
 import { showScreen } from './ui/screenManager.js';
 import { show as showWaveIntro } from './ui/waveIntroCard.js';
-import { getPreferences, savePreferences } from './utils/storage.js';
+import { getPreferences, saveLanguage } from './utils/storage.js';
 import { show as showUpgradeScreen } from './ui/upgradeScreen.js';
 
 // Imports are added as each Issue is completed. Example structure:
@@ -1003,7 +1003,7 @@ document.querySelectorAll('.btn-language').forEach((btn) => {
     // Blur immediately so keyboard focus doesn't re-fire this handler
     // when the player presses any key during or after the scare transition.
     btn.blur();
-    savePreferences({ ...prefs, language });
+    saveLanguage(language);
     stopMenuMusic();
     startRun(language);
     // After the scare: prepare snippet, show wave intro, then start combat.
