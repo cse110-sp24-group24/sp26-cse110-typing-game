@@ -1,4 +1,4 @@
-import { getPreferences, savePreferences } from '../utils/storage.js';
+import { getPreferences, saveAudioSettings } from '../utils/storage.js';
 
 const AUDIO_PATH = 'assets/audio/';
 const MENU_MUSIC_SRC = 'media/audio/spookymusic.mp3';
@@ -289,10 +289,7 @@ function applyMuteState() {
  * Saves current audio preferences.
  */
 function saveAudioPreferences() {
-  const prefs = getPreferences();
-
-  savePreferences({
-    ...prefs,
+  saveAudioSettings({
     musicVolume,
     sfxVolume,
     muted: isMuted,
