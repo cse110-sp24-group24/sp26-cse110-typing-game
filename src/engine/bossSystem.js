@@ -26,6 +26,11 @@ let _onFightStart = null;
 let _onProgressUpdate = null;
 let _onBossCleanup = null;
 
+// Issue #50 pause-menu: Boss intro/entrance delays must freeze on pause.
+let _isPaused = false;
+let _timerIdSeq = 0;
+const _timers = new Map();
+
 /**
  * Initializes boss system callbacks.
  *
@@ -60,6 +65,10 @@ export function init(callbacks = {}) {
 export function startBoss(snippet, state, onBossDefeated, onLifeLost) {
   void onLifeLost;
 
+  // Issue #50 pause-menu: New boss fights start with clean timer state.
+  clearManagedTimeouts();
+  _isPaused = false;
+
   const { lines = [] } = snippet ?? {};
 
   _lines = Array.isArray(lines) ? lines : [];
@@ -75,16 +84,77 @@ export function startBoss(snippet, state, onBossDefeated, onLifeLost) {
     return;
   }
 
-  window.setTimeout(() => {
+  setManagedTimeout(() => {
     _onEntranceStart?.();
 
-    window.setTimeout(() => {
+    setManagedTimeout(() => {
       activate();
       _onFightStart?.();
       _updateProgress();
       _setCurrentLine();
     }, BOSS_ENTRANCE_DURATION_MS);
   }, BOSS_INTRO_DELAY_MS);
+}
+
+/**
+ * Issue #50 pause-menu: Stores remaining boss delay time instead of advancing.
+ *
+ * Pauses boss intro/entrance timers.
+ * @returns {void}
+ */
+export function pauseAll() {
+  if (_isPaused) {
+    return;
+  }
+
+  _isPaused = true;
+  const now = performance.now();
+
+  for (const timer of _timers.values()) {
+    window.clearTimeout(timer.timeoutId);
+    timer.remaining = Math.max(0, timer.remaining - (now - timer.startedAt));
+    timer.timeoutId = null;
+  }
+}
+
+/**
+ * Issue #50 pause-menu: Recreates pending boss delays with remaining time.
+ *
+ * Resumes boss intro/entrance timers.
+ * @returns {void}
+ */
+export function resumeAll() {
+  if (!_isPaused) {
+    return;
+  }
+
+  _isPaused = false;
+
+  for (const [id, timer] of _timers.entries()) {
+    timer.startedAt = performance.now();
+    timer.timeoutId = window.setTimeout(() => {
+      _timers.delete(id);
+      timer.callback();
+    }, timer.remaining);
+  }
+}
+
+/**
+ * Issue #50 pause-menu: Quit Run cancels boss state without awarding victory.
+ *
+ * Cancels the current boss encounter without awarding victory.
+ * Used when the player quits the run mid-fight.
+ * @returns {void}
+ */
+export function clearAll() {
+  clearManagedTimeouts();
+  _isPaused = false;
+  _lines = [];
+  _lineIndex = 0;
+  _state = null;
+  _onBossDefeated = null;
+  deactivate();
+  clearTarget();
 }
 
 /**
@@ -145,6 +215,9 @@ function _updateProgress() {
  * @returns {void}
  */
 function _finishBoss() {
+  // Issue #50 pause-menu: Clear any pending pause-aware boss timers on victory.
+  clearManagedTimeouts();
+
   const bonusScore = _calcBonusScore(_lines, _state);
 
   deactivate();
@@ -156,6 +229,50 @@ function _finishBoss() {
   });
   _onBossCleanup?.();
   _onBossDefeated?.(bonusScore);
+}
+
+/**
+ * Issue #50 pause-menu: Pause-aware replacement for plain setTimeout.
+ *
+ * Creates a timeout that can be paused and resumed by this module.
+ * @param {Function} callback - Callback to run after the delay.
+ * @param {number} delayMs - Delay in milliseconds.
+ * @returns {number} Managed timeout id.
+ */
+function setManagedTimeout(callback, delayMs) {
+  const id = _timerIdSeq;
+  _timerIdSeq += 1;
+
+  const timer = {
+    callback,
+    remaining: delayMs,
+    startedAt: performance.now(),
+    timeoutId: null,
+  };
+
+  timer.timeoutId = window.setTimeout(() => {
+    _timers.delete(id);
+    callback();
+  }, delayMs);
+
+  _timers.set(id, timer);
+  return id;
+}
+
+/**
+ * Issue #50 pause-menu: Removes pending boss delay callbacks.
+ *
+ * Clears any pending managed boss timers.
+ * @returns {void}
+ */
+function clearManagedTimeouts() {
+  for (const timer of _timers.values()) {
+    if (timer.timeoutId !== null) {
+      window.clearTimeout(timer.timeoutId);
+    }
+  }
+
+  _timers.clear();
 }
 
 /**

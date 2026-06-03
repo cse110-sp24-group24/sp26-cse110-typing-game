@@ -11,10 +11,12 @@
 import { createRunState } from './state.js';
 import {
   init as initAudio,
+  pause as pauseAudio,
   playAmbient,
   playMenuMusic,
   stopMenuMusic,
   playSFX as playSfx,
+  resume as resumeAudio,
 } from './audio/audioManager.js';
 import * as bossSystem from './engine/bossSystem.js';
 import * as enemySystem from './engine/enemySystem.js';
@@ -23,6 +25,7 @@ import {
   clearTarget as clearTypingTarget,
   deactivate as deactivateTyping,
   init as initTyping,
+  isActive as isTypingActive,
 } from './engine/typingEngine.js';
 import * as waveManager from './engine/waveManager.js';
 import * as bossView from './ui/bossView.js';
@@ -32,7 +35,8 @@ import {
   revealLine,
   showFull,
 } from './ui/codePanel.js';
-import { showScreen } from './ui/screenManager.js';
+import { getCurrentScreen, showScreen } from './ui/screenManager.js';
+import { show as showStats } from './ui/statsScreen.js';
 import { show as showWaveIntro } from './ui/waveIntroCard.js';
 import { getPreferences, savePreferences } from './utils/storage.js';
 import { show as showUpgradeScreen } from './ui/upgradeScreen.js';
@@ -78,6 +82,15 @@ const livesDisplayEl = document.getElementById('lives-display');
 const playAreaEl = document.getElementById('play-area');
 const deadlineEl = document.getElementById('deadline-line');
 const typingInputEl = document.getElementById('typing-input');
+
+// Issue #50 pause-menu: Overlay controls and pause state live in main.js.
+const pauseOverlayEl = document.getElementById('pause-overlay');
+const resumeBtnEl = document.getElementById('resume-btn');
+const quitBtnEl = document.getElementById('quit-btn');
+
+let isPaused = false;
+let typingWasActiveBeforePause = false;
+let typingWasDisabledBeforePause = false;
 
 // ── Boss System (Issue #26) ───────────────────────────────────
 // main.js wires boss engine callbacks to UI and audio modules so
@@ -393,8 +406,112 @@ function spawnVibeVanishAngel() {
  * @returns {void}
  */
 function endRun() {
+  // Issue #50 pause-menu: Quit Run can be clicked while the game is paused.
+  if (isPaused) {
+    isPaused = false;
+    pauseOverlayEl?.classList.add('hidden');
+    document.body.classList.remove('game-paused');
+  }
+
   enemySystem.clearAll();
+  // Issue #50 pause-menu: Clear boss state when quitting mid-fight.
+  bossSystem.clearAll?.();
+  bossView.clearBoss();
+  pauseAudio();
+  deactivateTyping();
+  if (typingInputEl) {
+    typingInputEl.disabled = true;
+  }
+  showStats(runState);
   showScreen('stats-screen');
+}
+
+/**
+ * Issue #50 pause-menu: Escape only works on the active game screen.
+ *
+ * Returns true only while the active screen is the wave/boss gameplay screen.
+ * Escape should not affect menus, intros, upgrade choices, or stats.
+ * @returns {boolean}
+ */
+function isGameActive() {
+  return Boolean(runState) && getCurrentScreen() === 'game-screen';
+}
+
+/**
+ * Issue #50 pause-menu: Central pause entry point.
+ *
+ * Pauses movement, time-based enemy/boss checks, ambient audio, and typing.
+ * @returns {void}
+ */
+function pauseRun() {
+  if (isPaused || !isGameActive()) {
+    return;
+  }
+
+  isPaused = true;
+  // Issue #50 pause-menu: Resume should restore the prior typing mode exactly.
+  typingWasActiveBeforePause = isTypingActive();
+  typingWasDisabledBeforePause = typingInputEl?.disabled ?? false;
+  document.body.classList.add('game-paused');
+  enemySystem.pauseAll();
+  bossSystem.pauseAll?.();
+  pauseAudio();
+  deactivateTyping();
+
+  if (typingInputEl) {
+    typingInputEl.disabled = true;
+    typingInputEl.blur();
+  }
+
+  pauseOverlayEl?.classList.remove('hidden');
+  resumeBtnEl?.focus();
+}
+
+/**
+ * Issue #50 pause-menu: Central resume path without rebuilding run state.
+ *
+ * Resumes from pause without rebuilding any game state.
+ * @param {object} [options] - Resume behavior options.
+ * @param {boolean} [options.restoreInput=true] - Whether to re-enable and focus typing.
+ * @returns {void}
+ */
+function resumeRun({ restoreInput = true } = {}) {
+  if (!isPaused) {
+    return;
+  }
+
+  pauseOverlayEl?.classList.add('hidden');
+  document.body.classList.remove('game-paused');
+  enemySystem.resumeAll();
+  bossSystem.resumeAll?.();
+  resumeAudio();
+
+  // Issue #50 pause-menu: Preserve disabled input if pause happened in a transition.
+  if (restoreInput && typingInputEl && isGameActive()) {
+    typingInputEl.disabled = typingWasDisabledBeforePause;
+    if (typingWasActiveBeforePause) {
+      activateTyping();
+    }
+    typingInputEl.focus();
+  }
+
+  typingWasActiveBeforePause = false;
+  typingWasDisabledBeforePause = false;
+  isPaused = false;
+}
+
+/**
+ * Issue #50 pause-menu: Shared toggle for Escape and overlay buttons.
+ *
+ * Toggles pause from keyboard or overlay controls.
+ * @returns {void}
+ */
+function togglePause() {
+  if (isPaused) {
+    resumeRun();
+  } else {
+    pauseRun();
+  }
 }
 
 // ── Ghost canvas — chroma-key compositing ──────────────────────
@@ -1018,12 +1135,34 @@ document.querySelectorAll('.btn-language').forEach((btn) => {
   });
 });
 
+// ── Pause menu (Issue #50) ─────────────────────────────────────
+// Escape toggles pause only during active wave or boss gameplay.
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && isGameActive()) {
+    e.preventDefault();
+    togglePause();
+  }
+});
+
+resumeBtnEl?.addEventListener('click', () => {
+  resumeRun();
+});
+
+quitBtnEl?.addEventListener('click', () => {
+  endRun();
+});
+
 // ── Vibe Vanish chant detector ─────────────────────────────────
 // Uses keydown (not input.value) so the chant buffer is never wiped
 // when setTarget() clears the typing input between ghost spawns.
 // The buffer keeps only the last N characters (chant length) so partial
 // matches from earlier keystrokes don't prevent future activation.
 document.addEventListener('keydown', (e) => {
+  // Issue #50 pause-menu: Pause blocks hidden gameplay key handlers too.
+  if (isPaused) {
+    return;
+  }
+
   if (!runState?.vibeVanishActive || !vibeVanishAngelEl) {
     return;
   }

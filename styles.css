@@ -192,6 +192,18 @@ button {
   width: min(92vw, 620px);
 }
 
+.pause-content {
+  /* Issue #50 pause-menu: Lift the pause panel above exact center. */
+  transform: translateY(-8vh);
+}
+
+.pause-title {
+  margin-bottom: 2rem;
+  font-size: clamp(2rem, 6vw, 3.6rem);
+  text-transform: uppercase;
+  transform: translateY(0.15rem);
+}
+
 .game-title,
 .screen-title,
 .stats-title {
@@ -563,6 +575,11 @@ button {
 
 .overlay.hidden {
   display: none;
+}
+
+body.game-paused #game-screen * {
+  /* Issue #50 pause-menu: Freeze decorative gameplay animations too. */
+  animation-play-state: paused !important;
 }
 
 #countdown-overlay,
