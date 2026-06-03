@@ -45,7 +45,7 @@ export function startWave() {
 }
 
 /**
- * @param {number} now
+ * @param {number} now - Current timestamp in milliseconds.
  * @returns {void}
  */
 function resetWaveBaseline(now) {
@@ -72,7 +72,8 @@ export function recordKeystroke(isCorrect) {
 
 /**
  * Records typing stats for the completed wave.
- * @param {string} snippetId
+ * @param {string} snippetId - ID of the snippet used in this wave.
+ * @returns {void}
  */
 export function endWave(snippetId) {
   if (!state) {
@@ -164,10 +165,10 @@ export function getSummary(summaryState = state) {
 }
 
 /**
- * @param {number} startTime
- * @param {number} keystrokes
- * @param {number} errors
- * @param {number} now
+ * @param {number} startTime - Start timestamp of the measurement window in milliseconds.
+ * @param {number} keystrokes - Total keystrokes recorded in the window.
+ * @param {number} errors - Total errors recorded in the window.
+ * @param {number} now - End timestamp of the measurement window in milliseconds.
  * @returns {void}
  */
 function setStatsWindow(startTime, keystrokes, errors, now = Date.now()) {

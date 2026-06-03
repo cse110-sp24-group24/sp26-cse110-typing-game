@@ -35,10 +35,6 @@ import {
   revealLine,
   showFull,
 } from './ui/codePanel.js';
-import { showScreen } from './ui/screenManager.js';
-import { show as showStatsScreen } from './ui/statsScreen.js';
-import { show as showWaveIntro } from './ui/waveIntroCard.js';
-import { getPreferences, savePreferences } from './utils/storage.js';
 import * as statTracker from './utils/statTracker.js';
 import { getCurrentScreen, showScreen } from './ui/screenManager.js';
 import { show as showStats } from './ui/statsScreen.js';
@@ -419,7 +415,6 @@ function endRun() {
   }
 
   enemySystem.clearAll();
-  showStatsScreen(runState);
   // Issue #50 pause-menu: Clear boss state when quitting mid-fight.
   bossSystem.clearAll?.();
   bossView.clearBoss();
@@ -1120,6 +1115,15 @@ function launchWave() {
 }
 
 /**
+ * Placeholder for the per-wave stats overlay (wave-stats-screen).
+ * Resolves immediately until the screen is implemented.
+ * @returns {Promise<void>}
+ */
+function showLatestWaveStats() {
+  return Promise.resolve();
+}
+
+/**
  * Called once the boss for the current wave is defeated.
  * Shows the Upgrade Selection screen (Issue #13). When the player
  * picks an upgrade, that promise resolves and we route to the next
@@ -1215,4 +1219,4 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-console.log('Phantom Type — main.js loaded');
+console.warn('Phantom Type — main.js loaded');
