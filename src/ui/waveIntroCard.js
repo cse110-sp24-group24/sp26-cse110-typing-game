@@ -12,16 +12,9 @@ const AUTO_DISMISS_MS = 5000;
 
 /**
  * Shows the wave intro card and resolves when the player dismisses it.
- * *
  * @param {object} _state - RunState (unused; included for stable UI API)
  * @param {object} waveData - { wave, snippet }
  * @returns {Promise<void>}
- */
-
-/**
- *
- * @param _state
- * @param waveData
  */
 export function show(_state, waveData) {
   showScreen('wave-intro-screen');

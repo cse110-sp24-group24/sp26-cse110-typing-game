@@ -35,6 +35,7 @@ import {
   revealLine,
   showFull,
 } from './ui/codePanel.js';
+import * as statTracker from './utils/statTracker.js';
 import { getCurrentScreen, showScreen } from './ui/screenManager.js';
 import { show as showStats } from './ui/statsScreen.js';
 import { show as showWaveIntro } from './ui/waveIntroCard.js';
@@ -121,6 +122,7 @@ bossSystem.init({
  */
 function startRun(language) {
   runState = createRunState(language);
+  statTracker.init(runState);
 
   enemySystem.init(playAreaEl, deadlineEl, runState, onDeadlineBreach);
 
@@ -162,8 +164,7 @@ function startRun(language) {
         nextLinePreRevealed = true;
       }
     },
-    // onKeystroke: statTracker wires this in Issue #17.
-    () => {}
+    statTracker.recordKeystroke
   );
 
   waveManager.init(runState, onWaveClear, onWaveStart);
@@ -987,6 +988,8 @@ function beginWaveIntro() {
  * @returns {void}
  */
 function onWaveStart(snippet) {
+  statTracker.startWave();
+
   // Reset Foresight pre-reveal tracker for the fresh set of placeholders.
   nextLinePreRevealed = false;
   // Reset Vibe Vanish chant buffer so stale keystrokes never carry over.
@@ -1018,6 +1021,7 @@ function onWaveStart(snippet) {
  * @returns {void}
  */
 function onWaveClear(snippet) {
+  statTracker.endWave(snippet.id);
   showFull(snippet.lines, runState.language);
 
   // Brief pause so the last enemy's dissolve animation can finish
@@ -1111,6 +1115,15 @@ function launchWave() {
 }
 
 /**
+ * Placeholder for the per-wave stats overlay (wave-stats-screen).
+ * Resolves immediately until the screen is implemented.
+ * @returns {Promise<void>}
+ */
+function showLatestWaveStats() {
+  return Promise.resolve();
+}
+
+/**
  * Called once the boss for the current wave is defeated.
  * Shows the Upgrade Selection screen (Issue #13). When the player
  * picks an upgrade, that promise resolves and we route to the next
@@ -1118,19 +1131,23 @@ function launchWave() {
  * @returns {void}
  */
 function onBossDefeated() {
-  // showUpgradeScreen handles its own screen transition, renders the
-  // 3 cards, applies the chosen upgrade to runState, and resolves
-  // after the 400ms pick-confirmation animation finishes.
-  showUpgradeScreen(runState).then(() => {
-    // prepareWave picks the snippet for the upcoming wave before the
-    // intro card needs waveData.snippet (same pattern used elsewhere
-    // in this file).
-    waveManager.prepareWave();
-    beginWaveIntro().then(() => {
-      showScreen('game-screen');
-      launchWave();
+  showLatestWaveStats()
+    .then(() => {
+      // showUpgradeScreen handles its own screen transition, renders the
+      // 3 cards, applies the chosen upgrade to runState, and resolves
+      // after the 400ms pick-confirmation animation finishes.
+      return showUpgradeScreen(runState);
+    })
+    .then(() => {
+      // prepareWave picks the snippet for the upcoming wave before the
+      // intro card needs waveData.snippet (same pattern used elsewhere
+      // in this file).
+      waveManager.prepareWave();
+      beginWaveIntro().then(() => {
+        showScreen('game-screen');
+        launchWave();
+      });
     });
-  });
 }
 
 document.querySelectorAll('.btn-language').forEach((btn) => {
@@ -1202,4 +1219,4 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-console.log('Phantom Type — main.js loaded');
+console.warn('Phantom Type — main.js loaded');
