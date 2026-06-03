@@ -205,5 +205,6 @@ function spawnCurrentLine() {
   const line = currentSnippet.lines[lineIndex].trimStart();
 
   currentEnemyEl = enemySystem.spawnEnemy(line, lineIndex);
-  setTarget(line);
+  // Mirror typing feedback onto this ghost's code label as the player types.
+  setTarget(line, enemySystem.getEnemyCodeEl(currentEnemyEl));
 }

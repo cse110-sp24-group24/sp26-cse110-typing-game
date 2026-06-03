@@ -675,6 +675,53 @@ body.game-paused #game-screen * {
   font-size: clamp(1.1rem, 2.4vw, 1.35rem);
 }
 
+/* ── Per-Wave Stats Screen (Issue #19) ───────────────────────── */
+.wave-stats-content .stat-block {
+  margin: 0.75rem auto;
+  width: min(80%, 420px);
+  font-size: clamp(1.1rem, 2.6vw, 1.4rem);
+}
+
+/* The mistakes box holds a heading and a few rows, so align left. */
+.mistakes-list {
+  text-align: left;
+}
+
+.mistakes-heading {
+  margin-bottom: 0.5rem;
+  text-align: center;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.mistake-row {
+  padding: 0.2rem 0;
+  font-family: var(--font-code);
+  color: var(--ink);
+}
+
+.mistake-row--none {
+  text-align: center;
+  color: var(--success);
+}
+
+/* The character the player actually typed (wrong). */
+.mistake-typed {
+  color: var(--error);
+  font-weight: bold;
+}
+
+/* The character they should have typed (correct). */
+.mistake-correct {
+  color: var(--success);
+  font-weight: bold;
+}
+
+.mistake-count {
+  color: var(--ink-dim);
+}
+
 .btn-icon {
   background: rgba(35, 10, 14, 0.78);
   border: 1px solid var(--line);
@@ -781,6 +828,44 @@ body.game-paused #game-screen * {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Per-character typing feedback mirrored onto the ghost — same colours as
+   the bottom display: typed-correct is green, typed-wrong is red. */
+.enemy .enemy-code .correct {
+  color: var(--success);
+}
+
+.enemy .enemy-code .incorrect {
+  color: var(--error);
+  text-decoration: underline;
+}
+
+/* Creative typo cue: while the current input is wrong the ghost "recoils" —
+   its code label flips to an angry red and glitch-shakes, and the ghost
+   itself flashes a red aura. It settles the moment the typo is fixed. */
+.enemy-code.echo-error {
+  color: #fff;
+  background: rgba(120, 12, 20, 0.94);
+  border-color: var(--error);
+  box-shadow: 0 0 10px rgba(255, 56, 76, 0.7);
+  animation: enemyCodeGlitch 0.16s steps(2, end) infinite;
+}
+
+.enemy:has(.enemy-code.echo-error) .enemy-sprite {
+  filter: drop-shadow(0 0 12px rgba(255, 60, 80, 0.95));
+}
+
+@keyframes enemyCodeGlitch {
+  0% {
+    transform: translateX(-2px) skewX(-4deg);
+  }
+  50% {
+    transform: translateX(2px) skewX(4deg);
+  }
+  100% {
+    transform: translateX(-2px) skewX(-4deg);
+  }
 }
 
 .code-panel {

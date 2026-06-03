@@ -21,6 +21,9 @@ import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals
 jest.unstable_mockModule('../src/engine/enemySystem.js', () => ({
   spawnEnemy: jest.fn(() => document.createElement('div')),
   defeatEnemy: jest.fn(),
+  // waveManager passes this ghost code element to setTarget so typing
+  // feedback mirrors onto the falling enemy; the value is opaque here.
+  getEnemyCodeEl: jest.fn(() => document.createElement('div')),
 }));
 
 jest.unstable_mockModule('../src/engine/typingEngine.js', () => ({
@@ -98,7 +101,8 @@ describe('waveManager — startWave', () => {
     beginWave();
 
     const snippet = getCurrentSnippet();
-    expect(typingEngine.setTarget).toHaveBeenCalledWith(snippet.lines[0]);
+    // Second arg is the ghost code element used to mirror typing feedback.
+    expect(typingEngine.setTarget).toHaveBeenCalledWith(snippet.lines[0], expect.anything());
   });
 
   it('calls onWaveStart with the chosen snippet', () => {

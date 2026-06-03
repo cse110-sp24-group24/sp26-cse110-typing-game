@@ -139,6 +139,17 @@ export function spawnEnemy(line, lineIndex = 0) {
 }
 
 /**
+ * Returns the code-text label inside an enemy so callers can mirror typing
+ * feedback onto the falling ghost. Keeps the `.enemy-code` selector owned
+ * by this module.
+ * @param {HTMLElement} enemyEl - The enemy root element.
+ * @returns {HTMLElement | null} The code label element, or null if absent.
+ */
+export function getEnemyCodeEl(enemyEl) {
+  return enemyEl ? enemyEl.querySelector('.enemy-code') : null;
+}
+
+/**
  * Triggers the enemy dissolve animation and removes the enemy after it completes.
  * @param {HTMLElement} enemyEl - The enemy element to remove.
  * @returns {void}

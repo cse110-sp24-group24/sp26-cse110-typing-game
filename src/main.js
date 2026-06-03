@@ -83,6 +83,20 @@ const livesDisplayEl = document.getElementById('lives-display');
 const playAreaEl = document.getElementById('play-area');
 const deadlineEl = document.getElementById('deadline-line');
 const typingInputEl = document.getElementById('typing-input');
+const targetLineDisplayEl = document.getElementById('target-line-display');
+
+// ── Per-wave mistake tracking (Issue #19) ──────────────────────
+// The stat tracker only counts errors, so we capture character-level
+// mistakes here for the wave-stats screen. Keyed by "<expected>\u0000<typed>"
+// (a null char separator that can't collide with real code characters).
+const waveMistakes = new Map();
+// True while the typed prefix is currently wrong. Prevents counting the
+// same mistake repeatedly as the player keeps typing without fixing it.
+let typingHadError = false;
+
+const MAX_MISTAKES_SHOWN = 5;
+const WAVE_STATS_AUTO_ADVANCE_MS = 4000; // auto-advance to upgrades
+const WAVE_STATS_KEY_ARM_MS = 400; // delay before a keypress can dismiss
 
 // Issue #50 pause-menu: Overlay controls and pause state live in main.js.
 const pauseOverlayEl = document.getElementById('pause-overlay');
@@ -128,7 +142,7 @@ function startRun(language) {
 
   initTyping(
     typingInputEl,
-    document.getElementById('target-line-display'),
+    targetLineDisplayEl,
     // Route completed lines to the boss system during boss mode.
     // Otherwise, keep the normal wave enemy behavior and apply
     // Two Ghosts One Stone if the player owns it.
@@ -164,7 +178,7 @@ function startRun(language) {
         nextLinePreRevealed = true;
       }
     },
-    statTracker.recordKeystroke
+    onTypingKeystroke
   );
 
   waveManager.init(runState, onWaveClear, onWaveStart);
@@ -990,6 +1004,10 @@ function beginWaveIntro() {
 function onWaveStart(snippet) {
   statTracker.startWave();
 
+  // Issue #19: start each wave's mistake log fresh.
+  waveMistakes.clear();
+  typingHadError = false;
+
   // Reset Foresight pre-reveal tracker for the fresh set of placeholders.
   nextLinePreRevealed = false;
   // Reset Vibe Vanish chant buffer so stale keystrokes never carry over.
@@ -1115,12 +1133,177 @@ function launchWave() {
 }
 
 /**
- * Placeholder for the per-wave stats overlay (wave-stats-screen).
- * Resolves immediately until the screen is implemented.
+ * Records one keystroke and, on the first frame an error appears, captures
+ * the character-level mistake for the wave-stats screen.
+ * @param {boolean} isCorrect - Whether the typed prefix matches so far.
+ * @returns {void}
+ */
+function onTypingKeystroke(isCorrect) {
+  statTracker.recordKeystroke(isCorrect);
+
+  if (isCorrect) {
+    typingHadError = false;
+    return;
+  }
+
+  // Only record the moment an error first appears, not every keystroke
+  // the player makes while the line is still wrong.
+  if (!typingHadError) {
+    recordTypingMistake();
+    typingHadError = true;
+  }
+}
+
+/**
+ * Compares what the player typed against the line they were supposed to
+ * type and logs the first character that differs (typed vs. expected).
+ * @returns {void}
+ */
+function recordTypingMistake() {
+  const target = targetLineDisplayEl?.textContent ?? '';
+  const typed = typingInputEl?.value ?? '';
+
+  // Walk forward to the first character that does not match.
+  let i = 0;
+  while (i < typed.length && typed[i] === target[i]) {
+    i += 1;
+  }
+
+  const expected = target[i] ?? '';
+  const typedChar = typed[i] ?? '';
+
+  // Ignore typing past the end of the line — there is no expected char.
+  if (expected === '' || typedChar === '') {
+    return;
+  }
+
+  const key = `${expected}\u0000${typedChar}`;
+  waveMistakes.set(key, (waveMistakes.get(key) ?? 0) + 1);
+}
+
+/**
+ * Turns whitespace into a visible symbol so mistakes stay readable.
+ * @param {string} ch - A single character.
+ * @returns {string} A display-friendly version of the character.
+ */
+function displayChar(ch) {
+  if (ch === ' ') {
+    return '␣';
+  }
+  if (ch === '\t') {
+    return '⇥';
+  }
+  if (ch === '\n') {
+    return '⏎';
+  }
+  return ch;
+}
+
+/**
+ * Fills #wave-stat-mistakes with up to five of the wave's most common
+ * character-level mistakes, showing the wrong and correct character.
+ * @returns {void}
+ */
+function renderWaveMistakes() {
+  const container = document.getElementById('wave-stat-mistakes');
+  if (!container) {
+    return;
+  }
+  container.innerHTML = '';
+
+  const heading = document.createElement('div');
+  heading.className = 'mistakes-heading';
+  heading.textContent = 'Common Mistakes';
+  container.appendChild(heading);
+
+  // Sort by how often each mistake happened and keep the top few.
+  const topMistakes = [...waveMistakes.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, MAX_MISTAKES_SHOWN);
+
+  if (topMistakes.length === 0) {
+    const none = document.createElement('div');
+    none.className = 'mistake-row mistake-row--none';
+    none.textContent = 'Flawless wave — no mistakes!';
+    container.appendChild(none);
+    return;
+  }
+
+  topMistakes.forEach(([key, count]) => {
+    const [expected, typedChar] = key.split('\u0000');
+
+    const typedSpan = document.createElement('span');
+    typedSpan.className = 'mistake-typed';
+    typedSpan.textContent = displayChar(typedChar);
+
+    const correctSpan = document.createElement('span');
+    correctSpan.className = 'mistake-correct';
+    correctSpan.textContent = displayChar(expected);
+
+    const countSpan = document.createElement('span');
+    countSpan.className = 'mistake-count';
+    countSpan.textContent = `×${count}`;
+
+    // Reads as:  Typed "X" instead of "Y"  ×N
+    const row = document.createElement('div');
+    row.className = 'mistake-row';
+    row.append('Typed ', typedSpan, ' instead of ', correctSpan, ' ', countSpan);
+    container.appendChild(row);
+  });
+}
+
+/**
+ * Shows the per-wave stats screen (Issue #19) after a boss is defeated and
+ * before the upgrade screen. Displays the just-completed wave's WPM and
+ * accuracy plus its most common mistakes. Resolves — handing off to the
+ * upgrade screen — after a short delay or as soon as the player presses a key.
  * @returns {Promise<void>}
  */
 function showLatestWaveStats() {
-  return Promise.resolve();
+  const waveData = runState?.stats?.waveData ?? [];
+  const latest = waveData[waveData.length - 1];
+
+  // No recorded wave (shouldn't happen) — skip straight to upgrades.
+  if (!latest) {
+    return Promise.resolve();
+  }
+
+  showScreen('wave-stats-screen');
+
+  const wpmEl = document.getElementById('wave-stat-wpm');
+  const accuracyEl = document.getElementById('wave-stat-accuracy');
+  if (wpmEl) {
+    wpmEl.textContent = `WPM: ${Math.round(latest.wpm)}`;
+  }
+  if (accuracyEl) {
+    accuracyEl.textContent = `Accuracy: ${latest.accuracy}%`;
+  }
+  renderWaveMistakes();
+
+  return new Promise((resolve) => {
+    let settled = false;
+
+    // Advances to the upgrade screen exactly once and cleans up.
+    const advance = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      window.clearTimeout(autoTimer);
+      window.clearTimeout(armTimer);
+      document.removeEventListener('keydown', advance);
+      resolve();
+    };
+
+    // Auto-advance after the timeout.
+    const autoTimer = window.setTimeout(advance, WAVE_STATS_AUTO_ADVANCE_MS);
+
+    // Any key dismisses early, but arm the listener slightly late so the
+    // keystroke that finished the boss line doesn't skip the screen instantly.
+    const armTimer = window.setTimeout(() => {
+      document.addEventListener('keydown', advance);
+    }, WAVE_STATS_KEY_ARM_MS);
+  });
 }
 
 /**
