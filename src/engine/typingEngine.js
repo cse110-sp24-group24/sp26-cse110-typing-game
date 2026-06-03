@@ -12,6 +12,11 @@ let _inputEl = null;
 
 let _feedbackEl = null;
 
+// Optional second surface that mirrors the bottom feedback overlay — used to
+// echo the line onto the falling ghost. Null whenever there is no ghost
+// (e.g. the boss fight), so feedback then only renders to the bottom display.
+let _echoEl = null;
+
 let _onDefeated = () => {};
 
 let _onKeystroke = () => {};
@@ -53,10 +58,14 @@ export function init(inputEl, feedbackEl, onDefeated, onKeystroke) {
 /**
  * Sets the current target string the player must type.
  * @param {string} _line - The target string to match.
+ * @param {HTMLElement|null} [echoEl] - Optional element (the falling ghost's
+ *   code label) to mirror the per-character feedback onto. Pass null/omit to
+ *   render feedback to the bottom display only.
  */
-export function setTarget(_line) {
+export function setTarget(_line, echoEl = null) {
   // Issue #5
   _target = _line ?? '';
+  _echoEl = echoEl ?? null;
 
   if (_inputEl) {
     _inputEl.value = '';
@@ -80,6 +89,9 @@ export function clearTarget() {
   if (_feedbackEl) {
     _feedbackEl.innerHTML = '';
   }
+
+  // Stop mirroring onto any ghost (the boss fight has none).
+  _echoEl = null;
 }
 
 /**
@@ -142,10 +154,6 @@ function escapeHtml(ch) {
  * @param {string} typed - Current value of the input element.
  */
 function renderFeedback(typed) {
-  if (!_feedbackEl) {
-    return;
-  }
-
   let html = '';
   let errorFound = false;
 
@@ -162,7 +170,17 @@ function renderFeedback(typed) {
     }
   }
 
-  _feedbackEl.innerHTML = html;
+  // Bottom feedback overlay.
+  if (_feedbackEl) {
+    _feedbackEl.innerHTML = html;
+  }
+
+  // Mirror the exact same per-character feedback onto the falling ghost.
+  // The 'echo-error' class lets CSS make the ghost react when input is wrong.
+  if (_echoEl) {
+    _echoEl.innerHTML = html;
+    _echoEl.classList.toggle('echo-error', errorFound);
+  }
 }
 
 /**
