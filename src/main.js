@@ -437,7 +437,7 @@ function endRun() {
   if (typingInputEl) {
     typingInputEl.disabled = true;
   }
-  showStats(runState);
+  showStats(statTracker.getSummary(runState));
   showScreen('stats-screen');
 }
 
