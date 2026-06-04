@@ -3,6 +3,7 @@ import { getPreferences, saveAudioSettings } from '../utils/storage.js';
 const AUDIO_PATH = 'assets/audio/';
 const MENU_MUSIC_SRC = 'media/audio/spookymusic.mp3';
 const DEFEAT_POOL_SIZE = 4;
+const LIFE_LOSS_CUTOFF_RATIO = 0.5;
 
 let ambientAudio = null;
 let bossAmbientAudio = null;
@@ -12,6 +13,7 @@ let currentAmbient = null;
 let sfxElements = {};
 let defeatPool = [];
 let defeatIndex = 0;
+const oneShotCutoffTimers = new WeakMap();
 
 let musicVolume = 0.575;
 let sfxVolume = 0.7;
@@ -135,6 +137,11 @@ export function playSFX(name) {
     return;
   }
 
+  if (name === 'life-loss') {
+    playOneShot(sfxElements[name], LIFE_LOSS_CUTOFF_RATIO);
+    return;
+  }
+
   playOneShot(sfxElements[name]);
 }
 
@@ -236,15 +243,45 @@ function switchAmbient(nextAmbient) {
 /**
  * Plays one sound effect from the beginning.
  * @param {HTMLAudioElement} audio - Audio element to play.
+ * @param {number} [cutoffRatio] - Optional fraction of duration to play before stopping.
  */
-function playOneShot(audio) {
+function playOneShot(audio, cutoffRatio) {
   if (!audio) {
     return;
+  }
+
+  const existingCutoff = oneShotCutoffTimers.get(audio);
+  if (existingCutoff) {
+    window.clearTimeout(existingCutoff);
+    oneShotCutoffTimers.delete(audio);
   }
 
   audio.currentTime = 0;
   audio.volume = isMuted ? 0 : sfxVolume;
   audio.play().catch(() => {});
+
+  if (!Number.isFinite(cutoffRatio)) {
+    return;
+  }
+
+  const stopAtCutoff = () => {
+    const timer = window.setTimeout(
+      () => {
+        audio.pause();
+        audio.currentTime = 0;
+        oneShotCutoffTimers.delete(audio);
+      },
+      audio.duration * cutoffRatio * 1000
+    );
+    oneShotCutoffTimers.set(audio, timer);
+  };
+
+  if (Number.isFinite(audio.duration) && audio.duration > 0) {
+    stopAtCutoff();
+    return;
+  }
+
+  audio.addEventListener('loadedmetadata', stopAtCutoff, { once: true });
 }
 
 /**

@@ -92,7 +92,7 @@ describe('waveManager — startWave', () => {
     const snippet = getCurrentSnippet();
     expect(snippet).not.toBeNull();
     expect(enemySystem.spawnEnemy).toHaveBeenCalledTimes(1);
-    expect(enemySystem.spawnEnemy).toHaveBeenCalledWith(snippet.lines[0], 0);
+    expect(enemySystem.spawnEnemy).toHaveBeenCalledWith(snippet.lines[0].trimStart(), 0);
   });
 
   it('sets the typing target to the first line on startWave', () => {
@@ -195,8 +195,8 @@ describe('waveManager — onEnemyDefeated', () => {
     onEnemyDefeated();
     jest.advanceTimersByTime(300);
 
-    expect(enemySystem.spawnEnemy).toHaveBeenCalledWith(snippet.lines[1], 1);
-    expect(typingEngine.setTarget).toHaveBeenCalledWith(snippet.lines[1]);
+    expect(enemySystem.spawnEnemy).toHaveBeenCalledWith(snippet.lines[1].trimStart(), 1);
+    expect(typingEngine.setTarget).toHaveBeenCalledWith(snippet.lines[1].trimStart());
   });
 
   it('advances through all lines in sequence', () => {
@@ -211,7 +211,7 @@ describe('waveManager — onEnemyDefeated', () => {
     for (let i = 1; i < snippet.lines.length - 1; i++) {
       onEnemyDefeated();
       jest.advanceTimersByTime(300);
-      expect(typingEngine.setTarget).toHaveBeenLastCalledWith(snippet.lines[i]);
+      expect(typingEngine.setTarget).toHaveBeenLastCalledWith(snippet.lines[i].trimStart());
     }
   });
 

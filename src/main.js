@@ -97,6 +97,7 @@ let typingHadError = false;
 const MAX_MISTAKES_SHOWN = 5;
 const WAVE_STATS_AUTO_ADVANCE_MS = 4000; // auto-advance to upgrades
 const WAVE_STATS_KEY_ARM_MS = 400; // delay before a keypress can dismiss
+const VIBE_VANISH_BUFFER_PADDING = 12;
 
 // Issue #50 pause-menu: Overlay controls and pause state live in main.js.
 const pauseOverlayEl = document.getElementById('pause-overlay');
@@ -217,7 +218,7 @@ function onDeadlineBreach(_enemyEl) {
   playLifeLossEffect();
 
   if (runState.lives <= 0) {
-    endRun();
+    endRun('death');
     return;
   }
 
@@ -344,6 +345,16 @@ let _vibeVanishActivate = null;
 let _chantBuffer = '';
 
 /**
+ * Normalizes the Vibe Vanish chant so harmless differences like spaces,
+ * punctuation, or casing do not prevent the upgrade from activating.
+ * @param {string} value - Raw chant text.
+ * @returns {string} Uppercase alphanumeric chant text.
+ */
+function normalizeVibeVanishChant(value) {
+  return value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+/**
  * Spawns the Vibe Vanish angel on the play area as a pre-wave phase.
  * The angel falls alone — no ghosts spawn until the Promise settles.
  *
@@ -418,9 +429,10 @@ function spawnVibeVanishAngel() {
  * Ends the current run: clears any remaining enemies and routes the
  * player to the end-of-run Stats screen. statsScreen.show() (Issue #20)
  * will populate the screen from runState when it lands.
+ * @param {'death' | 'completed' | 'quit'} reason - Why the run ended.
  * @returns {void}
  */
-function endRun() {
+function endRun(reason = 'death') {
   // Issue #50 pause-menu: Quit Run can be clicked while the game is paused.
   if (isPaused) {
     isPaused = false;
@@ -433,11 +445,15 @@ function endRun() {
   bossSystem.clearAll?.();
   bossView.clearBoss();
   pauseAudio();
+  playMenuMusic();
   deactivateTyping();
   if (typingInputEl) {
     typingInputEl.disabled = true;
   }
-  showStats(runState);
+  if (runState) {
+    runState.runEndReason = reason;
+  }
+  showStats(statTracker.getSummary(runState));
   showScreen('stats-screen');
 }
 
@@ -1072,7 +1088,7 @@ function playGhostVanishEntry() {
   }
 
   const SPAWN_STAGGER_MS = 180; // delay between each ghost appearing
-  const FALL_BEFORE_DISSOLVE_MS = 380; // how long each ghost falls before fading
+  const FALL_BEFORE_DISSOLVE_MS = 1000; // lets each ghost fall farther before fading
   const DISSOLVE_MS = 500; // must match enemySystem's DISSOLVE_DURATION_MS
 
   const promises = snippet.lines.map(
@@ -1368,7 +1384,7 @@ resumeBtnEl?.addEventListener('click', () => {
 });
 
 quitBtnEl?.addEventListener('click', () => {
-  endRun();
+  endRun('quit');
 });
 
 // ── Vibe Vanish chant detector ─────────────────────────────────
@@ -1385,17 +1401,24 @@ document.addEventListener('keydown', (e) => {
   if (!runState?.vibeVanishActive || !vibeVanishAngelEl) {
     return;
   }
+  if (e.key === 'Backspace') {
+    _chantBuffer = _chantBuffer.slice(0, -1);
+    return;
+  }
   // Ignore modifier-only presses, Enter, Tab, etc.
   if (e.key.length !== 1) {
     return;
   }
-  const chant = runState.vibeVanishChant.toUpperCase();
-  _chantBuffer += e.key.toUpperCase();
+  const chant = runState.vibeVanishChant;
+  _chantBuffer += e.key;
   // Trim to a sliding window so old keystrokes don't block future matches.
-  if (_chantBuffer.length > chant.length) {
-    _chantBuffer = _chantBuffer.slice(-chant.length);
+  if (_chantBuffer.length > chant.length + VIBE_VANISH_BUFFER_PADDING) {
+    _chantBuffer = _chantBuffer.slice(-(chant.length + VIBE_VANISH_BUFFER_PADDING));
   }
-  if (_chantBuffer === chant && _vibeVanishActivate) {
+  if (
+    normalizeVibeVanishChant(_chantBuffer).endsWith(normalizeVibeVanishChant(chant)) &&
+    _vibeVanishActivate
+  ) {
     _chantBuffer = '';
     _vibeVanishActivate();
     _vibeVanishActivate = null;

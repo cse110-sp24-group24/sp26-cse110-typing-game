@@ -160,6 +160,7 @@ export function getSummary(summaryState = state) {
     averageWpm,
     wavesCleared: stats.waveData?.length ?? 0,
     finalScore: summaryState?.score ?? 0,
+    runEndReason: summaryState?.runEndReason ?? null,
     waveData: stats.waveData ?? [],
   };
 }

@@ -155,12 +155,29 @@
     <!-- SCREEN 7: End-of-Run Stats -->
     <div id="stats-screen" class="screen">
       <!-- Populated by Issue #20 (statsScreen.js) -->
+      <canvas id="stats-bats-canvas" class="stats-bats-canvas" aria-hidden="true"></canvas>
+      <img
+        class="stats-flash-ghost"
+        src="media/visuals/SpookyGhosts/ghostly-figure-shrouded-in-mist-on-a-transparent-background-evokes-a-sense-of-mystery-paranormal-ghost-background-free-png.webp"
+        alt=""
+        aria-hidden="true"
+      />
       <div class="stats-content">
         <h2 class="stats-title">Run Over</h2>
-        <div id="stats-accuracy" class="stat-block"></div>
+        <div id="stats-status" class="stats-status"></div>
+        <div id="stats-accuracy" class="stat-block stats-accuracy-hero"></div>
         <div id="stats-wpm" class="stat-block"></div>
         <div id="stats-waves" class="stat-block"></div>
         <div id="stats-score" class="stat-block"></div>
+        <div id="stats-score-formula" class="stats-formula"></div>
+        <button
+          id="stats-breakdown-toggle"
+          type="button"
+          class="btn btn-secondary stats-breakdown-toggle hidden"
+        >
+          Per-wave breakdown
+        </button>
+        <div id="stats-breakdown" class="stats-breakdown collapsed" aria-hidden="true"></div>
         <button id="play-again-btn" class="btn btn-primary">Play Again</button>
       </div>
     </div>

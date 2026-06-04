@@ -211,6 +211,7 @@ describe('statTracker — getSummary', () => {
       averageWpm: 1.6,
       wavesCleared: 1,
       finalScore: 250,
+      runEndReason: null,
       waveData: state.stats.waveData,
     });
   });
@@ -223,6 +224,7 @@ describe('statTracker — getSummary', () => {
       averageWpm: 0,
       wavesCleared: 0,
       finalScore: 0,
+      runEndReason: null,
       waveData: [],
     });
   });

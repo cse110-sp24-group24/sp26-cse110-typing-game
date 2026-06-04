@@ -132,12 +132,12 @@ describe('enemySystem — spawnEnemy', () => {
     expect(secondEnemy.style.left).toBe('27%');
   });
 
-  it('sets default fall duration to 8 seconds', () => {
+  it('sets default fall duration to 16 seconds', () => {
     createTestEnvironment();
 
     const enemyEl = EnemySystem.spawnEnemy('default speed;', 0);
 
-    expect(enemyEl.style.animationDuration).toBe('8s');
+    expect(enemyEl.style.animationDuration).toBe('16s');
   });
 });
 
@@ -158,7 +158,7 @@ describe('enemySystem — fall speed multiplier', () => {
     state.fallSpeedMultiplier = 2;
     const enemyEl = EnemySystem.spawnEnemy('fast enemy;', 1);
 
-    expect(enemyEl.style.animationDuration).toBe('4s');
+    expect(enemyEl.style.animationDuration).toBe('8s');
   });
 
   it('fallSpeedMultiplier 0.5 doubles animation duration', () => {
@@ -167,7 +167,7 @@ describe('enemySystem — fall speed multiplier', () => {
     state.fallSpeedMultiplier = 0.5;
     const enemyEl = EnemySystem.spawnEnemy('slow enemy;', 2);
 
-    expect(enemyEl.style.animationDuration).toBe('16s');
+    expect(enemyEl.style.animationDuration).toBe('32s');
   });
 
   it('clamps very small fallSpeedMultiplier values', () => {
@@ -176,7 +176,7 @@ describe('enemySystem — fall speed multiplier', () => {
     state.fallSpeedMultiplier = 0;
     const enemyEl = EnemySystem.spawnEnemy('clamped enemy;', 0);
 
-    expect(enemyEl.style.animationDuration).toBe('80s');
+    expect(enemyEl.style.animationDuration).toBe('160s');
   });
 });
 
