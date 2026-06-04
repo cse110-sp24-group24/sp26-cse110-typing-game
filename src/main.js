@@ -17,6 +17,10 @@ import {
   stopMenuMusic,
   playSFX as playSfx,
   resume as resumeAudio,
+  setMusicVolume,
+  setSFXVolume,
+  mute,
+  unmute,
 } from './audio/audioManager.js';
 import * as bossSystem from './engine/bossSystem.js';
 import * as enemySystem from './engine/enemySystem.js';
@@ -102,6 +106,7 @@ const WAVE_STATS_KEY_ARM_MS = 400; // delay before a keypress can dismiss
 const pauseOverlayEl = document.getElementById('pause-overlay');
 const resumeBtnEl = document.getElementById('resume-btn');
 const quitBtnEl = document.getElementById('quit-btn');
+const pauseSettingsBtnEl = document.getElementById('pause-settings-btn');
 
 let isPaused = false;
 let typingWasActiveBeforePause = false;
@@ -1354,6 +1359,61 @@ document.querySelectorAll('.btn-language').forEach((btn) => {
   });
 });
 
+// ── Audio settings panel (Issue #23) ───────────────────────────
+
+const settingsBtnEl = document.getElementById('settings-btn');
+const settingsPanelEl = document.getElementById('settings-panel');
+const settingsCloseEl = document.getElementById('settings-close');
+const musicVolumeEl = document.getElementById('music-volume');
+const sfxVolumeEl = document.getElementById('sfx-volume');
+const muteToggleEl = document.getElementById('mute-toggle');
+
+function syncAudioSettingsUI() {
+  const prefs = getPreferences();
+
+  if (musicVolumeEl) {
+    musicVolumeEl.value = String(prefs.musicVolume);
+  }
+
+  if (sfxVolumeEl) {
+    sfxVolumeEl.value = String(prefs.sfxVolume);
+  }
+
+  if (muteToggleEl) {
+    muteToggleEl.checked = prefs.muted;
+  }
+}
+
+function openSettingsPanel() {
+  syncAudioSettingsUI();
+  settingsPanelEl?.classList.remove('hidden');
+}
+
+function closeSettingsPanel() {
+  settingsPanelEl?.classList.add('hidden');
+}
+
+settingsBtnEl?.addEventListener('click', openSettingsPanel);
+settingsCloseEl?.addEventListener('click', closeSettingsPanel);
+pauseSettingsBtnEl?.addEventListener('click', openSettingsPanel);
+
+musicVolumeEl?.addEventListener('input', () => {
+  setMusicVolume(Number(musicVolumeEl.value));
+});
+
+sfxVolumeEl?.addEventListener('input', () => {
+  setSFXVolume(Number(sfxVolumeEl.value));
+});
+
+muteToggleEl?.addEventListener('change', () => {
+  if (muteToggleEl.checked) {
+    mute();
+  } else {
+    unmute();
+  }
+});
+
+syncAudioSettingsUI();
 // ── Pause menu (Issue #50) ─────────────────────────────────────
 // Escape toggles pause only during active wave or boss gameplay.
 document.addEventListener('keydown', (e) => {
