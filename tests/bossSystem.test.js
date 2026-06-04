@@ -141,7 +141,7 @@ describe('bossSystem', () => {
     bossSystem.onLineDefeated();
 
     expect(typingEngine.setTarget).toHaveBeenCalledTimes(1);
-    expect(typingEngine.setTarget).toHaveBeenCalledWith(snippet.lines[1]);
+    expect(typingEngine.setTarget).toHaveBeenCalledWith(snippet.lines[1].trimStart());
     expect(callbacks.onProgressUpdate).toHaveBeenCalledWith({
       currentLine: 2,
       completedLines: 1,
@@ -159,10 +159,10 @@ describe('bossSystem', () => {
     jest.clearAllMocks();
 
     bossSystem.onLineDefeated();
-    expect(typingEngine.setTarget).toHaveBeenLastCalledWith(snippet.lines[1]);
+    expect(typingEngine.setTarget).toHaveBeenLastCalledWith(snippet.lines[1].trimStart());
 
     bossSystem.onLineDefeated();
-    expect(typingEngine.setTarget).toHaveBeenLastCalledWith(snippet.lines[2]);
+    expect(typingEngine.setTarget).toHaveBeenLastCalledWith(snippet.lines[2].trimStart());
   });
 
   it('clears target, cleans up, and fires onBossDefeated after final line', () => {

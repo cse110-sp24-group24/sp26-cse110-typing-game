@@ -16,6 +16,7 @@ export function createRunState(language) {
     wave: 1, // Current wave number
     currentSnippetId: null, // ID of the currently active code snippet
     lives: 3, // Player state
+    runEndReason: null, // 'death', 'completed', or 'quit' once the run ends
     score: 0,
     scoreMultiplier: 1.0, // Score modifiers
     bossScoreMultiplier: 1.0,

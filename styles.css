@@ -723,10 +723,121 @@ body.game-paused #game-screen * {
 }
 
 /* ── End-of-Run Stats Screen (Issue #20) ─────────────────────── */
+#stats-screen {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 22%, rgba(0, 255, 65, 0.18), transparent 32%),
+    radial-gradient(circle at 18% 78%, rgba(0, 120, 42, 0.26), transparent 34%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.28), rgba(5, 15, 8, 0.74)),
+    url('media/visuals/graveyard.jpg') center/cover no-repeat,
+    linear-gradient(180deg, rgba(0, 0, 0, 0.92), rgba(5, 15, 8, 0.96));
+  animation: statsScreenTwitch 4.8s steps(1) infinite;
+}
+
+#stats-screen::before,
+#stats-screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+#stats-screen::before {
+  z-index: 0;
+  background:
+    radial-gradient(ellipse at 12% 34%, rgba(180, 255, 202, 0.18), transparent 42%),
+    radial-gradient(ellipse at 72% 58%, rgba(0, 255, 65, 0.14), transparent 48%),
+    radial-gradient(ellipse at 45% 86%, rgba(210, 255, 222, 0.1), transparent 44%);
+  filter: blur(24px);
+  opacity: 0.54;
+  animation: statsFogDrift 18s linear infinite;
+}
+
+#stats-screen::after {
+  z-index: 4;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.18) 0,
+      rgba(0, 0, 0, 0.18) 1px,
+      transparent 1px,
+      transparent 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 255, 65, 0.04) 0,
+      rgba(0, 255, 65, 0.04) 2px,
+      transparent 2px,
+      transparent 9px
+    );
+  opacity: 0.58;
+  mix-blend-mode: screen;
+  animation: statsStaticTwitch 900ms steps(2) infinite;
+}
+
+.stats-bats-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.78;
+  filter: contrast(1.15) drop-shadow(0 0 18px rgba(0, 255, 65, 0.38));
+}
+
+.stats-flash-ghost {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 5;
+  width: min(82vw, 720px);
+  max-height: 96vh;
+  object-fit: contain;
+  opacity: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 0 18px rgba(210, 255, 222, 0.62))
+    drop-shadow(0 0 42px rgba(0, 255, 65, 0.34));
+  transform: translate(-50%, -50%) scale(1.05);
+  animation: statsGhostFlash 8.5s steps(1) infinite;
+}
+
+#stats-screen .stats-content {
+  z-index: 3;
+  border-color: rgba(0, 255, 65, 0.48);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(4, 18, 8, 0.78), rgba(8, 6, 8, 0.92)),
+    radial-gradient(circle at 50% 0, rgba(0, 255, 65, 0.14), transparent 52%);
+  box-shadow:
+    0 0 32px rgba(0, 255, 65, 0.24),
+    0 0 90px rgba(0, 0, 0, 0.74),
+    inset 0 0 42px rgba(0, 255, 65, 0.12);
+  animation: statsPanelPulse 5.5s ease-in-out infinite;
+}
+
+#stats-screen .stats-title {
+  color: var(--color-ghost);
+  text-shadow:
+    0 0 8px var(--color-ghost),
+    0 0 28px var(--color-ghost-dim),
+    0 0 62px var(--color-ghost-glow);
+  animation:
+    titleFloat 4s ease-in-out infinite,
+    titleFlicker 6s steps(1) infinite;
+}
+
 .stats-content .stat-block {
   margin: 0.65rem auto;
   width: min(85%, 440px);
   font-size: clamp(1rem, 2.4vw, 1.3rem);
+}
+
+#stats-screen .stat-block {
+  background: rgba(0, 12, 5, 0.78);
+  border-color: rgba(0, 255, 65, 0.34);
+  color: #d9ffe4;
+  text-shadow: 0 0 10px rgba(0, 255, 65, 0.32);
 }
 
 .stats-status {
@@ -735,8 +846,17 @@ body.game-paused #game-screen * {
   font-size: clamp(1.4rem, 4vw, 2rem);
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  color: #b8ffc9;
+  text-shadow:
+    0 0 10px rgba(0, 255, 65, 0.68),
+    0 0 28px rgba(0, 255, 65, 0.28);
+}
+
+.stats-status-danger {
   color: var(--blood-bright);
-  text-shadow: 0 0 12px rgba(255, 46, 70, 0.55);
+  text-shadow:
+    0 0 10px rgba(255, 45, 68, 0.86),
+    0 0 26px rgba(177, 15, 33, 0.58);
 }
 
 #stats-accuracy.stats-accuracy-hero {
@@ -751,17 +871,17 @@ body.game-paused #game-screen * {
   font-size: clamp(0.85rem, 2.2vw, 1rem);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink-dim);
+  color: rgba(217, 255, 228, 0.68);
 }
 
 .stats-accuracy-value {
   font-size: clamp(2.2rem, 7vw, 3.4rem);
   font-family: var(--font-display);
   letter-spacing: 0.06em;
-  color: #e8f4ff;
+  color: var(--color-ghost);
   text-shadow:
-    0 0 14px rgba(130, 200, 255, 0.65),
-    0 0 28px rgba(130, 200, 255, 0.25);
+    0 0 14px var(--color-ghost-dim),
+    0 0 32px rgba(0, 255, 65, 0.28);
 }
 
 .stats-formula {
@@ -769,7 +889,7 @@ body.game-paused #game-screen * {
   width: min(90%, 460px);
   font-family: var(--font-code);
   font-size: clamp(0.85rem, 2vw, 1rem);
-  color: var(--ink-dim);
+  color: rgba(217, 255, 228, 0.7);
   letter-spacing: 0.04em;
 }
 
@@ -784,9 +904,9 @@ body.game-paused #game-screen * {
 .stats-breakdown {
   margin: 0 auto 1rem;
   width: min(92%, 480px);
-  border: 1px solid rgba(255, 87, 105, 0.28);
+  border: 1px solid rgba(0, 255, 65, 0.28);
   border-radius: 8px;
-  background: rgba(18, 8, 11, 0.82);
+  background: rgba(0, 12, 5, 0.82);
   overflow: hidden;
 }
 
@@ -801,8 +921,8 @@ body.game-paused #game-screen * {
   padding: 0.45rem 0.75rem;
   font-family: var(--font-code);
   font-size: 0.95rem;
-  color: var(--ink);
-  border-top: 1px solid rgba(255, 87, 105, 0.12);
+  color: #d9ffe4;
+  border-top: 1px solid rgba(0, 255, 65, 0.14);
 }
 
 .stats-breakdown-row--header {
@@ -811,8 +931,8 @@ body.game-paused #game-screen * {
   font-size: 0.8rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-dim);
-  background: rgba(30, 9, 13, 0.55);
+  color: rgba(217, 255, 228, 0.68);
+  background: rgba(0, 28, 10, 0.68);
 }
 
 .stats-breakdown-row span {
@@ -1457,6 +1577,129 @@ body.shield-absorbed {
 
   100% {
     transform: translateX(9%) translateY(0);
+  }
+}
+
+@keyframes statsFogDrift {
+  0% {
+    transform: translateX(-9%) translateY(2%) scale(1.08);
+  }
+
+  45% {
+    transform: translateX(8%) translateY(-3%) scale(1.18);
+  }
+
+  100% {
+    transform: translateX(-9%) translateY(2%) scale(1.08);
+  }
+}
+
+@keyframes statsStaticTwitch {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0.44;
+  }
+
+  32% {
+    transform: translate(-1px, 1px);
+    opacity: 0.62;
+  }
+
+  64% {
+    transform: translate(2px, -1px);
+    opacity: 0.5;
+  }
+}
+
+@keyframes statsScreenTwitch {
+  0%,
+  72%,
+  76%,
+  100% {
+    transform: translate(0, 0);
+    filter: none;
+  }
+
+  73% {
+    transform: translate(-2px, 1px);
+    filter: contrast(1.12) saturate(1.2);
+  }
+
+  74% {
+    transform: translate(2px, -1px);
+    filter: contrast(0.92);
+  }
+}
+
+@keyframes statsPanelPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 32px rgba(0, 255, 65, 0.24),
+      0 0 90px rgba(0, 0, 0, 0.74),
+      inset 0 0 42px rgba(0, 255, 65, 0.12);
+  }
+
+  50% {
+    box-shadow:
+      0 0 46px rgba(0, 255, 65, 0.32),
+      0 0 110px rgba(0, 0, 0, 0.84),
+      inset 0 0 54px rgba(0, 255, 65, 0.18);
+  }
+}
+
+@keyframes statsGhostFlash {
+  0%,
+  16%,
+  22%,
+  54%,
+  60%,
+  78%,
+  84%,
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+
+  17% {
+    opacity: 0.86;
+    transform: translate(-51%, -50%) scale(1.12);
+  }
+
+  18% {
+    opacity: 0.28;
+    transform: translate(-49%, -51%) scale(1.04);
+  }
+
+  20% {
+    opacity: 0.56;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+
+  55% {
+    opacity: 0.74;
+    transform: translate(-50%, -49%) scale(1.09);
+  }
+
+  56% {
+    opacity: 0.18;
+    transform: translate(-52%, -50%) scale(1.02);
+  }
+
+  58% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.07);
+  }
+
+  79% {
+    opacity: 0.9;
+    transform: translate(-48%, -50%) scale(1.14);
+  }
+
+  81% {
+    opacity: 0.62;
+    transform: translate(-50%, -50%) scale(1.1);
   }
 }
 

@@ -32,6 +32,7 @@ const sampleSummary = {
   averageWpm: 48.3,
   wavesCleared: 3,
   finalScore: 4250,
+  runEndReason: 'death',
   waveData: [
     { wpm: 40, accuracy: 88, errorCount: 2, snippetId: 'a', timestamp: 1 },
     { wpm: 52, accuracy: 95, errorCount: 0, snippetId: 'b', timestamp: 2 },
@@ -48,7 +49,10 @@ describe('ui/statsScreen.show', () => {
   it('renders headline stats, formula caption, and death status', () => {
     show(sampleSummary);
 
-    expect(document.getElementById('stats-status').textContent).toBe('You Died');
+    expect(document.getElementById('stats-status').textContent).toBe(
+      "You've Been Possessed by Poor Code"
+    );
+    expect(document.querySelector('.stats-status-danger').textContent).toBe('Possessed');
     const accuracyEl = document.getElementById('stats-accuracy');
     expect(accuracyEl.querySelector('.stats-accuracy-label').textContent).toBe('Total Accuracy');
     expect(accuracyEl.querySelector('.stats-accuracy-value').textContent).toBe('92.5%');
@@ -58,6 +62,18 @@ describe('ui/statsScreen.show', () => {
     expect(document.getElementById('stats-score-formula').textContent).toBe(
       '(WPM × accuracy × wave multiplier)'
     );
+  });
+
+  it('renders completion status when the run was completed', () => {
+    show({ ...sampleSummary, runEndReason: 'completed' });
+
+    expect(document.getElementById('stats-status').textContent).toBe('Run Complete');
+  });
+
+  it('renders quit status when the run was abandoned', () => {
+    show({ ...sampleSummary, runEndReason: 'quit' });
+
+    expect(document.getElementById('stats-status').textContent).toBe('Run Abandoned');
   });
 
   it('builds per-wave breakdown rows and toggles visibility', () => {
