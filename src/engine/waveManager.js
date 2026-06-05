@@ -260,10 +260,7 @@ function clearCurrentWave() {
  * @returns {void}
  */
 function advanceToNextTypeableLine() {
-  while (
-    lineIndex < currentSnippet.lines.length &&
-    currentSnippet.lines[lineIndex].trim() === ''
-  ) {
+  while (lineIndex < currentSnippet.lines.length && currentSnippet.lines[lineIndex].trim() === '') {
     lineIndex += 1;
   }
 }
