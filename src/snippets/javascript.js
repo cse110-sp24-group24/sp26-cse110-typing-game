@@ -13,8 +13,7 @@ export const snippets = [
     id: 'js-reverse-string',
     name: 'reverseString',
     language: 'javascript',
-    description:
-      'Takes a string and returns it with its characters in reverse order.',
+    description: 'Takes a string and returns it with its characters in reverse order.',
     conceptTags: ['loops', 'strings'],
     complexity: 1,
     lines: [
@@ -32,8 +31,7 @@ export const snippets = [
     id: 'js-count-vowels',
     name: 'countVowels',
     language: 'javascript',
-    description:
-      'Counts the number of vowels in a string.',
+    description: 'Counts the number of vowels in a string.',
     conceptTags: ['strings', 'conditionals'],
     complexity: 2,
     lines: [
@@ -52,8 +50,7 @@ export const snippets = [
     id: 'js-find-maximum',
     name: 'findMaximum',
     language: 'javascript',
-    description:
-      'Returns the largest number in an array.',
+    description: 'Returns the largest number in an array.',
     conceptTags: ['arrays', 'math'],
     complexity: 1,
     lines: [
@@ -71,8 +68,7 @@ export const snippets = [
     id: 'js-is-palindrome',
     name: 'isPalindrome',
     language: 'javascript',
-    description:
-      'Checks whether a word reads the same forward and backward.',
+    description: 'Checks whether a word reads the same forward and backward.',
     conceptTags: ['strings', 'two-pointers'],
     complexity: 2,
     lines: [
@@ -92,8 +88,7 @@ export const snippets = [
     id: 'js-sum-array',
     name: 'sumArray',
     language: 'javascript',
-    description:
-      'Adds all numbers in an array and returns the total.',
+    description: 'Adds all numbers in an array and returns the total.',
     conceptTags: ['arrays', 'accumulation'],
     complexity: 1,
     lines: [
