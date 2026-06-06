@@ -159,7 +159,7 @@ function startRun(language) {
       }
 
       const snippet = waveManager.getCurrentSnippet();
-      // Read index before onEnemyDefeated() — it increments lineIndex immediately.
+      // Read the true source index before onEnemyDefeated() advances the spawn cursor.
       const idx = waveManager.getCurrentLineIndex();
 
       // Foresight: if this line was already pre-revealed on the previous defeat,
