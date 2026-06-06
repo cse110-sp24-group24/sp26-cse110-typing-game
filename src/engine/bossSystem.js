@@ -71,7 +71,7 @@ export function startBoss(snippet, state, onBossDefeated, onLifeLost) {
 
   const { lines = [] } = snippet ?? {};
 
-  _lines = Array.isArray(lines) ? lines : [];
+  _lines = Array.isArray(lines) ? lines.filter((line) => line.trim() !== '') : [];
   _lineIndex = 0;
   _state = state;
   _onBossDefeated = onBossDefeated;

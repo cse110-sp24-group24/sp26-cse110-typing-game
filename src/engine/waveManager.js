@@ -27,6 +27,7 @@ let currentSnippet = null;
 let spawnOrder = [];
 let spawnCursor = 0;
 let currentEnemyEl = null;
+let nextLineSpawnTimer = null;
 
 // Tracks snippet IDs used this run so getRandomSnippet can exclude them.
 const usedSnippetIds = [];
@@ -43,6 +44,8 @@ const NEXT_LINE_SPAWN_DELAY_MS = 300;
  * @returns {void}
  */
 export function init(state, onWaveClear, onWaveStart) {
+  clearPendingNextLineSpawn();
+
   stateRef = state;
   onWaveClearRef = onWaveClear;
   onWaveStartRef = onWaveStart;
@@ -61,6 +64,8 @@ export function init(state, onWaveClear, onWaveStart) {
  * @returns {void}
  */
 export function prepareWave() {
+  clearPendingNextLineSpawn();
+
   // state.wave starts at 1 from createRunState — only increment on subsequent waves.
   if (currentSnippet !== null) {
     stateRef.wave += 1;
@@ -109,6 +114,8 @@ export function beginSpawning() {
  * @returns {void}
  */
 export function onEnemyDefeated() {
+  clearPendingNextLineSpawn();
+
   if (currentEnemyEl) {
     enemySystem.defeatEnemy(currentEnemyEl);
     currentEnemyEl = null;
@@ -121,7 +128,8 @@ export function onEnemyDefeated() {
     return;
   }
 
-  window.setTimeout(() => {
+  nextLineSpawnTimer = window.setTimeout(() => {
+    nextLineSpawnTimer = null;
     spawnCurrentLine();
   }, NEXT_LINE_SPAWN_DELAY_MS);
 }
@@ -165,9 +173,10 @@ export function getRemainingLinesCount() {
  * @returns {void}
  */
 export function forceWaveClear() {
+  clearPendingNextLineSpawn();
   currentEnemyEl = null;
   if (currentSnippet) {
-    onWaveClearRef(currentSnippet);
+    clearCurrentWave();
   }
 }
 

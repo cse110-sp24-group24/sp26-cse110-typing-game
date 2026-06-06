@@ -31,8 +31,15 @@ jest.unstable_mockModule('../src/engine/typingEngine.js', () => ({
 }));
 
 // Dynamic imports after mock setup so waveManager loads the mocked modules.
-const { init, prepareWave, startWave, onEnemyDefeated, getCurrentSnippet, getCurrentLineIndex } =
-  await import('../src/engine/waveManager.js');
+const {
+  init,
+  prepareWave,
+  startWave,
+  onEnemyDefeated,
+  forceWaveClear,
+  getCurrentSnippet,
+  getCurrentLineIndex,
+} = await import('../src/engine/waveManager.js');
 const enemySystem = await import('../src/engine/enemySystem.js');
 const typingEngine = await import('../src/engine/typingEngine.js');
 
@@ -280,6 +287,43 @@ describe('waveManager — onEnemyDefeated', () => {
     } finally {
       Math.random = originalRandom;
     }
+  });
+
+  it('skips blank snippet lines instead of spawning empty-target enemies', () => {
+    const state = makeState();
+    init(state, jest.fn(), jest.fn());
+    beginWave();
+
+    const snippet = getCurrentSnippet();
+    const nextTypeableLine = snippet.lines[1];
+    snippet.lines.splice(1, 0, '');
+    jest.clearAllMocks();
+
+    onEnemyDefeated();
+    expect(getCurrentLineIndex()).toBe(2);
+    jest.advanceTimersByTime(300);
+
+    expect(enemySystem.spawnEnemy).toHaveBeenCalledWith(nextTypeableLine.trimStart(), 2);
+    expect(enemySystem.spawnEnemy).not.toHaveBeenCalledWith('', expect.anything());
+    expect(typingEngine.setTarget).toHaveBeenCalledWith(
+      nextTypeableLine.trimStart(),
+      expect.anything()
+    );
+  });
+
+  it('cancels a pending next-line spawn when the wave is force-cleared', () => {
+    const state = makeState();
+    const onWaveClear = jest.fn();
+    init(state, onWaveClear, jest.fn());
+    beginWave();
+    jest.clearAllMocks();
+
+    onEnemyDefeated();
+    forceWaveClear();
+    jest.advanceTimersByTime(300);
+
+    expect(enemySystem.spawnEnemy).not.toHaveBeenCalled();
+    expect(onWaveClear).toHaveBeenCalledTimes(1);
   });
 
   // Acceptance criterion 3: onWaveClear fires after last enemy

@@ -49,6 +49,26 @@ function makeSnippet() {
 }
 
 /**
+ * Creates a boss snippet with a visual blank spacer between CSS blocks.
+ * @returns {object} A snippet object.
+ */
+function makeSnippetWithBlankLine() {
+  return {
+    name: 'CSS Block Boss',
+    language: 'css',
+    lines: [
+      '.parent {',
+      '  position: relative;',
+      '}',
+      '',
+      '.child {',
+      '  position: absolute;',
+      '}',
+    ],
+  };
+}
+
+/**
  * Registers fresh boss callbacks for a test.
  * @returns {object} Callback spies.
  */
@@ -163,6 +183,26 @@ describe('bossSystem', () => {
 
     bossSystem.onLineDefeated();
     expect(typingEngine.setTarget).toHaveBeenLastCalledWith(snippet.lines[2].trimStart());
+  });
+
+  it('skips blank boss lines instead of setting an empty typing target', () => {
+    const snippet = makeSnippetWithBlankLine();
+
+    initBossCallbacks();
+    bossSystem.startBoss(snippet, makeState(), jest.fn(), jest.fn());
+    finishBossIntroTimers();
+
+    jest.clearAllMocks();
+
+    bossSystem.onLineDefeated();
+    expect(typingEngine.setTarget).toHaveBeenLastCalledWith('position: relative;');
+
+    bossSystem.onLineDefeated();
+    expect(typingEngine.setTarget).toHaveBeenLastCalledWith('}');
+
+    bossSystem.onLineDefeated();
+    expect(typingEngine.setTarget).toHaveBeenLastCalledWith('.child {');
+    expect(typingEngine.setTarget).not.toHaveBeenCalledWith('');
   });
 
   it('clears target, cleans up, and fires onBossDefeated after final line', () => {
