@@ -1129,6 +1129,8 @@ body.game-paused #game-screen * {
   background: rgba(33, 10, 14, 0.76);
   color: #ffdde0;
   font-family: var(--font-code);
+  white-space: pre-wrap;
+  tab-size: 2;
 }
 
 #target-line-display .correct {
@@ -1883,18 +1885,10 @@ body.shield-absorbed {
 }
 
 .boss-sprite {
-  position: relative;
-  width: 160px;
-  height: 130px;
-  border: 3px solid rgba(255, 92, 110, 0.52);
-  border-radius: 42% 42% 35% 35%;
-  background:
-    radial-gradient(circle at 35% 38%, rgba(255, 210, 216, 0.24), transparent 14%),
-    linear-gradient(135deg, var(--blood), #3b060c);
-  box-shadow:
-    0 0 30px rgba(255, 45, 68, 0.56),
-    0 18px 35px rgba(0, 0, 0, 0.42),
-    inset 0 0 26px rgba(70, 0, 8, 0.58);
+  width: 270px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 18px rgba(255, 45, 68, 0.7));
 }
 
 .boss-sprite-face {
@@ -2038,6 +2032,72 @@ body.shield-absorbed {
 
   80% {
     transform: translateX(4px);
+  }
+}
+
+/* Boss fight textarea — replaces the single-line input during boss encounters */
+#boss-typing-input {
+  width: 100%;
+  font-family: var(--font-code);
+  font-size: 1rem;
+  padding: 0.62rem 0.72rem;
+  color: #ffe6e9;
+  background: rgba(24, 8, 11, 0.94);
+  border: 1px solid rgba(255, 77, 100, 0.38);
+  border-radius: 8px;
+  outline: none;
+  caret-color: var(--blood-bright);
+  resize: none;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  min-height: 6rem;
+  max-height: 14rem;
+  overflow-y: auto;
+  tab-size: 2;
+  line-height: 1.5;
+}
+
+#boss-typing-input:focus {
+  border-color: rgba(255, 110, 126, 0.78);
+  box-shadow: 0 0 11px rgba(255, 56, 76, 0.6);
+}
+
+/* Boss fight countdown timer */
+.boss-timer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  font-family: var(--font-code);
+  font-size: 0.9rem;
+  color: #ffdde0;
+  letter-spacing: 0.05em;
+}
+
+.boss-timer-value {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--blood-bright);
+  min-width: 3ch;
+  text-align: right;
+  transition: color 300ms ease;
+}
+
+.boss-timer-value.boss-timer-urgent {
+  color: #ff2244;
+  animation: boss-timer-pulse 600ms ease-in-out infinite;
+}
+
+@keyframes boss-timer-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.45;
   }
 }
 

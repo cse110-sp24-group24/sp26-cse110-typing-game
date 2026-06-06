@@ -30,6 +30,7 @@ import {
   deactivate as deactivateTyping,
   init as initTyping,
   isActive as isTypingActive,
+  swapInput,
 } from './engine/typingEngine.js';
 import * as waveManager from './engine/waveManager.js';
 import * as bossView from './ui/bossView.js';
@@ -87,7 +88,24 @@ const livesDisplayEl = document.getElementById('lives-display');
 const playAreaEl = document.getElementById('play-area');
 const deadlineEl = document.getElementById('deadline-line');
 const typingInputEl = document.getElementById('typing-input');
+const bossTypingInputEl = document.getElementById('boss-typing-input');
 const targetLineDisplayEl = document.getElementById('target-line-display');
+
+// Boss textarea: intercept Tab so it inserts a tab character instead of
+// shifting focus, matching the indentation behaviour of a real code editor.
+bossTypingInputEl?.addEventListener('keydown', (e) => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const el = /** @type {HTMLTextAreaElement} */ (e.target);
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    el.value = el.value.slice(0, start) + '\t' + el.value.slice(end);
+    el.selectionStart = start + 1;
+    el.selectionEnd = start + 1;
+    // Manually fire an input event so the typing engine picks up the change.
+    el.dispatchEvent(new Event('input'));
+  }
+});
 
 // ── Per-wave mistake tracking (Issue #19) ──────────────────────
 // The stat tracker only counts errors, so we capture character-level
@@ -125,11 +143,32 @@ bossSystem.init({
     bossView.playEntrance();
     playSfx('boss-sting');
   },
+  onFightStart: () => {
+    // Switch to the multi-line textarea for full-function typing.
+    typingInputEl.hidden = true;
+    bossTypingInputEl.hidden = false;
+    swapInput(bossTypingInputEl);
+  },
   onProgressUpdate: (progress) => {
     bossView.updateProgress(progress);
   },
   onBossCleanup: () => {
+    // Restore the single-line input for the next wave.
+    bossTypingInputEl.hidden = true;
+    typingInputEl.hidden = false;
+    swapInput(typingInputEl);
     bossView.playDefeat();
+  },
+  onTimerTick: (seconds) => {
+    bossView.updateTimer(seconds);
+  },
+  onTimerExpired: () => {
+    // Timer expiry is an instant run-ender — treat it as a full death.
+    bossTypingInputEl.hidden = true;
+    typingInputEl.hidden = false;
+    swapInput(typingInputEl);
+    bossView.clearBoss();
+    endRun('death');
   },
 });
 
@@ -449,6 +488,12 @@ function endRun(reason = 'death') {
   // Issue #50 pause-menu: Clear boss state when quitting mid-fight.
   bossSystem.clearAll?.();
   bossView.clearBoss();
+  // Restore the wave input if the run ended while the boss textarea was active.
+  if (bossTypingInputEl && !bossTypingInputEl.hidden) {
+    bossTypingInputEl.hidden = true;
+    typingInputEl.hidden = false;
+    swapInput(typingInputEl);
+  }
   pauseAudio();
   playMenuMusic();
   deactivateTyping();
@@ -1135,6 +1180,9 @@ function launchWave() {
     return;
   }
 
+  // Consume the one-shot flag immediately so it doesn't carry into future waves.
+  runState.vibeVanishActive = false;
+
   // Set up HUD and code panel without spawning any enemy yet.
   waveManager.setupWave();
 
@@ -1159,8 +1207,13 @@ function launchWave() {
  * @param {boolean} isCorrect - Whether the typed prefix matches so far.
  * @returns {void}
  */
-function onTypingKeystroke(isCorrect) {
+function onTypingKeystroke(isCorrect, typedLength = 0) {
   statTracker.recordKeystroke(isCorrect);
+
+  // Update character-level boss progress bar on every keystroke.
+  if (bossSystem.isActive()) {
+    bossSystem.reportCharProgress(typedLength);
+  }
 
   if (isCorrect) {
     typingHadError = false;
