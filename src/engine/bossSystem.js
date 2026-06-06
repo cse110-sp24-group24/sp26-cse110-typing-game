@@ -383,7 +383,7 @@ function _fireTimerTick() {
 function _clearCountdown() {
   if (_countdownTickId !== null) {
     const timer = _timers.get(_countdownTickId);
-    if (timer?.timeoutId != null) {
+    if (timer?.timeoutId !== null && timer?.timeoutId !== undefined) {
       window.clearTimeout(timer.timeoutId);
     }
     _timers.delete(_countdownTickId);
@@ -392,7 +392,7 @@ function _clearCountdown() {
 
   if (_countdownExpiryId !== null) {
     const timer = _timers.get(_countdownExpiryId);
-    if (timer?.timeoutId != null) {
+    if (timer?.timeoutId !== null && timer?.timeoutId !== undefined) {
       window.clearTimeout(timer.timeoutId);
     }
     _timers.delete(_countdownExpiryId);

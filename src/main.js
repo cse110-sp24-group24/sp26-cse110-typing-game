@@ -1205,6 +1205,7 @@ function launchWave() {
  * Records one keystroke and, on the first frame an error appears, captures
  * the character-level mistake for the wave-stats screen.
  * @param {boolean} isCorrect - Whether the typed prefix matches so far.
+ * @param {number} typedLength - Number of characters currently typed.
  * @returns {void}
  */
 function onTypingKeystroke(isCorrect, typedLength = 0) {
