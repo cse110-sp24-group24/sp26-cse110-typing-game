@@ -123,6 +123,44 @@ export function revealLine(line, language) {
 }
 
 /**
+ * Replace the placeholder at a specific source index with a syntax-highlighted line.
+ * Used when wave lines spawn in randomized order but the code panel must preserve
+ * the original source order.
+ *
+ * @param {number} lineIdx - Original source index of the line to reveal.
+ * @param {string} line - Exact source line, with spaces/tabs preserved.
+ * @param {string} language - Prism language key, e.g. "javascript".
+ * @returns {void}
+ */
+export function revealLineAt(lineIdx, line, language) {
+  _assertInit('revealLineAt');
+
+  if (lineIdx < 0 || lineIdx >= _placeholderEls.length) {
+    console.warn('[codePanel] revealLineAt() called with an invalid line index');
+    return;
+  }
+
+  const placeholder = _placeholderEls[lineIdx];
+
+  if (!placeholder || !placeholder.isConnected) {
+    return;
+  }
+
+  const revealed = _makeRevealedLine(line, language, lineIdx);
+
+  _linesContainer.replaceChild(revealed, placeholder);
+  _placeholderEls[lineIdx] = revealed;
+
+  while (_nextRevealIdx < _placeholderEls.length && !_placeholderEls[_nextRevealIdx].isConnected) {
+    _nextRevealIdx += 1;
+  }
+
+  if (typeof revealed.scrollIntoView === 'function') {
+    revealed.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+}
+
+/**
  * Reveal all lines at once — used immediately before the boss fight
  * so the player can read the complete function.
  *

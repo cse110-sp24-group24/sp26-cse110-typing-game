@@ -3,6 +3,12 @@
  *
  * Uses JSDOM instead of a custom FakeElement because Jest already provides
  * browser-like DOM nodes. This avoids mixing fake elements with real nodes.
+ *
+ * Updated by Sprint 4: duration assertions now use the character-length
+ * fall-speed formula instead of the old flat BASE_FALL_DURATION_SECONDS = 16.
+ * Expected values are derived from:
+ *   duration = (BASE + charCount * PER_CHAR) / (clampedMultiplier * waveDifficulty)
+ *   BASE = 4, PER_CHAR = 0.18, WAVE_SPEEDUP = 0.07, MIN_MULTIPLIER = 0.1
  */
 
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
@@ -10,6 +16,30 @@ import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals
 import * as EnemySystem from '../src/engine/enemySystem.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────────
+
+/**
+ * Mirrors the fall-duration formula from enemySystem.js so tests stay
+ * in sync with the implementation without importing internal constants.
+ * Any change to the constants in the module must be reflected here.
+ * @param {string} line - The code text the enemy displays.
+ * @param {number} wave - Current wave number (1-based).
+ * @param {number} speedMultiplier - RunState fallSpeedMultiplier value.
+ * @returns {string} The expected animationDuration CSS string, e.g. '6.52s'.
+ */
+function expectedDuration(line, wave, speedMultiplier) {
+  const BASE_FALL_DURATION_SECONDS = 4;
+  const PER_CHAR_SECONDS = 0.18;
+  const WAVE_SPEEDUP = 0.07;
+  const MIN_FALL_SPEED_MULTIPLIER = 0.1;
+
+  const charCount = line.length;
+  const lengthBonusSeconds = charCount * PER_CHAR_SECONDS;
+  const waveDifficulty = 1 + (wave - 1) * WAVE_SPEEDUP;
+  const clampedMultiplier = Math.max(speedMultiplier, MIN_FALL_SPEED_MULTIPLIER);
+  const duration =
+    (BASE_FALL_DURATION_SECONDS + lengthBonusSeconds) / (clampedMultiplier * waveDifficulty);
+  return `${duration}s`;
+}
 
 /**
  * Creates a minimal DOM and initializes enemySystem.
@@ -41,6 +71,7 @@ function createTestEnvironment() {
 
   const state = {
     fallSpeedMultiplier: 1,
+    wave: 1,
   };
 
   const breachedEnemies = [];
@@ -89,7 +120,7 @@ function flushAnimationFrame() {
   jest.advanceTimersByTime(16);
 }
 
-// ── enemySystem ───────────────────────────────────────────────────────────
+// ── enemySystem — spawnEnemy ──────────────────────────────────────────────
 
 describe('enemySystem — spawnEnemy', () => {
   beforeEach(() => {
@@ -132,14 +163,49 @@ describe('enemySystem — spawnEnemy', () => {
     expect(secondEnemy.style.left).toBe('27%');
   });
 
-  it('sets default fall duration to 16 seconds', () => {
-    createTestEnvironment();
+  it('sets fall duration based on character length of the line', () => {
+    const { state } = createTestEnvironment();
 
-    const enemyEl = EnemySystem.spawnEnemy('default speed;', 0);
+    const line = 'default speed;';
+    const enemyEl = EnemySystem.spawnEnemy(line, 0);
 
-    expect(enemyEl.style.animationDuration).toBe('16s');
+    expect(enemyEl.style.animationDuration).toBe(
+      expectedDuration(line, state.wave, state.fallSpeedMultiplier)
+    );
+  });
+
+  it('longer lines receive a greater fall duration than shorter lines', () => {
+    const { state } = createTestEnvironment();
+
+    const shortLine = 'x;';
+    const longLine = 'const result = someFunction(argumentOne, argumentTwo);';
+
+    const shortEnemy = EnemySystem.spawnEnemy(shortLine, 0);
+    const longEnemy = EnemySystem.spawnEnemy(longLine, 1);
+
+    const shortDuration = parseFloat(shortEnemy.style.animationDuration);
+    const longDuration = parseFloat(longEnemy.style.animationDuration);
+
+    expect(longDuration).toBeGreaterThan(shortDuration);
+  });
+
+  it('later waves produce shorter fall durations for the same line', () => {
+    const { state } = createTestEnvironment();
+    const line = 'const x = 1;';
+
+    state.wave = 1;
+    const wave1Enemy = EnemySystem.spawnEnemy(line, 0);
+    const wave1Duration = parseFloat(wave1Enemy.style.animationDuration);
+
+    state.wave = 5;
+    const wave5Enemy = EnemySystem.spawnEnemy(line, 1);
+    const wave5Duration = parseFloat(wave5Enemy.style.animationDuration);
+
+    expect(wave5Duration).toBeLessThan(wave1Duration);
   });
 });
+
+// ── enemySystem — fall speed multiplier ──────────────────────────────────
 
 describe('enemySystem — fall speed multiplier', () => {
   beforeEach(() => {
@@ -152,33 +218,69 @@ describe('enemySystem — fall speed multiplier', () => {
     document.body.innerHTML = '';
   });
 
-  it('fallSpeedMultiplier 2 halves animation duration', () => {
+  it('fallSpeedMultiplier 2 halves animation duration relative to multiplier 1', () => {
     const { state } = createTestEnvironment();
+    const line = 'fast enemy;';
 
     state.fallSpeedMultiplier = 2;
-    const enemyEl = EnemySystem.spawnEnemy('fast enemy;', 1);
+    const fastEnemy = EnemySystem.spawnEnemy(line, 1);
 
-    expect(enemyEl.style.animationDuration).toBe('8s');
+    expect(fastEnemy.style.animationDuration).toBe(expectedDuration(line, state.wave, 2));
   });
 
-  it('fallSpeedMultiplier 0.5 doubles animation duration', () => {
+  it('fallSpeedMultiplier 0.5 doubles animation duration relative to multiplier 1', () => {
     const { state } = createTestEnvironment();
+    const line = 'slow enemy;';
 
     state.fallSpeedMultiplier = 0.5;
-    const enemyEl = EnemySystem.spawnEnemy('slow enemy;', 2);
+    const slowEnemy = EnemySystem.spawnEnemy(line, 2);
 
-    expect(enemyEl.style.animationDuration).toBe('32s');
+    expect(slowEnemy.style.animationDuration).toBe(expectedDuration(line, state.wave, 0.5));
   });
 
-  it('clamps very small fallSpeedMultiplier values', () => {
+  it('multiplier 2 produces exactly half the duration of multiplier 1 for the same line', () => {
     const { state } = createTestEnvironment();
+    const line = 'const speed = test;';
+
+    state.fallSpeedMultiplier = 1;
+    const normalEnemy = EnemySystem.spawnEnemy(line, 0);
+    const normalDuration = parseFloat(normalEnemy.style.animationDuration);
+
+    state.fallSpeedMultiplier = 2;
+    const fastEnemy = EnemySystem.spawnEnemy(line, 1);
+    const fastDuration = parseFloat(fastEnemy.style.animationDuration);
+
+    expect(fastDuration).toBeCloseTo(normalDuration / 2, 10);
+  });
+
+  it('clamps very small fallSpeedMultiplier values to MIN_FALL_SPEED_MULTIPLIER', () => {
+    const { state } = createTestEnvironment();
+    const line = 'clamped enemy;';
 
     state.fallSpeedMultiplier = 0;
-    const enemyEl = EnemySystem.spawnEnemy('clamped enemy;', 0);
+    const clampedEnemy = EnemySystem.spawnEnemy(line, 0);
 
-    expect(enemyEl.style.animationDuration).toBe('160s');
+    // 0 clamps to MIN_FALL_SPEED_MULTIPLIER (0.1), so duration equals formula at 0.1.
+    expect(clampedEnemy.style.animationDuration).toBe(expectedDuration(line, state.wave, 0));
+  });
+
+  it('clamped multiplier produces the same duration as MIN_FALL_SPEED_MULTIPLIER', () => {
+    const { state } = createTestEnvironment();
+    const line = 'clamped enemy;';
+
+    state.fallSpeedMultiplier = 0;
+    const zeroMultiplierEnemy = EnemySystem.spawnEnemy(line, 0);
+
+    state.fallSpeedMultiplier = 0.1;
+    const minMultiplierEnemy = EnemySystem.spawnEnemy(line, 1);
+
+    expect(zeroMultiplierEnemy.style.animationDuration).toBe(
+      minMultiplierEnemy.style.animationDuration
+    );
   });
 });
+
+// ── enemySystem — defeatEnemy ─────────────────────────────────────────────
 
 describe('enemySystem — defeatEnemy', () => {
   beforeEach(() => {
@@ -215,6 +317,8 @@ describe('enemySystem — defeatEnemy', () => {
   });
 });
 
+// ── enemySystem — pauseAll and resumeAll ──────────────────────────────────
+
 describe('enemySystem — pauseAll and resumeAll', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -243,6 +347,8 @@ describe('enemySystem — pauseAll and resumeAll', () => {
     expect(secondEnemy.style.animationPlayState).toBe('running');
   });
 });
+
+// ── enemySystem — deadline breach detection ───────────────────────────────
 
 describe('enemySystem — deadline breach detection', () => {
   beforeEach(() => {
@@ -306,6 +412,8 @@ describe('enemySystem — deadline breach detection', () => {
     expect(breachedEnemies).toHaveLength(1);
   });
 });
+
+// ── enemySystem — clearAll ────────────────────────────────────────────────
 
 describe('enemySystem — clearAll', () => {
   beforeEach(() => {

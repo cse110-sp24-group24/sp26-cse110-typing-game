@@ -2,3 +2,4 @@
 node_modules/
 .DS_Store
 ENEMY_SYSTEM_SUMMARY.md
+.vscode/

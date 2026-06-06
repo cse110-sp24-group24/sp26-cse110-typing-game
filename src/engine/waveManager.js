@@ -24,9 +24,9 @@ let onWaveClearRef = null;
 let onWaveStartRef = null;
 
 let currentSnippet = null;
-let lineIndex = 0;
+let spawnOrder = [];
+let spawnCursor = 0;
 let currentEnemyEl = null;
-let nextLineSpawnTimer = null;
 
 // Tracks snippet IDs used this run so getRandomSnippet can exclude them.
 const usedSnippetIds = [];
@@ -43,15 +43,14 @@ const NEXT_LINE_SPAWN_DELAY_MS = 300;
  * @returns {void}
  */
 export function init(state, onWaveClear, onWaveStart) {
-  clearPendingNextLineSpawn();
-
   stateRef = state;
   onWaveClearRef = onWaveClear;
   onWaveStartRef = onWaveStart;
 
   // Reset wave state so a new run always starts clean.
   currentSnippet = null;
-  lineIndex = 0;
+  spawnOrder = [];
+  spawnCursor = 0;
   currentEnemyEl = null;
   usedSnippetIds.length = 0;
 }
@@ -62,8 +61,6 @@ export function init(state, onWaveClear, onWaveStart) {
  * @returns {void}
  */
 export function prepareWave() {
-  clearPendingNextLineSpawn();
-
   // state.wave starts at 1 from createRunState — only increment on subsequent waves.
   if (currentSnippet !== null) {
     stateRef.wave += 1;
@@ -72,7 +69,8 @@ export function prepareWave() {
   currentSnippet = getRandomSnippet(stateRef.language, usedSnippetIds);
   usedSnippetIds.push(currentSnippet.id);
   stateRef.currentSnippetId = currentSnippet.id;
-  lineIndex = 0;
+  spawnOrder = buildSpawnOrder(currentSnippet.lines.length);
+  spawnCursor = 0;
 }
 
 /**
@@ -111,23 +109,19 @@ export function beginSpawning() {
  * @returns {void}
  */
 export function onEnemyDefeated() {
-  clearPendingNextLineSpawn();
-
   if (currentEnemyEl) {
     enemySystem.defeatEnemy(currentEnemyEl);
     currentEnemyEl = null;
   }
 
-  lineIndex += 1;
-  advanceToNextTypeableLine();
+  spawnCursor += 1;
 
-  if (lineIndex >= currentSnippet.lines.length) {
-    clearCurrentWave();
+  if (spawnCursor >= spawnOrder.length) {
+    onWaveClearRef(currentSnippet);
     return;
   }
 
-  nextLineSpawnTimer = window.setTimeout(() => {
-    nextLineSpawnTimer = null;
+  window.setTimeout(() => {
     spawnCurrentLine();
   }, NEXT_LINE_SPAWN_DELAY_MS);
 }
@@ -142,17 +136,17 @@ export function getCurrentSnippet() {
 }
 
 /**
- * Returns the zero-based index of the line currently being fought.
+ * Returns the true source index of the line currently being fought.
  * main.js reads this before onEnemyDefeated() to reveal the correct code-panel line.
  * @returns {number}
  */
 export function getCurrentLineIndex() {
-  return lineIndex;
+  return spawnOrder[spawnCursor] ?? 0;
 }
 
 /**
- * Returns how many lines remain in the current wave (including the one
- * currently being typed). Returns 0 before the first startWave() call.
+ * Returns how many lines remain in the current wave, including the one
+ * currently being typed. Returns 0 before the first startWave() call.
  * Used by main.js to guard the Two Ghosts One Stone double-defeat.
  * @returns {number}
  */
@@ -160,7 +154,8 @@ export function getRemainingLinesCount() {
   if (!currentSnippet) {
     return 0;
   }
-  return Math.max(0, currentSnippet.lines.length - lineIndex);
+
+  return Math.max(0, spawnOrder.length - spawnCursor);
 }
 
 /**
@@ -170,32 +165,26 @@ export function getRemainingLinesCount() {
  * @returns {void}
  */
 export function forceWaveClear() {
-  clearPendingNextLineSpawn();
   currentEnemyEl = null;
   if (currentSnippet) {
-    clearCurrentWave();
+    onWaveClearRef(currentSnippet);
   }
 }
 
 /**
- * Skips `n` lines starting from the current lineIndex (inclusive) and
- * spawns the enemy at the new position, or fires onWaveClear if the
+ * Skips `n` spawned lines starting from the current spawn cursor and
+ * spawns the enemy at the new cursor, or fires onWaveClear if the
  * wave is exhausted. Used by Back from the Dead.
  *
- * @param {number} n - Number of lines to skip (≥ 1).
+ * @param {number} n - Number of spawned lines to skip (>= 1).
  * @returns {void}
  */
 export function skipLines(n) {
-  clearPendingNextLineSpawn();
-
-  // The current enemy element is already gone (breached/removed by
-  // enemySystem), so just null the reference and advance the counter.
   currentEnemyEl = null;
-  lineIndex += n;
-  advanceToNextTypeableLine();
+  spawnCursor += n;
 
-  if (lineIndex >= currentSnippet.lines.length) {
-    clearCurrentWave();
+  if (spawnCursor >= spawnOrder.length) {
+    onWaveClearRef(currentSnippet);
     return;
   }
 
@@ -205,62 +194,43 @@ export function skipLines(n) {
 // ── Private helpers ─────────────────────────────────────────────────────────
 
 /**
- * Spawns the enemy for the current line index and sets it as the typing target.
+ * Spawns the enemy for the current spawn cursor and sets it as the typing target.
  * Only one enemy is on screen at a time (single-enemy MVP model).
  * @returns {void}
  */
 function spawnCurrentLine() {
-  if (!currentSnippet?.lines) {
-    return;
-  }
+  const sourceLineIndex = getCurrentLineIndex();
+  const line = currentSnippet.lines[sourceLineIndex].trimStart();
 
-  advanceToNextTypeableLine();
-
-  if (lineIndex >= currentSnippet.lines.length) {
-    clearCurrentWave();
-    return;
-  }
-
-  // Strip leading whitespace so the player never has to type invisible
-  // indentation. The code panel keeps the raw indented line for context;
-  // the enemy ghost and the typing target both use the trimmed version.
-  // Strip leading whitespace so the player never has to type invisible
-  // indentation. The code panel keeps the raw indented line for context.
-  const line = currentSnippet.lines[lineIndex].trimStart();
-
-  currentEnemyEl = enemySystem.spawnEnemy(line, lineIndex);
+  currentEnemyEl = enemySystem.spawnEnemy(line, spawnCursor);
   // Mirror typing feedback onto this ghost's code label as the player types.
   setTarget(line, enemySystem.getEnemyCodeEl(currentEnemyEl));
 }
 
 /**
- * Cancels a delayed spawn that no longer matches the current wave state.
- * @returns {void}
+ * Builds a shuffled spawn order containing every source line index once.
+ * @param {number} lineCount - Number of lines in the current snippet.
+ * @returns {number[]} Shuffled source line indices.
  */
-function clearPendingNextLineSpawn() {
-  if (nextLineSpawnTimer === null) {
-    return;
-  }
-
-  window.clearTimeout(nextLineSpawnTimer);
-  nextLineSpawnTimer = null;
+function buildSpawnOrder(lineCount) {
+  const order = Array.from({ length: lineCount }, (_, index) => index);
+  return shuffleArray(order);
 }
 
 /**
- * Finishes the active wave exactly once from the wave manager's perspective.
- * @returns {void}
+ * Shuffles an array using Fisher-Yates.
+ * @param {number[]} values - Values to shuffle.
+ * @returns {number[]} Shuffled copy of the input values.
  */
-function clearCurrentWave() {
-  clearPendingNextLineSpawn();
-  onWaveClearRef(currentSnippet);
-}
+function shuffleArray(values) {
+  const shuffled = [...values];
 
-/**
- * Moves lineIndex past visual spacer lines that cannot be typed.
- * @returns {void}
- */
-function advanceToNextTypeableLine() {
-  while (lineIndex < currentSnippet.lines.length && currentSnippet.lines[lineIndex].trim() === '') {
-    lineIndex += 1;
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    const temp = shuffled[index];
+    shuffled[index] = shuffled[swapIndex];
+    shuffled[swapIndex] = temp;
   }
+
+  return shuffled;
 }

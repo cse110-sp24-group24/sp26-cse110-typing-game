@@ -7,6 +7,7 @@ import * as audioManager from '../audio/audioManager.js';
  * via requestAnimationFrame, and the life deduction signal.
  *
  * Implemented by Issue #6.
+ * Updated by Sprint 4: character-length fall speed (Part A).
  */
 
 let playAreaElRef = null;
@@ -18,7 +19,32 @@ let isPaused = false;
 
 const activeEnemies = new Set();
 
-const BASE_FALL_DURATION_SECONDS = 16; // doubled from 8 → enemies fall at 0.5× original speed
+// ---------------------------------------------------------------------------
+// Fall-duration constants
+// ---------------------------------------------------------------------------
+
+/**
+ * Baseline fall duration (seconds) for a zero-length line at wave 1.
+ * Acts as the minimum airtime floor before any length bonus is added.
+ * Kept intentionally short — the length bonus carries most of the duration.
+ */
+const BASE_FALL_DURATION_SECONDS = 4;
+
+/**
+ * Extra fall time granted per character in the line (seconds).
+ * At 0.18 s/char a 60-char line earns +10.8 s on top of the base,
+ * giving ~14.8 s at wave 1 — comfortable for ~200 WPM (60 chars ≈ 1.8 s of
+ * raw typing), with ample margin for reading time.
+ */
+const PER_CHAR_SECONDS = 0.18;
+
+/**
+ * Fractional speed increase applied per completed wave beyond wave 1.
+ * 0.07 → wave 2 is 7 % faster, wave 8 is 49 % faster, etc.
+ * Keeps later waves challenging without making long lines unplayable.
+ */
+const WAVE_SPEEDUP = 0.07;
+
 const DISSOLVE_DURATION_MS = 500;
 const BREACH_REMOVE_DELAY_MS = 350;
 const MIN_FALL_SPEED_MULTIPLIER = 0.1;
@@ -83,6 +109,36 @@ const ENEMY_MARKUPS = [
 ];
 
 /**
+ * Computes the CSS animation-duration (in seconds) for a falling enemy line.
+ *
+ * The formula has three components:
+ *   1. A fixed base (BASE_FALL_DURATION_SECONDS) — ensures every enemy has
+ *      at least minimal airtime even for very short lines.
+ *   2. A character-length bonus (PER_CHAR_SECONDS × charCount) — longer lines
+ *      fall proportionally slower, giving the player time to type them.
+ *   3. A wave-difficulty divisor (1 + (wave − 1) × WAVE_SPEEDUP) — gradually
+ *      shortens airtime as waves progress, maintaining long-run challenge.
+ *
+ * The Phantom Speed upgrade's `speedMultiplier` is applied as an additional
+ * divisor so both systems compose without interfering with each other.
+ * The result is clamped so `speedMultiplier` can never shrink duration below
+ * what MIN_FALL_SPEED_MULTIPLIER implies.
+ *
+ * @param {string} line - The code text the enemy displays.
+ * @param {number} wave - Current wave number (1-based).
+ * @param {number} speedMultiplier - The RunState fallSpeedMultiplier value.
+ * @returns {number} Animation duration in seconds.
+ */
+function computeFallDuration(line, wave, speedMultiplier) {
+  const charCount = line.length;
+  const lengthBonusSeconds = charCount * PER_CHAR_SECONDS;
+  // waveDifficulty ramps from 1.0 at wave 1 upward; clamp to ≥ 1 defensively.
+  const waveDifficulty = 1 + (wave - 1) * WAVE_SPEEDUP;
+  const clampedMultiplier = Math.max(speedMultiplier, MIN_FALL_SPEED_MULTIPLIER);
+  return (BASE_FALL_DURATION_SECONDS + lengthBonusSeconds) / (clampedMultiplier * waveDifficulty);
+}
+
+/**
  * Initializes the enemy system with DOM references and runtime dependencies.
  * @param {HTMLElement} playAreaEl - The play area container where enemies are spawned.
  * @param {HTMLElement} deadlineEl - The DOM element representing the deadline line.
@@ -100,8 +156,13 @@ export function init(playAreaEl, deadlineEl, state, onDeadlineBreach) {
 
 /**
  * Creates and spawns a falling enemy element for a code line.
+ *
+ * Fall duration is computed from the line's character count, the current wave,
+ * and the active speed multiplier — longer lines fall slower, and every wave
+ * tightens the window slightly (see `computeFallDuration`).
+ *
  * @param {string} line - The code text displayed on the enemy.
- * @param {number} lineIndex - The wave line index used for horizontal positioning.
+ * @param {number} lineIndex - The spawn slot index used for horizontal positioning.
  * @returns {HTMLElement | null} The spawned enemy element, or null if the system is not initialized.
  */
 export function spawnEnemy(line, lineIndex = 0) {
@@ -113,10 +174,12 @@ export function spawnEnemy(line, lineIndex = 0) {
   enemyEl.className = 'enemy';
   enemyEl.style.left = `${10 + (lineIndex % 5) * 17}%`;
 
-  const speedMultiplier = Math.max(stateRef?.fallSpeedMultiplier ?? 1, MIN_FALL_SPEED_MULTIPLIER);
-  enemyEl.style.animationDuration = `${BASE_FALL_DURATION_SECONDS / speedMultiplier}s`;
+  const speedMultiplier = stateRef?.fallSpeedMultiplier ?? 1;
+  const wave = stateRef?.wave ?? 1;
+  const duration = computeFallDuration(line, wave, speedMultiplier);
+  enemyEl.style.animationDuration = `${duration}s`;
 
-  const markupIndex = ((stateRef?.wave ?? 1) - 1) % ENEMY_MARKUPS.length;
+  const markupIndex = (wave - 1) % ENEMY_MARKUPS.length;
   enemyEl.dataset.spriteIndex = String(markupIndex);
   enemyEl.innerHTML = ENEMY_MARKUPS[markupIndex];
 
