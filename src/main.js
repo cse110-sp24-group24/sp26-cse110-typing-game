@@ -36,7 +36,7 @@ import * as bossView from './ui/bossView.js';
 import {
   init as initCodePanel,
   reset as resetCodePanel,
-  revealLine,
+  revealLineAt,
   showFull,
 } from './ui/codePanel.js';
 import * as statTracker from './utils/statTracker.js';
@@ -165,7 +165,7 @@ function startRun(language) {
       // Foresight: if this line was already pre-revealed on the previous defeat,
       // skip the reveal call so the code panel index stays in sync.
       if (!nextLinePreRevealed) {
-        revealLine(snippet.lines[idx], runState.language);
+        revealLineAt(idx, snippet.lines[idx], runState.language);
       }
       nextLinePreRevealed = false;
 
@@ -180,7 +180,7 @@ function startRun(language) {
       // the player can see what's coming while they type the current ghost.
       if (runState?.revealNext && waveManager.getRemainingLinesCount() > 0) {
         const nextIdx = waveManager.getCurrentLineIndex();
-        revealLine(snippet.lines[nextIdx], runState.language);
+        revealLineAt(nextIdx, snippet.lines[nextIdx], runState.language);
         nextLinePreRevealed = true;
       }
     },

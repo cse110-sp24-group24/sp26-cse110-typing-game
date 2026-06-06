@@ -5,11 +5,11 @@
  * Uses jest.unstable_mockModule (the correct ESM API) followed by dynamic
  * imports so waveManager picks up the mocked versions of its dependencies.
  *
- * Covers all five acceptance criteria from the issue:
+ * Covers wave behavior:
  *   1. Wave loads snippet and spawns first enemy immediately
- *   2. Each enemy defeat spawns the next enemy in sequence
+ *   2. Lines spawn through a shuffled source-index order
  *   3. After the last enemy is defeated, onWaveClear fires with the snippet
- *   4. state.wave increments at the start of each new wave (not the first)
+ *   4. state.wave increments at the start of each new wave, except the first
  *   5. The same snippet is never used twice in the same run
  */
 
@@ -55,6 +55,25 @@ function beginWave() {
   startWave();
 }
 
+/**
+ * Returns the most recent call made to a Jest mock function.
+ * @param {Function} mockFn - Jest mock function to inspect.
+ * @returns {Array} The most recent call arguments.
+ */
+function getLastMockCall(mockFn) {
+  return mockFn.mock.calls[mockFn.mock.calls.length - 1];
+}
+
+/**
+ * Returns the trimmed source line for the current enemy.
+ * @returns {string} Current enemy line text.
+ */
+function getCurrentTrimmedLine() {
+  const snippet = getCurrentSnippet();
+  const currentIndex = getCurrentLineIndex();
+  return snippet.lines[currentIndex].trimStart();
+}
+
 // ── init ──────────────────────────────────────────────────────────────────
 
 describe('waveManager — init', () => {
@@ -90,19 +109,26 @@ describe('waveManager — startWave', () => {
     beginWave();
 
     const snippet = getCurrentSnippet();
+    const currentIndex = getCurrentLineIndex();
+
     expect(snippet).not.toBeNull();
     expect(enemySystem.spawnEnemy).toHaveBeenCalledTimes(1);
-    expect(enemySystem.spawnEnemy).toHaveBeenCalledWith(snippet.lines[0].trimStart(), 0);
+    expect(enemySystem.spawnEnemy).toHaveBeenCalledWith(snippet.lines[currentIndex].trimStart(), 0);
   });
 
-  it('sets the typing target to the first line on startWave', () => {
+  it('sets the typing target to the current shuffled line on startWave', () => {
     const state = makeState();
     init(state, jest.fn(), jest.fn());
     beginWave();
 
     const snippet = getCurrentSnippet();
+    const currentIndex = getCurrentLineIndex();
+
     // Second arg is the ghost code element used to mirror typing feedback.
-    expect(typingEngine.setTarget).toHaveBeenCalledWith(snippet.lines[0], expect.anything());
+    expect(typingEngine.setTarget).toHaveBeenCalledWith(
+      snippet.lines[currentIndex].trimStart(),
+      expect.anything()
+    );
   });
 
   it('calls onWaveStart with the chosen snippet', () => {
@@ -142,7 +168,7 @@ describe('waveManager — startWave', () => {
 
     // Complete first wave, then start second.
     const firstLen = getCurrentSnippet().lines.length;
-    for (let i = 0; i < firstLen; i++) {
+    for (let i = 0; i < firstLen; i += 1) {
       onEnemyDefeated();
     }
     prepareWave();
@@ -151,7 +177,7 @@ describe('waveManager — startWave', () => {
 
     // Complete second wave, then start third.
     const secondLen = getCurrentSnippet().lines.length;
-    for (let i = 0; i < secondLen; i++) {
+    for (let i = 0; i < secondLen; i += 1) {
       onEnemyDefeated();
     }
     prepareWave();
@@ -183,35 +209,76 @@ describe('waveManager — onEnemyDefeated', () => {
     expect(enemySystem.defeatEnemy).toHaveBeenCalledWith(spawnedEl);
   });
 
-  // Acceptance criterion 2: next enemy in sequence
-  it('spawns the next line after a defeat', () => {
+  // Acceptance criterion 2: next enemy follows the shuffled spawn order.
+  it('spawns the next shuffled line after a defeat', () => {
     const state = makeState();
     init(state, jest.fn(), jest.fn());
     beginWave();
 
-    const snippet = getCurrentSnippet();
     jest.clearAllMocks();
 
     onEnemyDefeated();
     jest.advanceTimersByTime(300);
 
-    expect(enemySystem.spawnEnemy).toHaveBeenCalledWith(snippet.lines[1].trimStart(), 1);
-    expect(typingEngine.setTarget).toHaveBeenCalledWith(snippet.lines[1].trimStart());
+    expect(enemySystem.spawnEnemy).toHaveBeenCalledWith(getCurrentTrimmedLine(), 1);
+    expect(typingEngine.setTarget).toHaveBeenCalledWith(getCurrentTrimmedLine(), expect.anything());
   });
 
-  it('advances through all lines in sequence', () => {
+  it('advances through every line in shuffled order exactly once', () => {
     const state = makeState();
     init(state, jest.fn(), jest.fn());
     beginWave();
 
     const snippet = getCurrentSnippet();
+    const seenSourceIndexes = [getCurrentLineIndex()];
+
     jest.clearAllMocks();
 
-    // Defeat all but the last line, checking each target in order.
-    for (let i = 1; i < snippet.lines.length - 1; i++) {
+    // Defeat all but the last active line, checking each next target.
+    for (let i = 1; i < snippet.lines.length; i += 1) {
       onEnemyDefeated();
       jest.advanceTimersByTime(300);
-      expect(typingEngine.setTarget).toHaveBeenLastCalledWith(snippet.lines[i].trimStart());
+
+      const currentIndex = getCurrentLineIndex();
+      seenSourceIndexes.push(currentIndex);
+
+      expect(typingEngine.setTarget).toHaveBeenLastCalledWith(
+        snippet.lines[currentIndex].trimStart(),
+        expect.anything()
+      );
+    }
+
+    expect(seenSourceIndexes).toHaveLength(snippet.lines.length);
+    expect(new Set(seenSourceIndexes).size).toBe(snippet.lines.length);
+  });
+
+  it('spawns lines in a shuffled order instead of source order', () => {
+    const originalRandom = Math.random;
+    Math.random = jest.fn(() => 0);
+
+    try {
+      const state = makeState();
+      init(state, jest.fn(), jest.fn());
+      beginWave();
+
+      const snippet = getCurrentSnippet();
+      const sourceOrderLines = snippet.lines.map((line) => line.trimStart());
+      const spawnedLines = [getLastMockCall(enemySystem.spawnEnemy)[0]];
+
+      for (let i = 1; i < snippet.lines.length; i += 1) {
+        onEnemyDefeated();
+        jest.advanceTimersByTime(300);
+        spawnedLines.push(getLastMockCall(enemySystem.spawnEnemy)[0]);
+      }
+
+      expect(spawnedLines).toHaveLength(sourceOrderLines.length);
+      expect(new Set(spawnedLines)).toEqual(new Set(sourceOrderLines));
+
+      if (sourceOrderLines.length > 1) {
+        expect(spawnedLines).not.toEqual(sourceOrderLines);
+      }
+    } finally {
+      Math.random = originalRandom;
     }
   });
 
@@ -223,7 +290,7 @@ describe('waveManager — onEnemyDefeated', () => {
     beginWave();
 
     const lineCount = getCurrentSnippet().lines.length;
-    for (let i = 0; i < lineCount; i++) {
+    for (let i = 0; i < lineCount; i += 1) {
       onEnemyDefeated();
       jest.advanceTimersByTime(300);
     }
@@ -242,7 +309,7 @@ describe('waveManager — onEnemyDefeated', () => {
     const lineCount = getCurrentSnippet().lines.length;
     jest.clearAllMocks();
 
-    for (let i = 0; i < lineCount; i++) {
+    for (let i = 0; i < lineCount; i += 1) {
       onEnemyDefeated();
       jest.advanceTimersByTime(300);
     }
@@ -252,14 +319,23 @@ describe('waveManager — onEnemyDefeated', () => {
     expect(enemySystem.spawnEnemy).toHaveBeenCalledTimes(lineCount - 1);
   });
 
-  it('getCurrentLineIndex returns the index of the current enemy', () => {
+  it('getCurrentLineIndex returns the true source index of the current enemy', () => {
     const state = makeState();
     init(state, jest.fn(), jest.fn());
     beginWave();
-    expect(getCurrentLineIndex()).toBe(0);
+
+    let currentIndex = getCurrentLineIndex();
+    let lastSpawnCall = getLastMockCall(enemySystem.spawnEnemy);
+
+    expect(lastSpawnCall[0]).toBe(getCurrentSnippet().lines[currentIndex].trimStart());
+
     onEnemyDefeated();
     jest.advanceTimersByTime(300);
-    expect(getCurrentLineIndex()).toBe(1);
+
+    currentIndex = getCurrentLineIndex();
+    lastSpawnCall = getLastMockCall(enemySystem.spawnEnemy);
+
+    expect(lastSpawnCall[0]).toBe(getCurrentSnippet().lines[currentIndex].trimStart());
   });
 });
 
