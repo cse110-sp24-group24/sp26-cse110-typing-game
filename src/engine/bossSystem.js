@@ -329,7 +329,7 @@ function _scheduleCountdownTick() {
   }
 
   // Fire on the next whole-second boundary of the remaining time.
-  const msUntilNextTick = (_countdownRemainingMs % 1000) || 1000;
+  const msUntilNextTick = _countdownRemainingMs % 1000 || 1000;
 
   _countdownTickId = setManagedTimeout(() => {
     _countdownTickId = null;
