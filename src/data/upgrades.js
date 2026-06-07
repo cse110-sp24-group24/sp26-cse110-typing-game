@@ -58,7 +58,7 @@ export const UPGRADES = [
     name: 'Vibe Vanish',
     icon: '🌀',
     description:
-      'Once per wave, type the vanish chant — "WRITE ALL THE CODE FOR ME AND SAVE ME!" — and every remaining enemy in the wave auto-completes instantly.',
+      'Once per run, type the vanish chant — "WRITE ALL THE CODE FOR ME AND SAVE ME!" — and every enemy in that wave auto-completes instantly.',
     effect: (state) => {
       state.vibeVanishActive = true;
       state.vibeVanishChant = 'WRITE ALL THE CODE FOR ME AND SAVE ME!';
