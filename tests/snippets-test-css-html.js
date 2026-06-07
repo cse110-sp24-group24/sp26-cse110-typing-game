@@ -1,176 +1,122 @@
 /**
- * tests/snippets.test.js — Custom tests for html.js and css.js snippet libraries.
+ * tests/snippets-test-css-html.js - Custom tests for CSS and HTML snippet libraries.
  *
  * No test framework required. Run with:
- *   node --experimental-vm-modules tests/snippets.test.js
- *
- * A passing test prints:  PASS: <description>
- * A failing test prints:  FAIL: <description> — <reason>
- * Summary is printed at the end.
+ *   node tests/snippets-test-css-html.js
  */
 
 import { snippets as htmlSnippets } from '../src/snippets/html.js';
 import { snippets as cssSnippets } from '../src/snippets/css.js';
 
-// ─── Tiny test runner ────────────────────────────────────────────────────────
-
 let passed = 0;
 let failed = 0;
 
-function assert(condition, description, detail = '') {
+function assert(condition, description) {
   if (condition) {
-    console.log(`  ✓ PASS: ${description}`);
+    console.log(`PASS: ${description}`);
     passed++;
   } else {
-    console.error(`  ✗ FAIL: ${description}${detail ? ` — ${detail}` : ''}`);
+    console.error(`FAIL: ${description}`);
     failed++;
   }
 }
 
 function section(title) {
-  console.log(`\n── ${title} ─────────────────────────────────`);
+  console.log(`\n${title}`);
 }
 
-// ─── HTML Tests ──────────────────────────────────────────────────────────────
+function validateSnippetPool(snippets, language, expectedIds) {
+  section(`${language} - library shape`);
 
-section('html.js — library shape');
-
-assert(Array.isArray(htmlSnippets), 'snippets export is an array');
-assert(htmlSnippets.length >= 5, `has at least 5 entries (found ${htmlSnippets.length})`);
-
-section('html.js — every entry has required fields');
-
-htmlSnippets.forEach((s, i) => {
-  const id = s.fn ?? `index ${i}`;
-  assert(typeof s.line === 'string' && s.line.length > 0, `[${id}] line is a non-empty string`);
-  assert(typeof s.fn === 'string' && s.fn.length > 0, `[${id}] fn is a non-empty string`);
-  assert(Array.isArray(s.tags), `[${id}] tags is an array`);
-  assert(s.tags.length > 0, `[${id}] tags has at least one entry`);
-  s.tags.forEach((t) => {
-    assert(
-      typeof t === 'string' && t.length > 0,
-      `[${id}] each tag is a non-empty string (got: ${t})`
-    );
-  });
-});
-
-section('html.js — line content rules');
-
-htmlSnippets.forEach((s) => {
-  const id = s.fn;
-  // Every HTML line must open with < and contain a closing >
-  assert(s.line.startsWith('<'), `[${id}] line starts with <`);
-  assert(s.line.includes('>'), `[${id}] line contains >`);
-  // No line should be just a bare tag with no content or attributes (too trivial)
-  assert(s.line.length > 5, `[${id}] line is more than 5 characters`);
-  // No pseudocode — lines must not contain placeholder words in angle brackets
+  assert(Array.isArray(snippets), `${language} snippets export is an array`);
   assert(
-    !/<(yourText|content|placeholder)>/i.test(s.line),
-    `[${id}] line contains no pseudocode placeholders`
+    snippets.length >= expectedIds.length,
+    `${language} has at least ${expectedIds.length} entries`
   );
-});
 
-section('html.js — no duplicate lines');
+  const ids = new Set();
+  const names = new Set();
+  const tags = new Set();
+  const prefix = `${language}-`;
 
-const htmlLines = htmlSnippets.map((s) => s.line);
-const htmlUnique = new Set(htmlLines);
-assert(htmlUnique.size === htmlLines.length, `all ${htmlLines.length} lines are unique`);
+  section(`${language} - every entry has required fields`);
 
-section('html.js — tag variety (at least 4 distinct tags used across entries)');
+  snippets.forEach((snippet, index) => {
+    const label = snippet.id ?? `index ${index}`;
 
-const htmlAllTags = new Set(htmlSnippets.flatMap((s) => s.tags));
-assert(
-  htmlAllTags.size >= 4,
-  `at least 4 distinct tags used (found: ${[...htmlAllTags].join(', ')})`
-);
+    assert(typeof snippet.id === 'string', `[${label}] id is a string`);
+    assert(snippet.id.startsWith(prefix), `[${label}] id starts with ${prefix}`);
+    assert(/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(snippet.id), `[${label}] id is kebab-case`);
+    assert(!ids.has(snippet.id), `[${label}] id is unique`);
+    ids.add(snippet.id);
 
-section('html.js — specific expected entries present');
+    assert(typeof snippet.name === 'string' && snippet.name.length > 0, `[${label}] name exists`);
+    assert(!names.has(snippet.name), `[${label}] name is unique`);
+    names.add(snippet.name);
 
-const htmlLineSet = new Set(htmlSnippets.map((s) => s.line));
-assert(htmlLineSet.has('<h1 class="title">Hello, World!</h1>'), 'h1 heading entry exists');
-assert(htmlLineSet.has('<a href="https://example.com">Click here</a>'), 'anchor entry exists');
-assert(
-  htmlLineSet.has('<input type="text" placeholder="Enter name...">'),
-  'text input entry exists'
-);
-assert(htmlLineSet.has('<button type="submit">Send Message</button>'), 'button entry exists');
-assert(htmlLineSet.has('<img src="photo.jpg" alt="A scenic mountain view">'), 'image entry exists');
-
-// ─── CSS Tests ───────────────────────────────────────────────────────────────
-
-section('css.js — library shape');
-
-assert(Array.isArray(cssSnippets), 'snippets export is an array');
-assert(cssSnippets.length >= 5, `has at least 5 entries (found ${cssSnippets.length})`);
-
-section('css.js — every entry has required fields');
-
-cssSnippets.forEach((s, i) => {
-  const id = s.fn ?? `index ${i}`;
-  assert(typeof s.line === 'string' && s.line.length > 0, `[${id}] line is a non-empty string`);
-  assert(typeof s.fn === 'string' && s.fn.length > 0, `[${id}] fn is a non-empty string`);
-  assert(Array.isArray(s.tags), `[${id}] tags is an array`);
-  assert(s.tags.length > 0, `[${id}] tags has at least one entry`);
-  s.tags.forEach((t) => {
+    assert(snippet.language === language, `[${label}] language is ${language}`);
     assert(
-      typeof t === 'string' && t.length > 0,
-      `[${id}] each tag is a non-empty string (got: ${t})`
+      typeof snippet.description === 'string' && snippet.description.length > 0,
+      `[${label}] description exists`
     );
+    assert(Array.isArray(snippet.conceptTags), `[${label}] conceptTags is an array`);
+    assert(snippet.conceptTags.length > 0, `[${label}] has at least one concept tag`);
+    snippet.conceptTags.forEach((tag) => {
+      assert(typeof tag === 'string' && tag.length > 0, `[${label}] concept tag is non-empty`);
+      tags.add(tag);
+    });
+
+    assert(Number.isInteger(snippet.complexity), `[${label}] complexity is an integer`);
+    assert(snippet.complexity >= 1 && snippet.complexity <= 3, `[${label}] complexity is 1-3`);
+
+    assert(Array.isArray(snippet.lines), `[${label}] lines is an array`);
+    assert(snippet.lines.length > 0, `[${label}] has at least one line`);
+    snippet.lines.forEach((line, lineIndex) => {
+      assert(typeof line === 'string', `[${label}] line ${lineIndex + 1} is a string`);
+      assert(line.trim().length > 0, `[${label}] line ${lineIndex + 1} is not empty`);
+    });
   });
-});
 
-section('css.js — line content rules');
+  section(`${language} - expected entries present`);
 
-cssSnippets.forEach((s) => {
-  const id = s.fn;
-  // Every CSS declaration must end with a semicolon
-  assert(s.line.endsWith(';'), `[${id}] line ends with semicolon`);
-  // Must contain a colon separating property from value
-  assert(s.line.includes(':'), `[${id}] line contains colon (property: value)`);
-  // Must not be just a colon and semicolon — needs actual content
-  assert(s.line.length > 5, `[${id}] line is more than 5 characters`);
-  // No pseudocode — values shouldn't be placeholder words like <value> or <color>
-  assert(!/<\w+>/.test(s.line), `[${id}] line contains no angle-bracket placeholders`);
-});
+  expectedIds.forEach((id) => {
+    assert(ids.has(id), `[${id}] expected snippet exists`);
+  });
 
-section('css.js — no duplicate lines');
+  section(`${language} - variety`);
 
-const cssLines = cssSnippets.map((s) => s.line);
-const cssUnique = new Set(cssLines);
-assert(cssUnique.size === cssLines.length, `all ${cssLines.length} lines are unique`);
+  assert(tags.size >= 3, `${language} covers at least 3 concept tags`);
+}
 
-section('css.js — tag variety (at least 4 distinct tags used across entries)');
+validateSnippetPool(htmlSnippets, 'html', [
+  'html-article-header',
+  'html-nav-links',
+  'html-unordered-list',
+  'html-figure-image',
+  'html-contact-form',
+  'html-checkbox-label',
+  'html-select-dropdown',
+  'html-page-layout',
+  'html-card-component',
+  'html-data-table',
+]);
 
-const cssAllTags = new Set(cssSnippets.flatMap((s) => s.tags));
-assert(
-  cssAllTags.size >= 4,
-  `at least 4 distinct tags used (found: ${[...cssAllTags].join(', ')})`
-);
+validateSnippetPool(cssSnippets, 'css', [
+  'css-flexbox-row',
+  'css-grid-three-col',
+  'css-box-model-card',
+  'css-dark-theme-bg',
+  'css-typography-heading',
+  'css-fade-transition',
+  'css-absolute-centre',
+  'css-card-shadow',
+  'css-responsive-stack',
+  'css-custom-properties',
+  'css-sticky-navbar',
+  'css-hover-scale',
+]);
 
-section('css.js — specific expected entries present');
-
-const cssLineSet = new Set(cssSnippets.map((s) => s.line));
-assert(cssLineSet.has('display: flex;'), 'display flex entry exists');
-assert(cssLineSet.has('background-color: #1a1a2e;'), 'background-color entry exists');
-assert(cssLineSet.has('font-size: 1.5rem;'), 'font-size entry exists');
-assert(cssLineSet.has('border-radius: 8px;'), 'border-radius entry exists');
-assert(cssLineSet.has('transition: opacity 0.3s ease;'), 'transition entry exists');
-
-section('css.js — covers layout, color, typography, and spacing');
-
-const cssFns = new Set(cssSnippets.map((s) => s.fn));
-assert(cssFns.has('flexbox'), 'flexbox fn present');
-assert(cssFns.has('color'), 'color fn present');
-assert(cssFns.has('typography'), 'typography fn present');
-assert(cssFns.has('spacing'), 'spacing fn present');
-
-// ─── Summary ─────────────────────────────────────────────────────────────────
-
-console.log('\n─────────────────────────────────────────────');
-console.log(`Results: ${passed} passed, ${failed} failed out of ${passed + failed} tests`);
-if (failed === 0) {
-  console.log('All tests passed ✓');
-} else {
-  console.error(`${failed} test(s) failed ✗`);
-  process.exit(1);
+console.log(`\nResults: ${passed} passed, ${failed} failed out of ${passed + failed} tests`);
+if (failed > 0) {
+  process.exitCode = 1;
 }

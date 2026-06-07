@@ -108,7 +108,6 @@ export const snippets = [
       // transition eases the change in opacity over 0.3 s
       '  transition: opacity 0.3s ease;',
       '}',
-      '',
       '.btn:hover {',
       '  opacity: 0.7;',
       '}',
@@ -128,7 +127,6 @@ export const snippets = [
       '.parent {',
       '  position: relative;',
       '}',
-      '',
       '.child {',
       '  position: absolute;',
       '  top: 50%;',
@@ -163,7 +161,6 @@ export const snippets = [
       '  display: flex;',
       '  flex-direction: row;',
       '}',
-      '',
       // conditionally override layout below 600 px viewport width
       '@media (max-width: 600px) {',
       '  .row {',
@@ -187,11 +184,38 @@ export const snippets = [
       '  --color-primary: #4f46e5;',
       '  --spacing-md: 16px;',
       '}',
-      '',
       '.btn {',
       // var() reads the value declared on :root
       '  background-color: var(--color-primary);',
       '  padding: var(--spacing-md);',
+      '}',
+    ],
+  },
+  // --- Sticky Nagivation Bar ---
+  {
+    id: 'css-sticky-navbar',
+    name: 'stickyNavbar',
+    language: 'css',
+    description: 'Keeps a navigation bar fixed to the top of the viewport while scrolling.',
+    conceptTags: ['objects'],
+    complexity: 2,
+    lines: ['.navbar {', '  position: sticky;', '  top: 0;', '  background-color: white;', '}'],
+  },
+  // --- Hover Transform ---
+  {
+    id: 'css-hover-scale',
+    name: 'hoverScale',
+    language: 'css',
+    description:
+      'Slightly enlarges an element when the mouse hovers over it using the transform property.',
+    conceptTags: ['animation'],
+    complexity: 1,
+    lines: [
+      '.card {',
+      '  transition: transform 0.2s ease;',
+      '}',
+      '.card:hover {',
+      '  transform: scale(1.05);',
       '}',
     ],
   },
