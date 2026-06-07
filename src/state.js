@@ -33,6 +33,7 @@ export function createRunState(language) {
     twoGhostsOneStone: false, // Two Ghosts One Stone — defeating an enemy also kills the next
     backFromTheDead: false, // Back from the Dead — life loss destroys the killer + next 2 enemies
     mysteryBoxReveal: null, // Mystery Box — id of the upgrade the box randomly granted
+    bossTimeBonus: 1, // Borrowed Time upgrade multiplier applied to boss countdown (1 = no bonus)
 
     stats: {
       // Typing and run statistics

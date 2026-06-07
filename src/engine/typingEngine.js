@@ -56,6 +56,43 @@ export function init(inputEl, feedbackEl, onDefeated, onKeystroke) {
 }
 
 /**
+ * Swaps the active input element — used to switch between the wave input and
+ * the boss textarea. Moves all event listeners to the new element and resets
+ * its value. Safe to call while active or inactive.
+ *
+ * @param {HTMLInputElement|HTMLTextAreaElement} newInputEl - The element to switch to.
+ * @returns {void}
+ */
+export function swapInput(newInputEl) {
+  if (_inputEl) {
+    if (_active) {
+      _inputEl.removeEventListener('input', handleInput);
+    }
+    _inputEl.removeEventListener('paste', handlePaste);
+  }
+
+  _inputEl = newInputEl;
+  _echoEl = null;
+
+  if (_inputEl) {
+    _inputEl.setAttribute('autocomplete', 'new-password');
+    _inputEl.setAttribute('autocorrect', 'off');
+    _inputEl.setAttribute('autocapitalize', 'off');
+    _inputEl.setAttribute('spellcheck', 'false');
+    _inputEl.addEventListener('paste', handlePaste);
+
+    if (_active) {
+      _inputEl.addEventListener('input', handleInput);
+    }
+
+    _inputEl.value = '';
+    _inputEl.focus();
+  }
+
+  renderFeedback('');
+}
+
+/**
  * Sets the current target string the player must type.
  * @param {string} _line - The target string to match.
  * @param {HTMLElement|null} [echoEl] - Optional element (the falling ghost's
@@ -197,7 +234,7 @@ function handleInput() {
   renderFeedback(typed);
 
   const isCorrect = typed === _target.slice(0, typed.length);
-  _onKeystroke(isCorrect);
+  _onKeystroke(isCorrect, typed.length);
 
   if (typed === _target) {
     _onDefeated();

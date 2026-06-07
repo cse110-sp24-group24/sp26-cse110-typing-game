@@ -84,6 +84,15 @@ export const UPGRADES = [
     },
   },
   {
+    id: 'borrowed-time',
+    name: 'Borrowed Time',
+    icon: '⏳',
+    description: 'Boss fight countdown is 25% longer for the rest of the run.',
+    effect: (state) => {
+      state.bossTimeBonus *= 1.25;
+    },
+  },
+  {
     id: 'mystery-box',
     name: 'Mystery Box',
     icon: '📦',

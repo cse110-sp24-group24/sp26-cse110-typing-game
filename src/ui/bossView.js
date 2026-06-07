@@ -1,21 +1,25 @@
 /**
- * ui/bossView.js — Boss sprite and progress bar rendering.
+ * ui/bossView.js — Boss sprite, progress bar, and countdown timer rendering.
  *
  * Owns the boss DOM element, entrance animation, defeat cleanup,
- * and boss progress display.
+ * boss progress display, and the boss fight countdown timer.
  *
- * Implemented by Issue #26.
+ * Implemented by Issue #26. Timer UI added by Issue #68.
  */
 
 let bossElement = null;
 let progressLabelElement = null;
 let progressBarElement = null;
+let timerValueElement = null;
 
 const SCREEN_SHAKE_DURATION_MS = 450;
 const BOSS_DEFEAT_DURATION_MS = 500;
 
+// Seconds at or below which the timer value pulses red.
+const URGENT_THRESHOLD_SECONDS = 10;
+
 /**
- * Creates the boss sprite and progress UI inside the play area.
+ * Creates the boss sprite, progress UI, and countdown timer inside the play area.
  *
  * @returns {void}
  */
@@ -32,25 +36,11 @@ export function showBoss() {
   bossElement.id = 'boss-container';
   bossElement.className = 'boss-container boss-container-entering';
 
-  const spriteElement = document.createElement('div');
+  const spriteElement = document.createElement('img');
   spriteElement.className = 'boss-sprite';
-  spriteElement.setAttribute('aria-label', 'Boss enemy');
-  spriteElement.setAttribute('role', 'img');
-
-  const leftHornElement = document.createElement('div');
-  leftHornElement.className = 'boss-sprite-horn boss-sprite-horn-left';
-
-  const rightHornElement = document.createElement('div');
-  rightHornElement.className = 'boss-sprite-horn boss-sprite-horn-right';
-
-  const faceElement = document.createElement('div');
-  faceElement.className = 'boss-sprite-face';
-
-  const leftEyeElement = document.createElement('div');
-  leftEyeElement.className = 'boss-sprite-eye';
-
-  const rightEyeElement = document.createElement('div');
-  rightEyeElement.className = 'boss-sprite-eye';
+  spriteElement.src =
+    'media/visuals/SpookyGhosts/ghostly-figure-shrouded-in-mist-on-a-transparent-background-evokes-a-sense-of-mystery-paranormal-ghost-background-free-png.webp';
+  spriteElement.alt = 'Boss enemy';
 
   const progressElement = document.createElement('div');
   progressElement.className = 'boss-progress';
@@ -66,11 +56,24 @@ export function showBoss() {
   progressBarElement = document.createElement('div');
   progressBarElement.className = 'boss-progress-bar';
 
-  faceElement.append(leftEyeElement, rightEyeElement);
-  spriteElement.append(leftHornElement, rightHornElement, faceElement);
+  // Countdown timer display
+  const timerElement = document.createElement('div');
+  timerElement.className = 'boss-timer';
+  timerElement.setAttribute('aria-live', 'polite');
+  timerElement.setAttribute('aria-label', 'Boss timer');
+
+  const timerLabelElement = document.createElement('span');
+  timerLabelElement.textContent = '⏱';
+
+  timerValueElement = document.createElement('span');
+  timerValueElement.className = 'boss-timer-value';
+  timerValueElement.textContent = '--';
+
+  timerElement.append(timerLabelElement, timerValueElement);
+
   progressTrackElement.append(progressBarElement);
   progressElement.append(progressLabelElement, progressTrackElement);
-  bossElement.append(spriteElement, progressElement);
+  bossElement.append(spriteElement, progressElement, timerElement);
   playAreaElement.append(bossElement);
 }
 
@@ -123,11 +126,21 @@ export function playDefeat() {
  * @returns {void}
  */
 export function updateProgress(progress) {
-  const { currentLine, completedLines, totalLines } = progress;
-
   if (!progressLabelElement || !progressBarElement) {
     return;
   }
+
+  // Character-level progress (boss full-function mode).
+  if (progress.totalChars !== undefined) {
+    const { typedChars, totalChars } = progress;
+    const pct = totalChars > 0 ? Math.round((typedChars / totalChars) * 100) : 0;
+    progressLabelElement.textContent = `${typedChars} / ${totalChars} chars`;
+    progressBarElement.style.width = `${pct}%`;
+    return;
+  }
+
+  // Line-level progress (legacy / victory snapshot).
+  const { currentLine, completedLines, totalLines } = progress;
 
   if (totalLines === 0) {
     progressLabelElement.textContent = 'Line 0 of 0';
@@ -144,7 +157,23 @@ export function updateProgress(progress) {
 }
 
 /**
- * Removes the boss sprite and progress UI from the play area.
+ * Updates the countdown timer display.
+ * Applies the urgent pulse style when seconds reach the threshold.
+ *
+ * @param {number} seconds - Remaining seconds to display.
+ * @returns {void}
+ */
+export function updateTimer(seconds) {
+  if (!timerValueElement) {
+    return;
+  }
+
+  timerValueElement.textContent = String(seconds);
+  timerValueElement.classList.toggle('boss-timer-urgent', seconds <= URGENT_THRESHOLD_SECONDS);
+}
+
+/**
+ * Removes the boss sprite, progress UI, and timer from the play area.
  *
  * @returns {void}
  */
@@ -158,4 +187,5 @@ export function clearBoss() {
   bossElement = null;
   progressLabelElement = null;
   progressBarElement = null;
+  timerValueElement = null;
 }
