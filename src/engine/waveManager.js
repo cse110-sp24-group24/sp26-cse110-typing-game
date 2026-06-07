@@ -109,10 +109,12 @@ export function beginSpawning() {
  * @returns {void}
  */
 export function onEnemyDefeated() {
-  if (currentEnemyEl) {
-    enemySystem.defeatEnemy(currentEnemyEl);
-    currentEnemyEl = null;
+  if (!currentEnemyEl) {
+    return;
   }
+
+  enemySystem.defeatEnemy(currentEnemyEl);
+  currentEnemyEl = null;
 
   spawnCursor += 1;
 
