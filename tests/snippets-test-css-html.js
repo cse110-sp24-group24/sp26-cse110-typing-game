@@ -29,7 +29,10 @@ function validateSnippetPool(snippets, language, expectedIds) {
   section(`${language} - library shape`);
 
   assert(Array.isArray(snippets), `${language} snippets export is an array`);
-  assert(snippets.length >= expectedIds.length, `${language} has at least ${expectedIds.length} entries`);
+  assert(
+    snippets.length >= expectedIds.length,
+    `${language} has at least ${expectedIds.length} entries`
+  );
 
   const ids = new Set();
   const names = new Set();
