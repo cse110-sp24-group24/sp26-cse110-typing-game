@@ -229,4 +229,33 @@ export const snippets = [
       '</table>',
     ],
   },
+
+  {
+    id: 'html-progress-bar',
+    name: 'progressBar',
+    language: 'html',
+    description: 'Displays task completion using the progress element.',
+    conceptTags: ['objects'],
+    complexity: 1,
+    lines: [
+      '<label for="progress">Loading</label>',
+      '<progress id="progress" value="70" max="100">70%</progress>',
+    ],
+  },
+
+  {
+    id: 'html-ordered-list',
+    name: 'orderedList',
+    language: 'html',
+    description: 'Creates an ordered list showing numbered steps.',
+    conceptTags: ['arrays'],
+    complexity: 1,
+    lines: [
+      '<ol>',
+      '  <li>Install dependencies</li>',
+      '  <li>Run the project</li>',
+      '  <li>Test the application</li>',
+      '</ol>',
+    ],
+  },
 ];
