@@ -117,7 +117,6 @@ const waveMistakes = new Map();
 let typingHadError = false;
 
 const MAX_MISTAKES_SHOWN = 5;
-const WAVE_STATS_AUTO_ADVANCE_MS = 4000; // auto-advance to upgrades
 const WAVE_STATS_KEY_ARM_MS = 400; // delay before a keypress can dismiss
 const VIBE_VANISH_BUFFER_PADDING = 12;
 
@@ -130,6 +129,9 @@ const pauseSettingsBtnEl = document.getElementById('pause-settings-btn');
 let isPaused = false;
 let typingWasActiveBeforePause = false;
 let typingWasDisabledBeforePause = false;
+// True when opening the settings panel is what paused the run, so closing
+// settings knows to resume — and won't fight the Escape overlay's pause.
+let pausedBySettings = false;
 
 // ── Boss System (Issue #26) ───────────────────────────────────
 // main.js wires boss engine callbacks to UI and audio modules so
@@ -1054,10 +1056,18 @@ function beginWaveIntro() {
     wave: runState.wave,
     snippet: waveManager.getCurrentSnippet(),
   }).finally(() => {
-    if (typingInputEl) {
-      typingInputEl.disabled = false;
-    }
-    activateTyping();
+    // Re-enable typing on the next tick so the keypress that dismissed the
+    // intro card cannot also land in the input. Clearing the value first
+    // discards any character that still leaked through, so the first line
+    // starts empty and is immediately typeable.
+    window.setTimeout(() => {
+      if (typingInputEl) {
+        typingInputEl.value = '';
+        typingInputEl.disabled = false;
+        typingInputEl.focus();
+      }
+      activateTyping();
+    }, 0);
   });
 }
 
@@ -1180,15 +1190,19 @@ function launchWave() {
     return;
   }
 
-  // Consume the one-shot flag immediately so it doesn't carry into future waves.
-  runState.vibeVanishActive = false;
-
   // Set up HUD and code panel without spawning any enemy yet.
   waveManager.setupWave();
 
   // Angel descends before any ghost. Promise resolves once it activates or
-  // reaches the deadline.
+  // reaches the deadline. The flag stays true during the angel phase so the
+  // chant detector still works; we clear it once the phase settles.
   spawnVibeVanishAngel().then((activated) => {
+    // Vibe Vanish is single-use: consume it once the angel phase resolves,
+    // whether the chant was typed in time or the angel reached the deadline.
+    // Later waves then start normally with no angel.
+    runState.vibeVanishActive = false;
+    _chantBuffer = '';
+
     if (activated) {
       // Chant typed in time — play the ghost-entry-dissolve show, then clear.
       playGhostVanishEntry().then(() => {
@@ -1364,17 +1378,14 @@ function showLatestWaveStats() {
         return;
       }
       settled = true;
-      window.clearTimeout(autoTimer);
       window.clearTimeout(armTimer);
       document.removeEventListener('keydown', advance);
       resolve();
     };
 
-    // Auto-advance after the timeout.
-    const autoTimer = window.setTimeout(advance, WAVE_STATS_AUTO_ADVANCE_MS);
-
-    // Any key dismisses early, but arm the listener slightly late so the
-    // keystroke that finished the boss line doesn't skip the screen instantly.
+    // The screen stays until the player presses a key — there is no
+    // auto-advance. Arm the key listener slightly late so the keystroke that
+    // finished the boss line doesn't skip the screen instantly.
     const armTimer = window.setTimeout(() => {
       document.addEventListener('keydown', advance);
     }, WAVE_STATS_KEY_ARM_MS);
@@ -1454,13 +1465,42 @@ function syncAudioSettingsUI() {
   }
 }
 
+/**
+ * Opens the audio settings panel. When opened mid-run from the HUD gear,
+ * it pauses the run first so enemies, boss timers, audio, and typing freeze
+ * while the panel is open. Opening from the main menu (no active run) or from
+ * the already-paused Escape overlay just shows the panel.
+ * @returns {void}
+ */
 function openSettingsPanel() {
   syncAudioSettingsUI();
+
+  // Pause an active run, but only if it isn't already paused via the Escape
+  // overlay — otherwise the two pause sources would fight over the state.
+  if (isGameActive() && !isPaused) {
+    pauseRun();
+    pausedBySettings = true;
+    // pauseRun() reveals the Escape pause overlay; hide it so only the
+    // settings panel shows when settings is opened from the HUD gear.
+    pauseOverlayEl?.classList.add('hidden');
+  }
+
   settingsPanelEl?.classList.remove('hidden');
 }
 
+/**
+ * Closes the audio settings panel. If opening settings is what paused the
+ * run, it resumes to the exact prior state; if the run was already paused via
+ * the Escape overlay, it stays paused.
+ * @returns {void}
+ */
 function closeSettingsPanel() {
   settingsPanelEl?.classList.add('hidden');
+
+  if (pausedBySettings) {
+    pausedBySettings = false;
+    resumeRun();
+  }
 }
 
 settingsBtnEl?.addEventListener('click', openSettingsPanel);

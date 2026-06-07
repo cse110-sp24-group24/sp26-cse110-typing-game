@@ -53,7 +53,11 @@ export function show(_state, waveData) {
   return new Promise((resolve) => {
     let dismissed = false;
 
-    const keydownHandler = () => {
+    const keydownHandler = (event) => {
+      // Stop the dismissing keypress (usually Space) from also being typed
+      // into the input once typing re-enables — otherwise the first line
+      // starts with a stray character to delete.
+      event.preventDefault();
       dismiss();
     };
 
