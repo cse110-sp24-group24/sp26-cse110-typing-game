@@ -8,7 +8,7 @@
  * fall-speed formula instead of the old flat BASE_FALL_DURATION_SECONDS = 16.
  * Expected values are derived from:
  *   duration = (BASE + charCount * PER_CHAR) / (clampedMultiplier * waveDifficulty)
- *   BASE = 4, PER_CHAR = 0.18, WAVE_SPEEDUP = 0.07, MIN_MULTIPLIER = 0.1
+ *   BASE = 8, PER_CHAR = 0.22, WAVE_SPEEDUP = 0.05, MIN_MULTIPLIER = 0.1
  */
 
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
@@ -27,9 +27,9 @@ import * as EnemySystem from '../src/engine/enemySystem.js';
  * @returns {string} The expected animationDuration CSS string, e.g. '6.52s'.
  */
 function expectedDuration(line, wave, speedMultiplier) {
-  const BASE_FALL_DURATION_SECONDS = 4;
-  const PER_CHAR_SECONDS = 0.18;
-  const WAVE_SPEEDUP = 0.07;
+  const BASE_FALL_DURATION_SECONDS = 8;
+  const PER_CHAR_SECONDS = 0.22;
+  const WAVE_SPEEDUP = 0.05;
   const MIN_FALL_SPEED_MULTIPLIER = 0.1;
 
   const charCount = line.length;

@@ -28,6 +28,8 @@ let spawnOrder = [];
 let spawnCursor = 0;
 let currentEnemyEl = null;
 
+let nextLineSpawnTimeoutId = null;
+
 // Tracks snippet IDs used this run so getRandomSnippet can exclude them.
 const usedSnippetIds = [];
 const NEXT_LINE_SPAWN_DELAY_MS = 300;
@@ -53,6 +55,8 @@ export function init(state, onWaveClear, onWaveStart) {
   spawnCursor = 0;
   currentEnemyEl = null;
   usedSnippetIds.length = 0;
+
+  clearPendingSpawn();
 }
 
 /**
@@ -117,13 +121,17 @@ export function onEnemyDefeated() {
   currentEnemyEl = null;
 
   spawnCursor += 1;
+  skipBlankLines();
 
   if (spawnCursor >= spawnOrder.length) {
     onWaveClearRef(currentSnippet);
     return;
   }
 
-  window.setTimeout(() => {
+  clearPendingSpawn();
+
+  nextLineSpawnTimeoutId = window.setTimeout(() => {
+    nextLineSpawnTimeoutId = null;
     spawnCurrentLine();
   }, NEXT_LINE_SPAWN_DELAY_MS);
 }
@@ -167,6 +175,7 @@ export function getRemainingLinesCount() {
  * @returns {void}
  */
 export function forceWaveClear() {
+  clearPendingSpawn();
   currentEnemyEl = null;
   if (currentSnippet) {
     onWaveClearRef(currentSnippet);
@@ -182,6 +191,7 @@ export function forceWaveClear() {
  * @returns {void}
  */
 export function skipLines(n) {
+  clearPendingSpawn();
   currentEnemyEl = null;
   spawnCursor += n;
 
@@ -196,16 +206,46 @@ export function skipLines(n) {
 // ── Private helpers ─────────────────────────────────────────────────────────
 
 /**
+ * Cancels any delayed spawn that has not fired yet.
+ * @returns {void}
+ */
+function clearPendingSpawn() {
+  if (nextLineSpawnTimeoutId !== null) {
+    window.clearTimeout(nextLineSpawnTimeoutId);
+    nextLineSpawnTimeoutId = null;
+  }
+}
+
+/**
+ * Advances the spawn cursor past blank source lines.
+ * @returns {void}
+ */
+function skipBlankLines() {
+  while (
+    spawnCursor < spawnOrder.length &&
+    currentSnippet.lines[spawnOrder[spawnCursor]].trim() === ''
+  ) {
+    spawnCursor += 1;
+  }
+}
+
+/**
  * Spawns the enemy for the current spawn cursor and sets it as the typing target.
  * Only one enemy is on screen at a time (single-enemy MVP model).
  * @returns {void}
  */
 function spawnCurrentLine() {
+  skipBlankLines();
+
+  if (spawnCursor >= spawnOrder.length) {
+    onWaveClearRef(currentSnippet);
+    return;
+  }
+
   const sourceLineIndex = getCurrentLineIndex();
   const line = currentSnippet.lines[sourceLineIndex].trimStart();
 
   currentEnemyEl = enemySystem.spawnEnemy(line, spawnCursor);
-  // Mirror typing feedback onto this ghost's code label as the player types.
   setTarget(line, enemySystem.getEnemyCodeEl(currentEnemyEl));
 }
 

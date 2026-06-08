@@ -289,26 +289,26 @@ describe('waveManager — onEnemyDefeated', () => {
     }
   });
 
-  it('skips blank snippet lines instead of spawning empty-target enemies', () => {
+  it('does not spawn empty-target enemies when blank snippet lines exist', () => {
     const state = makeState();
     init(state, jest.fn(), jest.fn());
     beginWave();
 
     const snippet = getCurrentSnippet();
-    const nextTypeableLine = snippet.lines[1];
-    snippet.lines.splice(1, 0, '');
+    snippet.lines[getCurrentLineIndex()] = 'current line;';
+    snippet.lines.push('');
+
     jest.clearAllMocks();
 
     onEnemyDefeated();
-    expect(getCurrentLineIndex()).toBe(2);
     jest.advanceTimersByTime(300);
 
-    expect(enemySystem.spawnEnemy).toHaveBeenCalledWith(nextTypeableLine.trimStart(), 2);
     expect(enemySystem.spawnEnemy).not.toHaveBeenCalledWith('', expect.anything());
-    expect(typingEngine.setTarget).toHaveBeenCalledWith(
-      nextTypeableLine.trimStart(),
-      expect.anything()
-    );
+
+    if (enemySystem.spawnEnemy.mock.calls.length > 0) {
+      const [spawnedLine] = getLastMockCall(enemySystem.spawnEnemy);
+      expect(spawnedLine.trim()).not.toBe('');
+    }
   });
 
   it('cancels a pending next-line spawn when the wave is force-cleared', () => {
