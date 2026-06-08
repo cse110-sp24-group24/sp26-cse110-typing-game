@@ -15,7 +15,7 @@ import { jest, describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 
 import puppeteer from 'puppeteer';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'http://127.0.0.1:5501/index.html';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'http://127.0.0.1:5501/index.html'; // Change this to your Live Server link
 const UI_TIMEOUT_MS = 15000;
 const TARGET_TYPING_LIMIT = 8;
 
@@ -24,7 +24,7 @@ jest.setTimeout(90000);
 let browser = null;
 
 /**
- * Verifies that the configured app URL is reachable.
+ * Verifies that the configured app URL is reachable and looks like Phantom Type.
  * @param {import('puppeteer').Browser} activeBrowser - Puppeteer browser.
  * @returns {Promise<void>}
  */
@@ -32,13 +32,37 @@ async function verifySiteIsRunning(activeBrowser) {
   const page = await activeBrowser.newPage();
 
   try {
-    await page.goto(BASE_URL, {
+    const response = await page.goto(BASE_URL, {
       waitUntil: 'domcontentloaded',
       timeout: UI_TIMEOUT_MS,
     });
+
+    if (!response || !response.ok()) {
+      throw new Error(`HTTP ${response?.status() ?? 'unknown'}`);
+    }
+
+    const hasPlayButton = await page.$('#play-btn');
+
+    if (!hasPlayButton) {
+      throw new Error(
+        'The page loaded, but #play-btn was not found. This usually means E2E_BASE_URL is pointing to the wrong Live Server page or folder.'
+      );
+    }
   } catch (error) {
     throw new Error(
-      `Could not reach ${BASE_URL}. Start Live Server first, or set E2E_BASE_URL. Original error: ${error.message}`
+      [
+        `Could not start E2E test from BASE_URL: ${BASE_URL}`,
+        '',
+        'Check that:',
+        '- VS Code Live Server is running',
+        '- the URL matches the Live Server tab exactly',
+        '- the URL points to this project’s index.html, not a parent folder or another project',
+        '',
+        'Example:',
+        'E2E_BASE_URL=http://127.0.0.1:5501/index.html npm run test:e2e',
+        '',
+        `Original error: ${error.message}`,
+      ].join('\n')
     );
   } finally {
     await page.close();
