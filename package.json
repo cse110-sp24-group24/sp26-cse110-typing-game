@@ -10,7 +10,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:e2e": "cross-env NODE_OPTIONS=--experimental-vm-modules jest tests/e2e"
   },
   "jest": {
     "testEnvironment": "jsdom",
@@ -33,6 +34,6 @@
     "jest-environment-jsdom": "^30.4.1",
     "lint-staged": "^17.0.5",
     "prettier": "^3.0.0",
-    "puppeteer": "^25.0.4"
+    "puppeteer": "^25.1.0"
   }
 }
