@@ -295,19 +295,29 @@ describe('waveManager — onEnemyDefeated', () => {
     beginWave();
 
     const snippet = getCurrentSnippet();
-    snippet.lines[getCurrentLineIndex()] = 'current line;';
-    snippet.lines.push('');
+    // Snippets are shared module singletons, so snapshot the original lines
+    // and restore them after mutating — otherwise the injected blank line
+    // leaks into later tests that pick this same snippet at random.
+    const originalLines = [...snippet.lines];
 
-    jest.clearAllMocks();
+    try {
+      snippet.lines[getCurrentLineIndex()] = 'current line;';
+      snippet.lines.push('');
 
-    onEnemyDefeated();
-    jest.advanceTimersByTime(300);
+      jest.clearAllMocks();
 
-    expect(enemySystem.spawnEnemy).not.toHaveBeenCalledWith('', expect.anything());
+      onEnemyDefeated();
+      jest.advanceTimersByTime(300);
 
-    if (enemySystem.spawnEnemy.mock.calls.length > 0) {
-      const [spawnedLine] = getLastMockCall(enemySystem.spawnEnemy);
-      expect(spawnedLine.trim()).not.toBe('');
+      expect(enemySystem.spawnEnemy).not.toHaveBeenCalledWith('', expect.anything());
+
+      if (enemySystem.spawnEnemy.mock.calls.length > 0) {
+        const [spawnedLine] = getLastMockCall(enemySystem.spawnEnemy);
+        expect(spawnedLine.trim()).not.toBe('');
+      }
+    } finally {
+      snippet.lines.length = 0;
+      snippet.lines.push(...originalLines);
     }
   });
 
