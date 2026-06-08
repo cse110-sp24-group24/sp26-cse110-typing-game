@@ -85,6 +85,7 @@ let runState = null;
 let nextLinePreRevealed = false;
 
 const livesDisplayEl = document.getElementById('lives-display');
+const scoreDisplayEl = document.getElementById('score-display');
 const playAreaEl = document.getElementById('play-area');
 const deadlineEl = document.getElementById('deadline-line');
 const typingInputEl = document.getElementById('typing-input');
@@ -234,6 +235,7 @@ function startRun(language) {
   initCodePanel(document.getElementById('code-panel'));
 
   updateLivesDisplay();
+  updateScoreDisplay();
 }
 
 /**
@@ -302,6 +304,20 @@ function updateLivesDisplay() {
     livesDisplayEl.appendChild(heart);
   }
   livesDisplayEl.setAttribute('aria-label', `${lives} lives remaining`);
+}
+
+/**
+ * Renders the current run score into #score-display. Safe to call before
+ * startRun(); falls back to 0 when no run is active.
+ * @returns {void}
+ */
+function updateScoreDisplay() {
+  if (!scoreDisplayEl) {
+    return;
+  }
+  const score = runState?.score ?? 0;
+  scoreDisplayEl.textContent = score.toLocaleString();
+  scoreDisplayEl.setAttribute('aria-label', `Score ${score}`);
 }
 
 /**
@@ -1131,6 +1147,7 @@ function onWaveClear(snippet) {
       // Soul Harvest: scoreMultiplier starts at 1.0 and increases by 0.5
       // each time the upgrade is picked, so bonus points scale up per run.
       runState.score += Math.round(bonusScore * (runState.scoreMultiplier ?? 1));
+      updateScoreDisplay();
       onBossDefeated();
     });
   }, 800);
