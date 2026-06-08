@@ -48,7 +48,7 @@ export function getPreferences() {
 
 /**
  * Saves the last selected language.
- * @param {string} language - Accepted values are "javascript" or "python".
+ * @param {string} language - Accepted values are "javascript", "html", or "css".
  * @returns {void}
  */
 export function saveLanguage(language) {

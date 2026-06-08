@@ -38,17 +38,17 @@ describe('storage preferences', () => {
   });
 
   it('saves valid Sprint 3 preferences under phantomtype.v1 keys', () => {
-    saveLanguage('python');
+    saveLanguage('html');
     saveAudioSettings({ musicVolume: 0.25, sfxVolume: 0.8, muted: true });
     markTutorialSeen();
 
-    expect(window.localStorage.getItem('phantomtype.v1.language')).toBe('python');
+    expect(window.localStorage.getItem('phantomtype.v1.language')).toBe('html');
     expect(window.localStorage.getItem('phantomtype.v1.musicVolume')).toBe('0.25');
     expect(window.localStorage.getItem('phantomtype.v1.sfxVolume')).toBe('0.8');
     expect(window.localStorage.getItem('phantomtype.v1.muted')).toBe('true');
     expect(window.localStorage.getItem('phantomtype.v1.tutorialSeen')).toBe('true');
     expect(getPreferences()).toEqual({
-      language: 'python',
+      language: 'html',
       musicVolume: 0.25,
       sfxVolume: 0.8,
       muted: true,
@@ -56,8 +56,15 @@ describe('storage preferences', () => {
     });
   });
 
+  it('saves css as a valid language preference', () => {
+    saveLanguage('css');
+
+    expect(window.localStorage.getItem('phantomtype.v1.language')).toBe('css');
+    expect(getPreferences().language).toBe('css');
+  });
+
   it('ignores unsupported languages and invalid stored values', () => {
-    saveLanguage('html');
+    saveLanguage('python');
     window.localStorage.setItem('phantomtype.v1.musicVolume', 'loud');
     window.localStorage.setItem('phantomtype.v1.sfxVolume', '3');
     window.localStorage.setItem('phantomtype.v1.muted', 'sometimes');
@@ -73,8 +80,29 @@ describe('storage preferences', () => {
     });
   });
 
-  it('removes all phantomtype.v1 keys when resetting to defaults', () => {
+  it('normalizes invalid stored language values to the default language', () => {
     window.localStorage.setItem('phantomtype.v1.language', 'python');
+
+    expect(getPreferences().language).toBe('javascript');
+  });
+
+  it('normalizes invalid stored audio and tutorial values to defaults', () => {
+    window.localStorage.setItem('phantomtype.v1.musicVolume', 'loud');
+    window.localStorage.setItem('phantomtype.v1.sfxVolume', '3');
+    window.localStorage.setItem('phantomtype.v1.muted', 'sometimes');
+    window.localStorage.setItem('phantomtype.v1.tutorialSeen', 'eventually');
+
+    expect(getPreferences()).toEqual({
+      language: 'javascript',
+      musicVolume: 0.575,
+      sfxVolume: 0.7,
+      muted: false,
+      tutorialSeen: false,
+    });
+  });
+
+  it('removes all phantomtype.v1 keys when resetting to defaults', () => {
+    window.localStorage.setItem('phantomtype.v1.language', 'html');
     window.localStorage.setItem('phantomtype.v1.extra', 'legacy');
     window.localStorage.setItem('other.key', 'kept');
 
@@ -94,16 +122,29 @@ describe('storage preferences', () => {
       throw new Error('storage blocked');
     });
 
-    saveLanguage('python');
+    saveLanguage('html');
     saveAudioSettings({ musicVolume: 0.5, sfxVolume: 0.25, muted: true });
     markTutorialSeen();
 
     expect(getPreferences()).toEqual({
-      language: 'python',
+      language: 'html',
       musicVolume: 0.5,
       sfxVolume: 0.25,
       muted: true,
       tutorialSeen: true,
     });
+  });
+
+  it('ignores unsupported languages when localStorage throws', () => {
+    jest.spyOn(storagePrototype, 'setItem').mockImplementation(() => {
+      throw new Error('storage blocked');
+    });
+    jest.spyOn(storagePrototype, 'getItem').mockImplementation(() => {
+      throw new Error('storage blocked');
+    });
+
+    saveLanguage('python');
+
+    expect(getPreferences().language).toBe('javascript');
   });
 });
