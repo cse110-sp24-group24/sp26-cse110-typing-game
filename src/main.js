@@ -119,6 +119,7 @@ let typingHadError = false;
 const MAX_MISTAKES_SHOWN = 5;
 const WAVE_STATS_KEY_ARM_MS = 400; // delay before a keypress can dismiss
 const VIBE_VANISH_BUFFER_PADDING = 12;
+const TWO_GHOSTS_DEFEAT_DELAY_MS = 350; // delay for double ghost defeated upgrade
 
 // Issue #50 pause-menu: Overlay controls and pause state live in main.js.
 const pauseOverlayEl = document.getElementById('pause-overlay');
@@ -214,7 +215,7 @@ function startRun(language) {
 
       // Two Ghosts One Stone: automatically defeat the next line too.
       if (runState?.twoGhostsOneStone && waveManager.getRemainingLinesCount() > 0) {
-        window.setTimeout(() => waveManager.onEnemyDefeated(), 200);
+        window.setTimeout(() => waveManager.onEnemyDefeated(), TWO_GHOSTS_DEFEAT_DELAY_MS);
       }
 
       // Foresight: pre-reveal the next upcoming line in the code panel so

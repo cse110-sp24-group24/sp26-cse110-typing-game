@@ -28,7 +28,7 @@ const activeEnemies = new Set();
  * Acts as the minimum airtime floor before any length bonus is added.
  * Kept intentionally short — the length bonus carries most of the duration.
  */
-const BASE_FALL_DURATION_SECONDS = 4;
+const BASE_FALL_DURATION_SECONDS = 8;
 
 /**
  * Extra fall time granted per character in the line (seconds).
@@ -36,14 +36,14 @@ const BASE_FALL_DURATION_SECONDS = 4;
  * giving ~14.8 s at wave 1 — comfortable for ~200 WPM (60 chars ≈ 1.8 s of
  * raw typing), with ample margin for reading time.
  */
-const PER_CHAR_SECONDS = 0.18;
+const PER_CHAR_SECONDS = 0.22;
 
 /**
  * Fractional speed increase applied per completed wave beyond wave 1.
  * 0.07 → wave 2 is 7 % faster, wave 8 is 49 % faster, etc.
  * Keeps later waves challenging without making long lines unplayable.
  */
-const WAVE_SPEEDUP = 0.07;
+const WAVE_SPEEDUP = 0.05;
 
 const DISSOLVE_DURATION_MS = 500;
 const BREACH_REMOVE_DELAY_MS = 350;
