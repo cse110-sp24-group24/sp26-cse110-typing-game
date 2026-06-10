@@ -207,12 +207,6 @@ Modules in `ui/` never import from `audio/`, and `engine/` never imports `ui/` �
 
 ---
 
-## How We Used Generative AI
-
-GenAI was used as a **scaffolding and acceleration tool inside the system the team designed**, not as a replacement for it. The human-authored artifacts came first — 100 user stories, the MVP scope, ten ADRs, and the architecture doc — and those documents were fed to AI assistants as the spec. Concretely, AI was used to draft module skeletons and JSDoc against the agreed-upon public APIs, to generate first-pass unit tests, to help write boilerplate (issue templates, config files), and as a pair-programmer for debugging. Some branches in the history (e.g. the `codex/*` branches) reflect AI-assisted implementation of individual issues. Every AI-assisted change still went through the same gate as any other: a feature branch, a PR, green CI (ESLint + Prettier + Jest), and human review before merge to `main`.
-
----
-
 ## Team
 
 Ten contributors built this project together:
