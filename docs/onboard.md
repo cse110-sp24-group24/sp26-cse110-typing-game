@@ -120,15 +120,6 @@ Once that loop feels natural, graduate to a logic change (e.g. a new upgrade in 
 
 ---
 
-## 7. Known Rough Edges (worth fixing early)
-
-- **Prism.js is selected but not vendored.** [ADR-007](architecture/decisions/ADR-007-syntax-highlighting.md) chose Prism, but there is no `lib/prism.min.js` and no `<script>` tag in `index.html`, so `codePanel.js` runs its plain-text fallback. Vendoring Prism + adding the script tag would light up real syntax highlighting.
-- **CI doesn't run Jest.** `lint.yml` runs ESLint + Prettier only. Adding a `npm test` step (unit suite) to CI would catch logic regressions automatically.
-- **`assets/` vs `media/` split.** Both folders hold real, loaded assets (`audioManager` reads `assets/audio/`, but menu music and the stats video live under `media/`). Consolidating to one media root would remove confusion.
-- **e2e tests are environment-sensitive.** They need a live server and a headless Chromium; they aren't part of the default green path.
-
----
-
 ## 8. Where to Go Next
 
 - Product scope and roadmap: [`MVP.md`](../MVP.md)
