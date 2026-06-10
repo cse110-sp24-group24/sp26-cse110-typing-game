@@ -6,7 +6,7 @@
 
 **Status Video 1:** <https://youtu.be/3QU3BJbv-cA>
 
-**Final Private Video:** <https://youtu.be/ttjtHQoAl_Y>
+**Final Private Video:** <https://youtu.be/I35CwKpcQfA>
 
 <!--
   DEMO GIF — record a ~5-second clip of a wave → boss → upgrade loop, export as
