@@ -35,7 +35,7 @@ Open <http://localhost:8080>, click **Play**, choose a language, and you should 
 
 ---
 
-## 3. How the Code Is Wired (the 60-second mental model)
+## 3. How the Code Is Wired
 
 - **`index.html`** is the contract. Every screen (`#menu-screen`, `#language-screen`, `#wave-intro-screen`, `#game-screen`, `#wave-stats-screen`, `#upgrade-screen`, `#stats-screen`) and every element an engine/UI module reaches for by `id` lives here. If a module calls `document.getElementById('x')`, `x` exists in this file.
 - **`src/main.js`** is the only orchestrator. It creates the `RunState`, shows/hides screens, and registers callbacks. Engine modules never import UI; instead they fire callbacks that `main.js` routes to the right UI module. When you want to understand "what happens when the player finishes a line," start in `main.js` and follow the callback.
