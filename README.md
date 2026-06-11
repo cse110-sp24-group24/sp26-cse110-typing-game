@@ -8,6 +8,8 @@
 
 **Final Private Video:** <https://youtu.be/I35CwKpcQfA>
 
+**Final Public Video:** <https://youtu.be/AqrdHvX9eng>
+
 <!--
   DEMO GIF — record a ~5-second clip of a wave → boss → upgrade loop, export as
   docs/demo.gif, and uncomment the line below so it renders at the top of the README.
